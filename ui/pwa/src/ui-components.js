@@ -111,6 +111,11 @@ export function renderActionButton(action) {
   button.textContent = action.label;
   button.dataset.action = action.id;
 
+  if (action.menuTarget) {
+    button.dataset.menuLevel = String(action.menuTarget.level);
+    button.dataset.menuEntity = action.menuTarget.entity || '';
+  }
+
   if (action.command) {
     button.dataset.commandTarget = action.command.target;
     button.dataset.commandName = action.command.cmd;
