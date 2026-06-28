@@ -61,7 +61,7 @@ raw door GPIO read
 raw humidifier water GPIO read
 I2C scan for SHT31
 OneWire scan for DS18B20
-ADC raw read for pot0 and pot1
+ADC raw read for pot[0] and pot[1]
 manual output toggle test through temporary serial commands
 ```
 

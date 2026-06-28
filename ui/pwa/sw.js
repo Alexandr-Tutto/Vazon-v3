@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vazon-v3-pwa-visual-parity-v1';
+const CACHE_NAME = 'vazon-v3-pwa-contract-alignment-v1';
 
 const APP_ASSETS = [
   './index.html',

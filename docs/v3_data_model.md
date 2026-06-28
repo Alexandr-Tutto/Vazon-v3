@@ -1,60 +1,54 @@
-# Vazon V3 Data Model
+# Vazon V3 Data Model Boundary
 
-Document status: draft
+Document status: active
 Code status: architecture reference
-Scope: Vazon V3 state/data shape only
+Scope: shared data-shape rules, not module field ownership
 
 ## 1. Purpose
 
-```text
-This document defines the shared V3 data model for firmware structs, MQTT payloads, and UI state.
-```
+This document defines the minimal shared data-model rules used by firmware, MQTT, and UI.
 
-This file describes data shape only.
+It does not own module fields, module behavior, settings lists, command names, GPIO binding, persistence layout, or UI wording.
 
-It does not own module behavior, GPIO binding, UI wording, MQTT topic strings, persistence rules, or safety logic.
-
-## 2. Ownership References
+## 2. Ownership Rule
 
 ```text
-module behavior -> docs/v3_contracts/*.contract.md
-software boundaries -> docs/software_architecture.md
-UI presentation -> docs/ui_architecture.md
-pinout -> docs/hardware/v3_board_pinout.md
-board config -> components/board_config/include/vazon_board_config.h
-MQTT exact topic strings -> postponed MQTT registry
+One data fact has one owner.
+
+Module state/settings/status fields are owned by the corresponding contract in docs/v3_contracts/.
+Global/system fields are owned by global/system contracts.
+UI-only labels and grouping are owned by docs/ui_architecture.md.
+MQTT topic strings are owned by docs/mqtt_topic_registry.md.
+GPIO names and levels are owned by docs/hardware/v3_board_pinout.md and board_config.
 ```
 
-## 3. Common Types
+This file may define common envelope shape and naming rules only.
+
+## 3. Common Field Categories
 
 ```text
-status:
-    ok
-    warning
-    error
-    inactive
-    unknown
+state
+    physical or logical state owned by a module
 
-status_reason:
-    string enum owned by the corresponding module or global policy
+settings
+    persisted configuration owned by a module or global owner
 
-command_result:
-    accepted
-    rejected
-    failed
-    unknown
+status
+    ok / warning / error / inactive / unknown
 
-output_state:
-    on
-    off
-    unknown
+status_reason
+    machine-readable reason owned by the corresponding module or global policy
 
-mode:
-    auto
-    manual
+command_result
+    accepted / rejected / failed / unknown
+
+output
+    requested/reported actuator state: on / off / unknown
 ```
 
-## 4. Top-Level Entities
+Status values may be narrowed by the owning contract.
+
+## 4. Top-Level Entity Names
 
 ```text
 system
@@ -70,286 +64,66 @@ provisioning_button
 uart_debug
 ```
 
-## 5. system
+`pot[n]` is the canonical entity name for a configured pot.
 
-```text
-system.status: status without inactive
-system.status_reason: string enum / null
-system.primary_fault: string enum / null
-system.affected_system:
-    climate
-    pot
-    light
-    fan
-    humidifier
-    door
-    connection
-    system
-    null
-```
-
-```text
-system.global_context.maintenance.active: bool
-system.global_context.maintenance.reason:
-    manual
-    external
-    unknown
-    null
-
-system.global_context.day_window.active: bool / unknown
-system.global_context.day_window.schedule_enabled: bool
-system.global_context.day_window.time_on: HH:MM
-system.global_context.day_window.time_off: HH:MM
-
-system.global_context.connection.wifi_state:
-    connected
-    weak
-    disconnected
-    unknown
-
-system.global_context.connection.mqtt_state:
-    connected
-    reconnecting
-    disconnected
-    unknown
-```
-
-## 6. climate
-
-```text
-climate.sensor_0x44.temperature_c: float / unknown
-climate.sensor_0x44.humidity_pct: float / unknown
-climate.sensor_0x44.status: status without inactive
-climate.sensor_0x44.status_reason: string enum / null
-
-climate.sensor_0x45.temperature_c: float / unknown
-climate.sensor_0x45.humidity_pct: float / unknown
-climate.sensor_0x45.status: status without inactive
-climate.sensor_0x45.status_reason: string enum / null
-
-climate.rh_delta_pct: float / unknown
-climate.temperature_delta_c: float / unknown
-climate.status: status
-climate.status_reason: string enum / null
-climate.settings: object
-```
-
-UI placement labels such as `top` and `bottom` are presentation/installation metadata and do not replace SHT31 address identity.
-
-## 7. pot[n]
-
-There are two configured pot instances:
+UI code may use JavaScript-friendly containers such as arrays, but it must preserve the same logical identity:
 
 ```text
 pot[0]
 pot[1]
 ```
 
-Each pot has one soil moisture sensor and one soil temperature sensor.
+Do not introduce parallel names such as `pot0`, `pot1`, or `soil` as source-of-truth entity names.
+
+## 5. Minimal Object Rule
+
+Every publishable entity object should expose only fields owned by that entity contract.
+
+Recommended common shape:
 
 ```text
-pot[n].soil_moisture.raw_adc_value: integer / unknown
-pot[n].soil_moisture.raw_mv: integer / unknown
-pot[n].soil_moisture.value_pct: float 0..100 / unknown
-pot[n].soil_moisture.class:
-    dry
-    normal
-    wet
-    overwet
-    unknown
-pot[n].soil_moisture.status: status
-pot[n].soil_moisture.status_reason: string enum / null
-
-pot[n].soil_temperature.temperature_c: float / unknown
-pot[n].soil_temperature.status: status
-pot[n].soil_temperature.status_reason: string enum / null
-
-pot[n].status: status
-pot[n].status_reason: string enum / null
-pot[n].settings: object
+entity.status
+entity.status_reason
+entity.state / entity.output / entity.settings as defined by owner contract
 ```
 
-Sensor enable settings are part of `pot[n].settings`:
+Do not add aggregate fields here unless an owner contract defines them.
+
+## 6. Unknown / Disabled Rule
 
 ```text
-pot[n].settings.soil_moisture_enabled: bool
-pot[n].settings.soil_temperature_enabled: bool
+unknown
+    value cannot currently be trusted or read
+
+inactive
+    expected sensor/module is intentionally disabled by settings
 ```
 
-## 8. door
+Detailed missing/disabled behavior is owned by:
 
 ```text
-door.state:
-    closed
-    open
-    unknown
-
-door.status: status
-door.status_reason: string enum / null
-door.last_change_time: timestamp / null
+docs/v3_contracts/module_sensor_presence.contract.md
 ```
 
-GPIO semantic mapping is owned by `door.contract.md` and the board pinout.
+## 7. MQTT Relation
 
-## 9. light
+MQTT payloads carry owner-defined fields.
+
+This document does not list module payload fields. Use the owning module contract for that.
+
+## 8. UI Relation
+
+UI may create local presentation state, labels, cards, and derived summaries.
+
+UI-local presentation fields must not become firmware or MQTT source-of-truth fields unless an owner contract is updated first.
+
+## 9. Forbidden
 
 ```text
-light.output: output_state
-light.status: status
-light.status_reason: string enum / null
-light.last_command_result: command_result
-light.last_output_confirmed: bool / unknown
-light.settings.mode: mode
-light.settings.manual_state:
-    on
-    off
+Do not duplicate module field lists here.
+Do not define exact MQTT topics here.
+Do not define command names here.
+Do not define GPIO names or active levels here.
+Do not define persistence keys here.
+Do not use this document to bypass module contracts.
 ```
-
-Maintenance service-light behavior is owned by `light.contract.md`.
-
-## 10. fan
-
-```text
-fan.output: output_state
-fan.auto_state:
-    off
-    running
-    pause
-    blocked
-    alert
-    unknown
-fan.status: status
-fan.status_reason: string enum / null
-fan.last_command_result: command_result
-fan.last_output_confirmed: bool / unknown
-fan.settings: object
-```
-
-Minimum expected settings shape:
-
-```text
-fan.settings.mode: mode
-fan.settings.runtime:
-    day
-    always
-fan.settings.auto_strategy:
-    delta
-    timer
-fan.settings.manual_duration_sec: integer
-fan.settings.auto_delta_on_pct: integer
-fan.settings.auto_delta_off_pct: integer
-fan.settings.auto_timer_on_sec: integer
-fan.settings.auto_timer_off_sec: integer
-```
-
-## 11. humidifier
-
-```text
-humidifier.water_status:
-    present
-    empty
-    unknown
-
-humidifier.mist_output:
-    on
-    off
-    unknown
-
-humidifier.fan_output:
-    off
-    on
-    post_run
-    unknown
-
-humidifier.status: status
-humidifier.status_reason: string enum / null
-humidifier.water_sensor_debounce_state: object / null
-humidifier.last_mist_command_result: command_result
-humidifier.last_fan_command_result: command_result
-humidifier.last_mist_output_confirmed: bool / unknown
-humidifier.last_fan_output_confirmed: bool / unknown
-humidifier.settings: object
-```
-
-Minimum expected settings shape:
-
-```text
-humidifier.settings.mode: mode
-humidifier.settings.runtime:
-    day
-    always
-humidifier.settings.rh_start: integer
-humidifier.settings.rh_stop: integer
-humidifier.settings.rh_delta: integer
-humidifier.settings.mist_power_level:
-    low
-    medium
-    high
-humidifier.settings.manual_mist_duration_sec: integer
-humidifier.settings.post_fan_sec: integer
-```
-
-## 12. status_led
-
-```text
-status_led.red_output: output_state
-status_led.green_output: output_state
-status_led.pattern:
-    normal_ok
-    provisioning_active
-    wifi_offline
-    mqtt_offline
-    system_error
-    local_warning
-    unknown
-```
-
-LED pattern selection is owned by `status_led.contract.md`.
-
-## 13. provisioning_button
-
-```text
-provisioning_button.state:
-    pressed
-    released
-    unknown
-
-provisioning_button.boot_sample_result:
-    normal
-    provisioning
-    unknown
-```
-
-Provisioning behavior is boot-time only and is owned by `provisioning_button.contract.md` and `global_core.contract.md`.
-
-## 14. uart_debug
-
-```text
-uart_debug.enabled: bool
-uart_debug.log_level:
-    off
-    error
-    warning
-    info
-    debug
-    trace
-```
-
-UART0 ownership and restrictions are defined by `uart_debug.contract.md` and board pinout.
-
-## 15. Explicit Non-Model Items
-
-The following are not defined in this file:
-
-```text
-exact MQTT topic strings
-JSON serialization format
-firmware C struct names
-UI wording
-GPIO numbers
-GPIO active levels
-module behavior rules
-persistence storage layout
-```
-
-They must be defined by their owner documents only.

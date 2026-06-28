@@ -2,7 +2,7 @@
 
 Document status: active
 Code status: architecture reference
-Scope: Vazon V3 contracts
+Scope: Vazon V3 contracts and ownership map
 
 ## Existing Contract Files
 
@@ -40,6 +40,8 @@ SHT31 two-zone climate measurement and aggregation -> climate.contract.md
 pot soil moisture and soil temperature -> pot.contract.md
 main cabinet fan behavior -> fan.contract.md
 humidifier water / mist / local fan behavior -> humidifier.contract.md
+shared data-shape boundary rules -> docs/v3_data_model.md
+MQTT namespace / retain policy / command envelope -> docs/mqtt_topic_registry.md
 UI presentation text and screen behavior -> docs/ui_architecture.md
 software boundary rules -> docs/software_architecture.md
 old-repository migration rules -> docs/migration_rules.md
@@ -69,10 +71,9 @@ System service modules:
 ```text
 One fact must have one owner file.
 Other files may reference that fact but must not restate or reinterpret it.
-Exact MQTT topic registry is postponed.
+Data model and MQTT registry are boundary documents, not module logic owners.
 Settings persistence implementation is postponed.
-Firmware implementation is postponed.
-UI implementation is postponed.
+Firmware/UI skeletons are active; production implementation is postponed.
 ```
 
 ## Change Log
@@ -80,3 +81,4 @@ UI implementation is postponed.
 - 2026-06-28: seeded clean Vazon V3 repository with active source-of-truth documents only.
 - 2026-06-28: removed obsolete air sensor contract; climate contract owns both SHT31 sensors and climate aggregation.
 - 2026-06-28: simplified module groups: light, fan, and humidifier are actuator modules.
+- 2026-06-28: narrowed data model and MQTT registry to boundary ownership only; module fields remain owned by contracts.

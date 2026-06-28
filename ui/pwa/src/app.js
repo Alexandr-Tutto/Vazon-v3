@@ -224,13 +224,15 @@ function getPanelCards(entity) {
 
   if (entity === 'pot') {
     return [
-      { label: 'Вазон 1', pairs: [['Вологість', `${raw.pot0.soil_moisture.value_pct}%`], ['Стан', raw.pot0.soil_moisture.class], ['Темп.', `${raw.pot0.soil_temperature.temperature_c}°`]] },
-      { label: 'Вазон 2', pairs: [['Вологість', `${raw.pot1.soil_moisture.value_pct}%`], ['Стан', raw.pot1.soil_moisture.class], ['Темп.', `${raw.pot1.soil_temperature.temperature_c}°`]] },
+      { label: 'Вазон 1', pairs: [['Вологість', `${raw.pot[0].soil_moisture.value_pct}%`], ['Стан', raw.pot[0].soil_moisture.class], ['Темп.', `${raw.pot[0].soil_temperature.temperature_c}°`]] },
+      { label: 'Вазон 2', pairs: [['Вологість', `${raw.pot[1].soil_moisture.value_pct}%`], ['Стан', raw.pot[1].soil_moisture.class], ['Темп.', `${raw.pot[1].soil_temperature.temperature_c}°`]] },
       {
-        label: 'Активні вазони',
+        label: 'Датчики вазонів',
         controls: [
-          { label: 'Вазон 1 Вкл', action: 'soil.pot.0.toggle' },
-          { label: 'Вазон 2 Вкл', action: 'soil.pot.1.toggle' },
+          { label: 'Вазон 1 волога', action: 'pot[0].set_soil_moisture_enabled' },
+          { label: 'Вазон 1 температура', action: 'pot[0].set_soil_temperature_enabled' },
+          { label: 'Вазон 2 волога', action: 'pot[1].set_soil_moisture_enabled' },
+          { label: 'Вазон 2 температура', action: 'pot[1].set_soil_temperature_enabled' },
         ],
       },
       {
@@ -246,10 +248,10 @@ function getPanelCards(entity) {
       {
         label: 'Калібрування',
         controls: [
-          { label: 'Сухо', action: 'soil.calibration.dry' },
-          { label: 'Норма', action: 'soil.calibration.normal' },
-          { label: 'Мокро', action: 'soil.calibration.wet' },
-          { label: 'Скинути', action: 'soil.calibration.reset' },
+          { label: 'Сухо', action: 'pot[0].calibrate_soil_moisture' },
+          { label: 'Норма', action: 'pot[0].calibrate_soil_moisture' },
+          { label: 'Мокро', action: 'pot[0].calibrate_soil_moisture' },
+          { label: 'Скинути', action: 'pot[0].set_settings' },
         ],
         wide: true,
       },
@@ -264,15 +266,15 @@ function getPanelCards(entity) {
       {
         label: 'Керування',
         controls: [
-          { label: 'Авто', action: 'humidity.mode.auto' },
-          { label: 'Ручний', action: 'humidity.mode.manual' },
-          { label: 'Пуск', action: 'humidity.mist.on' },
-          { label: 'Стоп', action: 'humidity.mist.off' },
+          { label: 'Авто', action: 'humidifier.set_mode' },
+          { label: 'Ручний', action: 'humidifier.set_mode' },
+          { label: 'Пуск', action: 'humidifier.manual_mist' },
+          { label: 'Стоп', action: 'humidifier.stop' },
         ],
         wide: true,
       },
-      { label: 'Пороги вологості', value: `Старт ${raw.humidifier.settings.rh_start}%, стоп ${raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidity.thresholds.edit' } },
-      { label: 'Цикл', value: `${raw.humidifier.settings.manual_mist_duration_sec} сек робота / ${raw.humidifier.settings.post_fan_sec} сек продув`, action: { label: 'Змінити', action: 'humidity.cycle.edit' } },
+      { label: 'Пороги вологості', value: `Старт ${raw.humidifier.settings.rh_start}%, стоп ${raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidifier.set_settings' } },
+      { label: 'Цикл', value: `${raw.humidifier.settings.manual_mist_duration_sec} сек робота / ${raw.humidifier.settings.post_fan_sec} сек продув`, action: { label: 'Змінити', action: 'humidifier.set_settings' } },
     ];
   }
 
@@ -283,9 +285,9 @@ function getPanelCards(entity) {
       {
         label: 'Режим',
         controls: [
-          { label: 'Авто', action: 'light.mode.auto' },
-          { label: 'Увімкнути', action: 'light.manual.on' },
-          { label: 'Вимкнути', action: 'light.manual.off' },
+          { label: 'Авто', action: 'light.set_mode' },
+          { label: 'Увімкнути', action: 'light.set_manual_state' },
+          { label: 'Вимкнути', action: 'light.set_manual_state' },
         ],
       },
     ];
@@ -294,13 +296,13 @@ function getPanelCards(entity) {
   if (entity === 'fan') {
     return [
       { label: 'Поточний стан', value: raw.fan.output === 'on' ? 'Працює' : 'Пауза за режимом' },
-      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: { label: 'Змінити', action: 'fan.cycle.edit' } },
+      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: { label: 'Змінити', action: 'fan.set_settings' } },
       {
         label: 'Режим',
         controls: [
-          { label: 'Авто', action: 'fan.mode.auto' },
-          { label: 'Ручний', action: 'fan.mode.manual' },
-          { label: 'За світлом', action: 'fan.runtime.day' },
+          { label: 'Авто', action: 'fan.set_mode' },
+          { label: 'Ручний', action: 'fan.set_mode' },
+          { label: 'За світлом', action: 'fan.set_runtime' },
         ],
       },
     ];
@@ -335,10 +337,10 @@ function openService() {
 
   const cards = [
     { label: 'Клімат', value: '3°C / 15% RH', action: { label: 'Змінити', action: 'climate.thresholds.edit' } },
-    { label: 'Зволоження', value: `${uiState.raw.humidifier.settings.rh_start}% / ${uiState.raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidity.thresholds.edit' } },
-    { label: 'Цикл зволоження', value: `${uiState.raw.humidifier.settings.manual_mist_duration_sec} сек / ${uiState.raw.humidifier.settings.post_fan_sec} сек`, action: { label: 'Змінити', action: 'humidity.cycle.edit' } },
+    { label: 'Зволоження', value: `${uiState.raw.humidifier.settings.rh_start}% / ${uiState.raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidifier.set_settings' } },
+    { label: 'Цикл зволоження', value: `${uiState.raw.humidifier.settings.manual_mist_duration_sec} сек / ${uiState.raw.humidifier.settings.post_fan_sec} сек`, action: { label: 'Змінити', action: 'humidifier.set_settings' } },
     { label: 'Світло', value: `${uiState.raw.system.global_context.day_window.time_on} - ${uiState.raw.system.global_context.day_window.time_off}`, action: { label: 'Змінити', action: 'light.schedule.edit' } },
-    { label: 'Вентиляція', value: noData, action: { label: 'Змінити', action: 'fan.cycle.edit' } },
+    { label: 'Вентиляція', value: noData, action: { label: 'Змінити', action: 'fan.set_settings' } },
     { label: 'Оновлення', value: 'Vazon V3 draft', controls: [{ label: 'Перевірити', action: 'service.update.check' }, { label: 'Встановити', action: 'service.update.install' }] },
     { label: 'Діагностика', value: 'Сховано', action: { label: 'Відкрити', action: 'service.diagnostics.open' } },
     { label: 'Остання команда', value: 'Команд ще не було', wide: true },

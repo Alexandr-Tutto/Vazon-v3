@@ -42,54 +42,50 @@ export const mockState = {
     settings: {},
   },
 
-  pot_aggregate: {
-    status: 'ok',
-    summary: '2 вазони ok',
-  },
-
-  pot0: {
-    soil_moisture: {
-      raw_adc_value: 1900,
-      raw_mv: 1510,
-      value_pct: 62,
-      class: 'normal',
+  pot: [
+    {
+      soil_moisture: {
+        raw_adc_value: 1900,
+        raw_mv: 1510,
+        value_pct: 62,
+        class: 'normal',
+        status: 'ok',
+        status_reason: null,
+      },
+      soil_temperature: {
+        temperature_c: 22.8,
+        status: 'ok',
+        status_reason: null,
+      },
       status: 'ok',
       status_reason: null,
+      settings: {
+        soil_moisture_enabled: true,
+        soil_temperature_enabled: true,
+      },
     },
-    soil_temperature: {
-      temperature_c: 22.8,
+    {
+      soil_moisture: {
+        raw_adc_value: 2020,
+        raw_mv: 1580,
+        value_pct: 55,
+        class: 'normal',
+        status: 'ok',
+        status_reason: null,
+      },
+      soil_temperature: {
+        temperature_c: 23.1,
+        status: 'ok',
+        status_reason: null,
+      },
       status: 'ok',
       status_reason: null,
+      settings: {
+        soil_moisture_enabled: true,
+        soil_temperature_enabled: true,
+      },
     },
-    status: 'ok',
-    status_reason: null,
-    settings: {
-      soil_moisture_enabled: true,
-      soil_temperature_enabled: true,
-    },
-  },
-
-  pot1: {
-    soil_moisture: {
-      raw_adc_value: 2020,
-      raw_mv: 1580,
-      value_pct: 55,
-      class: 'normal',
-      status: 'ok',
-      status_reason: null,
-    },
-    soil_temperature: {
-      temperature_c: 23.1,
-      status: 'ok',
-      status_reason: null,
-    },
-    status: 'ok',
-    status_reason: null,
-    settings: {
-      soil_moisture_enabled: true,
-      soil_temperature_enabled: true,
-    },
-  },
+  ],
 
   door: {
     state: 'open',

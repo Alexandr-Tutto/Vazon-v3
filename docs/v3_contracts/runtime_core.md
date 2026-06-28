@@ -71,11 +71,11 @@ UI/MQTT/Command Router/software boundary rules
 UI presentation details
     owner: docs/ui_architecture.md
 
-MQTT namespace, exposed fields, and command names
-    owner: corresponding module contract
+MQTT namespace, retain policy, and command envelope
+    owner: docs/mqtt_topic_registry.md
 
-exact MQTT topic registry
-    owner: postponed MQTT cleanup pass
+module MQTT fields and command names
+    owner: corresponding module contract
 ```
 
 ## 5. Local Module Rule

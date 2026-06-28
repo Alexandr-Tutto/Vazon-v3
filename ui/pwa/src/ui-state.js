@@ -46,9 +46,16 @@ export function createUiState(raw) {
     },
   };
 
+  const potItems = raw.pot || [];
+  const potHasIssue = potItems.some((pot) => pot.status !== 'ok');
+  const potAggregate = {
+    status: potHasIssue ? 'warning' : 'ok',
+    summary: `${potItems.length} вазони ok`,
+  };
+
   const tiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
-    tile('pot', 'Грунт', raw.pot_aggregate.status, raw.pot_aggregate.status === 'ok' ? 'Норма' : raw.pot_aggregate.summary),
+    tile('pot', 'Грунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
     tile('light', 'Світло', raw.light.status, raw.light.output === 'on' ? 'Увімкнено' : 'Вимкнено', raw.light.output === 'on'),
     tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Пауза', raw.fan.output === 'on'),
@@ -64,13 +71,13 @@ export function createUiState(raw) {
       { label: 'RH delta', value: valueOrUnknown(raw.climate.rh_delta_pct, '%') },
     ]),
 
-    pot: makeDetail('Грунт', raw.pot_aggregate.status, raw.pot_aggregate.summary, 'Деталі по вазонах показуються тут, не на головному екрані.', [
-      { label: 'pot[0] moisture', value: valueOrUnknown(raw.pot0.soil_moisture.value_pct, '%') },
-      { label: 'pot[0] class', value: raw.pot0.soil_moisture.class },
-      { label: 'pot[0] temperature', value: valueOrUnknown(raw.pot0.soil_temperature.temperature_c, '°C') },
-      { label: 'pot[1] moisture', value: valueOrUnknown(raw.pot1.soil_moisture.value_pct, '%') },
-      { label: 'pot[1] class', value: raw.pot1.soil_moisture.class },
-      { label: 'pot[1] temperature', value: valueOrUnknown(raw.pot1.soil_temperature.temperature_c, '°C') },
+    pot: makeDetail('Грунт', potAggregate.status, potAggregate.summary, 'Деталі по вазонах показуються тут, не на головному екрані.', [
+      { label: 'pot[0] moisture', value: valueOrUnknown(raw.pot[0].soil_moisture.value_pct, '%') },
+      { label: 'pot[0] class', value: raw.pot[0].soil_moisture.class },
+      { label: 'pot[0] temperature', value: valueOrUnknown(raw.pot[0].soil_temperature.temperature_c, '°C') },
+      { label: 'pot[1] moisture', value: valueOrUnknown(raw.pot[1].soil_moisture.value_pct, '%') },
+      { label: 'pot[1] class', value: raw.pot[1].soil_moisture.class },
+      { label: 'pot[1] temperature', value: valueOrUnknown(raw.pot[1].soil_temperature.temperature_c, '°C') },
     ]),
 
     humidifier: makeDetail('Зволоження', raw.humidifier.status, raw.humidifier.status_reason || 'Стан зволоження', 'Вода і локальний вентилятор зволожувача належать цій підсистемі.', [

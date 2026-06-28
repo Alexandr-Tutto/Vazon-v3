@@ -43,7 +43,7 @@
 #define VAZON_GPIO_CLIMATE_I2C_SDA    GPIO_NUM_21
 #define VAZON_GPIO_CLIMATE_I2C_SCL    GPIO_NUM_22
 #define VAZON_CLIMATE_I2C_PORT        0
-#define VAZON_CLIMATE_I2C_FREQ_HZ     10000
+#define VAZON_CLIMATE_I2C_FREQ_HZ     100000
 
 /* Polarity / electrical confirmation placeholders */
 #define VAZON_STATUS_LED_GREEN_ACTIVE_LOW   1

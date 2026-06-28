@@ -17,6 +17,8 @@ docs/v3_contracts/
 docs/hardware/v3_board_pinout.md
 docs/ui_architecture.md
 docs/software_architecture.md
+docs/v3_data_model.md
+docs/mqtt_topic_registry.md
 docs/migration_rules.md
 components/board_config/include/vazon_board_config.h
 ```
@@ -28,9 +30,10 @@ Contracts: active source of truth
 Pinout: active V3 PCB reference
 Board config scaffold: active firmware-facing pinout seed
 UI architecture: active presentation boundary
+Data model: active minimal boundary
+MQTT topic registry: active minimal boundary
 Software architecture: active ownership/boundary reference
 Migration rules: active old-repo reference boundary
-MQTT topic registry: not created yet
 Settings persistence implementation: postponed
 Remaining hardware confirmations: none
 ```
@@ -109,7 +112,7 @@ components/board_config/include/vazon_board_config.h
 
 MQTT is transport/boundary work.
 
-Exact MQTT topic registry is not created yet.
+Minimal MQTT topic registry is active as a transport boundary.
 
 Module behavior belongs to module contracts, not to MQTT tables.
 

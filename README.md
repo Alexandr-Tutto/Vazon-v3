@@ -8,6 +8,8 @@ Active source of truth:
 docs/project_overview.md
 docs/software_architecture.md
 docs/ui_architecture.md
+docs/v3_data_model.md
+docs/mqtt_topic_registry.md
 docs/migration_rules.md
 docs/hardware/v3_board_pinout.md
 docs/v3_contracts/
