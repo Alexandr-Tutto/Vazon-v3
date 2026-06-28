@@ -1,10 +1,10 @@
 const entityLabels = {
   climate: 'Клімат',
-  pot: 'Грунт',
+  pot: 'Ґрунт',
   humidifier: 'Зволоження',
   light: 'Світло',
   fan: 'Вентиляція',
-  connection: 'Звʼязок',
+  connection: 'Wi-Fi / звʼязок',
   door: 'Двері',
   system: 'Система',
 };
@@ -55,11 +55,11 @@ export function createUiState(raw) {
 
   const tiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
-    tile('pot', 'Грунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
+    tile('pot', 'Ґрунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
     tile('light', 'Світло', raw.light.status, raw.light.output === 'on' ? 'Увімкнено' : 'Вимкнено', raw.light.output === 'on'),
     tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Пауза', raw.fan.output === 'on'),
-    tile('connection', 'Wi-Fi', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', 'Добрий'),
+    tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', 'Добрий'),
   ];
 
   const details = {
@@ -71,7 +71,7 @@ export function createUiState(raw) {
       { label: 'RH delta', value: valueOrUnknown(raw.climate.rh_delta_pct, '%') },
     ]),
 
-    pot: makeDetail('Грунт', potAggregate.status, potAggregate.summary, 'Деталі по вазонах показуються тут, не на головному екрані.', [
+    pot: makeDetail('Ґрунт', potAggregate.status, potAggregate.summary, 'Деталі по вазонах показуються тут, не на головному екрані.', [
       { label: 'pot[0] moisture', value: valueOrUnknown(raw.pot[0].soil_moisture.value_pct, '%') },
       { label: 'pot[0] class', value: raw.pot[0].soil_moisture.class },
       { label: 'pot[0] temperature', value: valueOrUnknown(raw.pot[0].soil_temperature.temperature_c, '°C') },
@@ -100,9 +100,9 @@ export function createUiState(raw) {
       { label: 'Strategy', value: raw.fan.settings.auto_strategy },
     ]),
 
-    connection: makeDetail('Wi-Fi', raw.system.status, raw.system.global_context.connection.mqtt_state, 'У звичайному UI технічне слово MQTT не показується на головному екрані.', [
+    connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, raw.system.global_context.connection.mqtt_state, 'У звичайному UI технічне слово MQTT не показується на головному екрані.', [
       { label: 'Wi-Fi', value: raw.system.global_context.connection.wifi_state },
-      { label: 'MQTT', value: raw.system.global_context.connection.mqtt_state },
+      { label: 'Сервіс', value: raw.system.global_context.connection.mqtt_state },
     ]),
   };
 
