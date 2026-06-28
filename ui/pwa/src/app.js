@@ -58,21 +58,14 @@ const icons = {
       <svg viewBox="0 0 64 64" aria-hidden="true">
         <g class="fan-blades">
           <circle cx="32" cy="32" r="5"></circle>
-          <path d="M32 27c-2-12 5-18 14-16 2 10-4 17-14 16Z"></path>
-          <path d="M37 34c12-2 18 5 16 14-10 2-17-4-16-14Z"></path>
-          <path d="M27 37c2 12-5 18-14 16-2-10 4-17 14-16Z"></path>
-          <path d="M25 30C13 32 7 25 9 16c10-2 17 4 16 14Z"></path>
+          <path d="M32 27c-2-9 3-18 12-20 6 8 3 18-7 24M37 35c9 2 15 10 13 19-10 2-18-4-19-15M27 35c-7 6-17 6-23 0 4-9 14-12 23-6"></path>
         </g>
-        <circle cx="32" cy="32" r="24"></circle>
+        <path d="M45 22h12M45 32h15M45 42h10"></path>
       </svg>
     </span>
   `,
   connection: `
-    <span class="status-icon icon-wifi">
-      <span class="wifi-bars level-5" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span>
-      </span>
-    </span>
+    <span class="wifi-bars level-4" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
   `,
 };
 
