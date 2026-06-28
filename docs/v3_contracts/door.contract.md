@@ -7,22 +7,24 @@ Scope: Vazon V3 Door Module
 ## 1. Purpose
 
 ```text
-Door Module визначає локальний стан дверей.
+Door Module determines local cabinet door state.
 ```
 
 ## 2. Role
 
 ```text
-Door Module є Local Sensor Module.
+Door Module is a Local Sensor Module.
 ```
 
 ## 3. Ownership
 
 ```text
-Door Module володіє тільки:
+Door Module owns only:
 
 door.state
 door.status
+door.status_reason
+door debounce state
 ```
 
 ## 4. Inputs
@@ -31,47 +33,88 @@ door.status
 door reed sensor
 ```
 
-## 5. Outputs
+## 5. Hardware Binding
+
+```text
+firmware input: DOOR_REED_GPIO
+V3 board pinout: GPIO33
+
+electrical input:
+pull-up input
+active-low door signal
+
+semantic mapping:
+GPIO33 = 0 means door closed
+GPIO33 = 1 means door open
+unstable input means door.state = unknown
+```
+
+Closed door is low level. Open door is high level.
+
+## 6. Outputs
 
 ```text
 door.state = open / closed / unknown
 door.status
+door.status_reason
 ```
 
-## 6. State
+## 7. State
 
 ```text
 door.state = open / closed / unknown
+door.status = ok / warning / error / inactive / unknown
+door.status_reason
 last_change_time
+door debounce state
 ```
 
-## 7. Logic
+## 8. Logic
 
 ```text
-if reed sensor active:
+if debounced GPIO33 = 0:
     door.state = closed
-else:
+    door.status = ok
+
+if debounced GPIO33 = 1:
     door.state = open
+    door.status = ok
+
+if input is unstable or debounce timeout occurs:
+    door.state = unknown
+    door.status = warning
+    door.status_reason = door_unstable
 ```
 
-## 8. Status
+## 9. Status
 
 ```text
-ok       — door.state визначений
-warning  — door.state нестабільний або debounce timeout
-error    — sensor failure якщо detectable
-inactive — door sensor disabled
-unknown  — door.state ще не визначений після старту
+ok       - door.state is determined
+warning  - door.state is unstable or debounce timeout occurred
+error    - sensor failure if detectable
+inactive - door sensor disabled
+unknown  - door.state is not determined after startup
 ```
 
-## 9. Dependency
+## 10. Dependency
 
 ```text
-Інші модулі можуть використовувати door.state
-як local dependency через свої module contracts.
+Other modules may use door.state as local dependency through their module contracts.
 ```
 
-## 10. MQTT Surface
+## 11. Door Boundary
+
+```text
+Door Module owns only door.state and local door status.
+
+System Status owns the top-level warning caused by door.state = open.
+
+Fan Module owns its own reaction to door.state = open.
+
+Humidifier Module owns its own reaction to door.state = open.
+```
+
+## 12. MQTT Surface
 
 ```text
 MQTT namespace: door
@@ -88,7 +131,7 @@ Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
 
-## 11. Boundary
+## 13. Boundary
 
 ```text
 Door Module only reports door state and local door status.
