@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101820">
+  <title>Vazon V3</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="app-header">
+      <div>
+        <div class="app-title">Vazon V3</div>
+        <div id="connectionText" class="app-subtitle">Mock state</div>
+      </div>
+      <button id="serviceButton" class="header-button" type="button">Сервіс</button>
+    </header>
+
+    <main>
+      <section id="overviewScreen" class="screen active-screen" aria-label="Огляд">
+        <section id="mainMessage" class="main-message status-unknown">
+          Немає актуальних даних
+        </section>
+
+        <section id="tileGrid" class="tile-grid" aria-label="Підсистеми"></section>
+
+        <section class="climate-summary" aria-label="Клімат">
+          <h2>Клімат</h2>
+          <div id="climateNumbers" class="number-grid"></div>
+        </section>
+      </section>
+
+      <section id="detailScreen" class="screen" aria-label="Деталі підсистеми">
+        <button id="backButton" class="text-button" type="button">← Огляд</button>
+        <h1 id="detailTitle">Підсистема</h1>
+        <div id="detailBody" class="detail-body"></div>
+      </section>
+
+      <section id="serviceScreen" class="screen" aria-label="Сервіс">
+        <button id="serviceBackButton" class="text-button" type="button">← Огляд</button>
+        <h1>Сервіс</h1>
+        <div class="service-panel">
+          <h2>Стан UI</h2>
+          <pre id="debugState" class="debug-state"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
