@@ -1,15 +1,59 @@
 import { getUiAction } from './ui-actions.js';
+import { createMenuView, MENU_LEVELS } from './ui-menu-levels.js';
 
 const noData = '—';
 
-export function getPanelCards(entity, uiState) {
+export function getFunctionStatusView(entity, uiState) {
+  const detail = uiState.details[entity];
+
+  return createMenuView(
+    MENU_LEVELS.FUNCTION_STATUS,
+    `${detail.title} ${detail.summary || ''}`,
+    getFunctionStatusCards(entity, uiState),
+    { entity },
+  );
+}
+
+export function getFunctionSettingsView(entity, uiState) {
+  const detail = uiState.details[entity];
+
+  return createMenuView(
+    MENU_LEVELS.FUNCTION_SETTINGS,
+    detail.title,
+    getFunctionSettingsCards(entity, uiState),
+    { entity },
+  );
+}
+
+export function getAdvancedServiceView(uiState) {
+  return createMenuView(
+    MENU_LEVELS.ADVANCED_SERVICE,
+    'Сервіс / розширено',
+    getAdvancedServiceCards(uiState),
+  );
+}
+
+function settingsOpenAction(entity) {
+  return {
+    id: `menu.${entity}.settings`,
+    label: 'Налаштування',
+    menuTarget: {
+      level: MENU_LEVELS.FUNCTION_SETTINGS,
+      entity,
+    },
+    command: null,
+  };
+}
+
+function getFunctionStatusCards(entity, uiState) {
   const raw = uiState.raw;
 
   if (entity === 'climate') {
     return [
       { label: 'Температура', pairs: [['Вгорі', uiState.climate.top.temperature_c], ['Внизу', uiState.climate.bottom.temperature_c]] },
       { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
-      { label: 'Допустима різниця', value: '3°C / 15% RH', action: getUiAction('climate.thresholds.edit') },
+      { label: 'Стан', value: raw.climate.status_reason || 'Норма' },
+      { label: 'Параметри', value: 'Пороги різниці температури та вологості', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
@@ -17,6 +61,61 @@ export function getPanelCards(entity, uiState) {
     return [
       { label: 'Вазон 1', pairs: [['Вологість', `${raw.pot[0].soil_moisture.value_pct}%`], ['Стан', raw.pot[0].soil_moisture.class], ['Темп.', `${raw.pot[0].soil_temperature.temperature_c}°`]] },
       { label: 'Вазон 2', pairs: [['Вологість', `${raw.pot[1].soil_moisture.value_pct}%`], ['Стан', raw.pot[1].soil_moisture.class], ['Темп.', `${raw.pot[1].soil_temperature.temperature_c}°`]] },
+      { label: 'Параметри', value: 'Датчики вазонів та калібрування', action: settingsOpenAction(entity), wide: true },
+    ];
+  }
+
+  if (entity === 'humidifier') {
+    return [
+      { label: 'Режим', value: raw.humidifier.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
+      { label: 'Вода', value: raw.humidifier.water_status === 'present' ? 'Є вода' : 'Немає води' },
+      { label: 'Пар', value: raw.humidifier.mist_output === 'on' ? 'Працює' : 'Вимкнено' },
+      { label: 'Локальний вентилятор', value: raw.humidifier.fan_output === 'on' ? 'Працює' : 'Вимкнено' },
+      { label: 'Параметри', value: 'Режим, пороги вологості, цикл зволоження', action: settingsOpenAction(entity), wide: true },
+    ];
+  }
+
+  if (entity === 'light') {
+    return [
+      { label: 'Поточний стан', value: raw.light.output === 'on' ? 'Світло увімкнене' : 'Світло вимкнене' },
+      { label: 'Режим', value: raw.light.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
+      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}` },
+      { label: 'Параметри', value: 'Режим і графік світла', action: settingsOpenAction(entity), wide: true },
+    ];
+  }
+
+  if (entity === 'fan') {
+    return [
+      { label: 'Поточний стан', value: raw.fan.output === 'on' ? 'Працює' : 'Пауза за режимом' },
+      { label: 'Режим', value: raw.fan.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
+      { label: 'Стратегія', value: raw.fan.settings.auto_strategy },
+      { label: 'Параметри', value: 'Режим, runtime, стратегія вентиляції', action: settingsOpenAction(entity), wide: true },
+    ];
+  }
+
+  if (entity === 'connection') {
+    return [
+      { label: 'Звʼязок', value: raw.system.global_context.connection.wifi_state },
+      { label: 'Актуальність даних', value: raw.system.global_context.connection.mqtt_state === 'connected' ? 'Дані актуальні' : 'Немає актуальних даних' },
+      { label: 'Примітка', value: 'Технічні параметри звʼязку приховані у сервісному рівні', wide: true },
+    ];
+  }
+
+  return [];
+}
+
+function getFunctionSettingsCards(entity, uiState) {
+  const raw = uiState.raw;
+
+  if (entity === 'climate') {
+    return [
+      { label: 'Допустима різниця', value: '3°C / 15% RH', action: getUiAction('climate.thresholds.edit') },
+      { label: 'Рекомендація', value: 'Основні параметри клімату налаштовуються тут; технічні пороги лишаються у сервісі.', wide: true },
+    ];
+  }
+
+  if (entity === 'pot') {
+    return [
       {
         label: 'Датчики вазонів',
         controls: [
@@ -52,10 +151,8 @@ export function getPanelCards(entity, uiState) {
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Режим', value: raw.humidifier.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
-      { label: 'Вода', value: raw.humidifier.water_status === 'present' ? 'Є вода' : 'Немає води' },
       {
-        label: 'Керування',
+        label: 'Керування режимом',
         controls: [
           getUiAction('humidifier.mode.auto'),
           getUiAction('humidifier.mode.manual'),
@@ -71,8 +168,6 @@ export function getPanelCards(entity, uiState) {
 
   if (entity === 'light') {
     return [
-      { label: 'Поточний стан', value: raw.light.output === 'on' ? 'Світло увімкнене' : 'Світло вимкнене' },
-      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}`, action: getUiAction('light.schedule.edit') },
       {
         label: 'Режим',
         controls: [
@@ -81,13 +176,12 @@ export function getPanelCards(entity, uiState) {
           getUiAction('light.manual.off'),
         ],
       },
+      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}`, action: getUiAction('light.schedule.edit') },
     ];
   }
 
   if (entity === 'fan') {
     return [
-      { label: 'Поточний стан', value: raw.fan.output === 'on' ? 'Працює' : 'Пауза за режимом' },
-      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: getUiAction('fan.settings.edit') },
       {
         label: 'Режим',
         controls: [
@@ -96,21 +190,21 @@ export function getPanelCards(entity, uiState) {
           getUiAction('fan.runtime.day'),
         ],
       },
+      { label: 'Стратегія', value: raw.fan.settings.auto_strategy, action: getUiAction('fan.settings.edit') },
+      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: getUiAction('fan.settings.edit') },
     ];
   }
 
   if (entity === 'connection') {
     return [
-      { label: 'Звʼязок', value: raw.system.global_context.connection.wifi_state },
-      { label: 'Останній сигнал', value: 'Добрий, щойно' },
-      { label: 'Сервіс', value: raw.system.global_context.connection.mqtt_state === 'connected' ? 'Підключено' : 'Недоступний' },
+      { label: 'Звʼязок', value: 'Користувацьких налаштувань на цьому рівні немає', wide: true },
     ];
   }
 
   return [];
 }
 
-export function getServiceCards(uiState) {
+function getAdvancedServiceCards(uiState) {
   return [
     { label: 'Клімат', value: '3°C / 15% RH', action: getUiAction('climate.thresholds.edit') },
     { label: 'Зволоження', value: `${uiState.raw.humidifier.settings.rh_start}% / ${uiState.raw.humidifier.settings.rh_stop}%`, action: getUiAction('humidifier.settings.edit') },
