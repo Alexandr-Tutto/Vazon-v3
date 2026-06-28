@@ -129,10 +129,9 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'climate') {
     return [
-      { label: 'SHT31 0x44', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
-      { label: 'SHT31 0x45', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
+      { label: 'Верх', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
+      { label: 'Низ', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
       { label: 'Warning limits', pairs: [['Temp low', show(raw.climate.settings.temperature_low_warn, '°')], ['Temp high', show(raw.climate.settings.temperature_high_warn, '°')], ['RH low', show(raw.climate.settings.humidity_low_warn, '%')], ['RH high', show(raw.climate.settings.humidity_high_warn, '%')]] },
-      { label: 'Sensor stale', value: show(raw.climate.settings.sht31_stale_timeout_sec, ' сек') },
       { label: 'Delta limits', pairs: [['Temp warn', show(raw.climate.settings.temperature_delta_warn, '°')], ['Temp error', show(raw.climate.settings.temperature_delta_error, '°')]] },
       { label: 'Команда', value: 'climate.set_settings', action: getUiAction('climate.thresholds.edit'), wide: true },
     ];
