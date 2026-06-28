@@ -7,8 +7,7 @@ Scope: Vazon V3 Module / Sensor Presence Policy
 ## 1. Purpose
 
 ```text
-Module / Sensor Presence Policy defines how the device handles an expected
-device, module, or sensor that is disabled, missing, or not producing data.
+Module / Sensor Presence Policy defines how the device handles an expected device, module, or sensor that is disabled, missing, or not producing data.
 ```
 
 ## 2. Role
@@ -115,5 +114,5 @@ Policy does not implement automatic module discovery now.
 Policy does not create optional-module gray state logic now.
 Policy does not hide controls based on autodetection now.
 Policy does not create sensor/module inventory screen now.
-Policy does not allow manual disable for air climate sensors, humidifier water sensor, door sensor, or actuators.
+Policy does not allow manual disable for SHT31 climate sensors, humidifier water sensor, door sensor, or actuators.
 ```
