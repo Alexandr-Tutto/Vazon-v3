@@ -132,14 +132,21 @@ function renderField(field) {
   fieldLabel.textContent = field.label;
 
   const input = document.createElement('input');
-  input.type = 'number';
+  input.type = 'text';
   input.inputMode = 'decimal';
   input.name = field.name;
   input.value = field.value ?? '';
+  input.maxLength = field.maxLength || 5;
+  input.size = field.size || 5;
+  input.pattern = field.pattern || '[0-9.,-]*';
+  input.style.width = field.width || '6ch';
+  input.style.maxWidth = '100%';
+  input.style.minWidth = '0';
+  input.style.justifySelf = 'start';
 
-  if (field.min !== undefined) input.min = String(field.min);
-  if (field.max !== undefined) input.max = String(field.max);
-  if (field.step !== undefined) input.step = String(field.step);
+  if (field.min !== undefined) input.dataset.min = String(field.min);
+  if (field.max !== undefined) input.dataset.max = String(field.max);
+  if (field.step !== undefined) input.dataset.step = String(field.step);
   if (field.unit) input.dataset.unit = field.unit;
 
   item.append(fieldLabel, input);
