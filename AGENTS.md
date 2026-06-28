@@ -10,6 +10,9 @@ Do not rely on memory, guesses, or previous chats.
 ## Default mode
 AUDIT_ONLY.
 
+User explicit command overrides default mode for that task.
+If the user explicitly asks to edit, implement, patch, create, delete, or update files, that instruction defines the task mode.
+
 ## Work modes
 
 ### AUDIT_ONLY
@@ -20,7 +23,7 @@ Do not add architecture.
 Do not resolve conflicts silently.
 
 ### PATCH_ONLY
-Edit only files explicitly listed in the prompt.
+Edit only files explicitly listed in the prompt or files required to complete the explicit user command.
 Apply only approved changes.
 Do not perform cleanup outside the requested scope.
 
@@ -39,7 +42,7 @@ Report only whether the requested changes were applied correctly.
 If documents conflict, report the conflict instead of choosing one.
 
 ## Documentation rules
-- Every sensor or actuator must have one contract file.
+- Every functional module/entity must have one owning contract or explicitly listed owner document.
 - Contract names, MQTT names, UI names, and board_config names must not diverge silently.
 - Deprecated terms must be explicitly marked as deprecated.
 - New terms require a decision file.
