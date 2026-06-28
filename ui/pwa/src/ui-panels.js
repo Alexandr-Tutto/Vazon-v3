@@ -65,9 +65,7 @@ function getFunctionStatusCards(entity, uiState) {
       { label: 'Температура', pairs: [['Вгорі', uiState.climate.top.temperature_c], ['Внизу', uiState.climate.bottom.temperature_c]] },
       { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
       { label: 'Різниця зон', pairs: [['Температура', show(raw.climate.temperature_delta_c, '°')], ['Вологість', show(raw.climate.rh_delta_pct, '%')]] },
-      { label: 'SHT31 0x44', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
-      { label: 'SHT31 0x45', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
-      { label: 'Стан підсистеми', value: statusText(raw.climate), wide: true },
+      { label: 'Стан підсистеми', value: statusText(raw.climate) },
       { label: 'Параметри', value: 'Пороги температури, вологості, stale timeout і delta thresholds', action: settingsOpenAction(entity), wide: true },
     ];
   }
@@ -131,6 +129,8 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'climate') {
     return [
+      { label: 'SHT31 0x44', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
+      { label: 'SHT31 0x45', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
       { label: 'Warning limits', pairs: [['Temp low', show(raw.climate.settings.temperature_low_warn, '°')], ['Temp high', show(raw.climate.settings.temperature_high_warn, '°')], ['RH low', show(raw.climate.settings.humidity_low_warn, '%')], ['RH high', show(raw.climate.settings.humidity_high_warn, '%')]] },
       { label: 'Sensor stale', value: show(raw.climate.settings.sht31_stale_timeout_sec, ' сек') },
       { label: 'Delta limits', pairs: [['Temp warn', show(raw.climate.settings.temperature_delta_warn, '°')], ['Temp error', show(raw.climate.settings.temperature_delta_error, '°')]] },
