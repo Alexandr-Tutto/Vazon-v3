@@ -1,9 +1,11 @@
 import { mockState } from './mock-state.js';
 import { createUiState } from './ui-state.js';
 import { renderCards, renderMetricCard, renderTile } from './ui-components.js';
-import { getPanelCards, getServiceCards } from './ui-panels.js';
+import { MENU_LEVELS } from './ui-menu-levels.js';
+import { getAdvancedServiceView, getFunctionSettingsView, getFunctionStatusView } from './ui-panels.js';
 
 const uiState = createUiState(mockState);
+let currentView = null;
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
@@ -43,7 +45,7 @@ function renderTiles(state) {
 
   state.tiles.forEach((tile) => {
     const button = renderTile(tile);
-    button.addEventListener('click', () => openDetail(tile.entity));
+    button.addEventListener('click', () => openFunctionStatus(tile.entity));
     elements.statusGrid.appendChild(button);
   });
 }
@@ -64,26 +66,55 @@ function renderMetrics(state) {
   );
 }
 
-function openDetail(entity) {
-  const detail = uiState.details[entity];
-
-  elements.detailKicker.textContent = 'Деталі';
-  elements.detailTitle.textContent = `${detail.title} ${detail.summary || ''}`;
-  renderCards(getPanelCards(entity, uiState), elements.detailBody);
-
+function openView(view) {
+  currentView = view;
+  elements.detailKicker.textContent = view.kicker;
+  elements.detailTitle.textContent = view.title;
+  renderCards(view.cards, elements.detailBody);
   document.body.classList.add('has-panel');
 }
 
-function openService() {
-  elements.detailKicker.textContent = 'Сервіс';
-  elements.detailTitle.textContent = 'Налаштування';
-  renderCards(getServiceCards(uiState), elements.detailBody);
+function openFunctionStatus(entity) {
+  openView(getFunctionStatusView(entity, uiState));
+}
 
-  document.body.classList.add('has-panel');
+function openFunctionSettings(entity) {
+  openView(getFunctionSettingsView(entity, uiState));
+}
+
+function openAdvancedService() {
+  openView(getAdvancedServiceView(uiState));
 }
 
 function closePanel() {
+  currentView = null;
   document.body.classList.remove('has-panel');
+}
+
+function handlePanelClick(event) {
+  const actionButton = event.target.closest('[data-action]');
+
+  if (!actionButton) {
+    return;
+  }
+
+  const action = actionButton.dataset.action;
+  const targetLevel = Number(actionButton.dataset.menuLevel || 0);
+  const targetEntity = actionButton.dataset.menuEntity || '';
+
+  if (targetLevel === MENU_LEVELS.FUNCTION_SETTINGS && targetEntity) {
+    openFunctionSettings(targetEntity);
+    return;
+  }
+
+  if (targetLevel === MENU_LEVELS.FUNCTION_STATUS && targetEntity) {
+    openFunctionStatus(targetEntity);
+    return;
+  }
+
+  if (action === 'navigation.close') {
+    closePanel();
+  }
 }
 
 function registerServiceWorker() {
@@ -103,7 +134,8 @@ function render() {
 }
 
 elements.closeButton.addEventListener('click', closePanel);
-elements.serviceButton.addEventListener('click', openService);
+elements.serviceButton.addEventListener('click', openAdvancedService);
+elements.detailBody.addEventListener('click', handlePanelClick);
 
 render();
 registerServiceWorker();
