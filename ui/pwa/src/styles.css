@@ -137,9 +137,19 @@ button {
   border-color: var(--err);
 }
 
-.status-tile.is-unknown,
+.status-tile.is-unknown {
+  border-color: var(--unknown);
+}
+
 .status-tile.is-inactive {
   border-color: var(--unknown);
+}
+
+.status-tile.is-unknown .status-icon,
+.status-tile.is-unknown .wifi-bars,
+.status-tile.is-inactive .status-icon,
+.status-tile.is-inactive .wifi-bars {
+  color: var(--unknown);
 }
 
 .status-icon {
@@ -159,12 +169,25 @@ button {
   stroke-linejoin: round;
 }
 
-.icon-climate { color: #cf6f2f; }
-.icon-soil { color: #167a48; }
-.icon-mist { color: #147dc2; }
-.icon-light { color: #e2a100; }
-.icon-fan { color: #344054; }
-.icon-wifi { color: #147dc2; }
+.icon-climate {
+  color: #cf6f2f;
+}
+
+.icon-soil {
+  color: #167a48;
+}
+
+.icon-mist {
+  color: #147dc2;
+}
+
+.icon-light {
+  color: #e2a100;
+}
+
+.icon-fan {
+  color: #344054;
+}
 
 .status-tile.is-running .icon-light svg {
   filter: drop-shadow(0 0 8px rgba(226, 161, 0, 0.45));
@@ -185,17 +208,33 @@ button {
 }
 
 @keyframes lightPulse {
-  0%, 100% { transform: scale(1); opacity: 0.92; }
-  50% { transform: scale(1.08); opacity: 1; }
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 
 @keyframes fanSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes mistPulse {
-  0%, 100% { transform: translateY(0); opacity: 0.82; }
-  50% { transform: translateY(-3px); opacity: 1; }
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
 }
 
 .tile-label {
@@ -240,11 +279,14 @@ button {
 .wifi-bars span:nth-child(3) { height: 20px; }
 .wifi-bars span:nth-child(4) { height: 28px; }
 .wifi-bars span:nth-child(5) { height: 36px; }
+
 .wifi-bars.level-1 span:nth-child(-n + 1),
 .wifi-bars.level-2 span:nth-child(-n + 2),
 .wifi-bars.level-3 span:nth-child(-n + 3),
 .wifi-bars.level-4 span:nth-child(-n + 4),
-.wifi-bars.level-5 span:nth-child(-n + 5) { opacity: 1; }
+.wifi-bars.level-5 span:nth-child(-n + 5) {
+  opacity: 1;
+}
 
 .metric-grid {
   display: grid;
@@ -324,6 +366,10 @@ body.has-panel .detail-panel {
   margin: 2px 0 0;
   font-size: 22px;
   line-height: 1.1;
+}
+
+.detail-title-row {
+  display: block;
 }
 
 .close-button {
