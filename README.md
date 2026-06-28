@@ -8,6 +8,7 @@ Active source of truth:
 docs/project_overview.md
 docs/software_architecture.md
 docs/ui_architecture.md
+docs/migration_rules.md
 docs/hardware/v3_board_pinout.md
 docs/v3_contracts/
 components/board_config/include/vazon_board_config.h
