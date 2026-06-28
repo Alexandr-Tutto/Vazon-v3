@@ -1,42 +1,107 @@
 # Documentation Index
 
 ## Project
+
 Vazon v3.
 
 ## Purpose
-This file is the navigation map for project documentation.
-Agents must use it to understand which documents are active and how documentation is organized.
 
-## Current baseline
+This file is the navigation map for active project documentation.
+
+Agents must read it to understand which documents are active and how documentation is organized. This file does not replace the owning documents listed below.
+
+## Current Baselines
+
+```text
+Project skeleton baseline: a9f5c3f Align V3 skeleton with contracts
+Documentation workflow baseline: 4316d01 docs: add documentation workflow decision
 Branch: main
-Baseline commit: a9f5c3f Align V3 skeleton with contracts
+```
 
-## Primary documents
+## Required Agent Entry Points
 
-- `AGENTS.md` — rules for AI agents working with this repository.
-- `docs/_index.md` — navigation map for active documentation.
-- `docs/ui_architecture.md` — UI structure, screens, states, and user-visible logic.
-- `docs/hardware/v3_board_pinout.md` — board pinout and hardware signal names.
-- `docs/v3_contracts/*.contract.md` — contracts for functional modules/entities, MQTT surfaces, and module interfaces.
-- `components/board_config/include/vazon_board_config.h` — firmware board configuration and signal definitions.
+```text
+AGENTS.md
+    rules for AI agents working with this repository
 
-## Decision records
+docs/_index.md
+    this navigation map
+```
 
-- `docs/decisions/*.md` — accepted architectural, naming, terminology, and workflow decisions.
+When auditing or editing documentation, agents must first read both files.
 
-## Open questions
+## Primary Project Documents
 
-- `docs/open_questions.md` — unresolved items. Agents must not resolve these without explicit approval.
+```text
+README.md
+    repository entry point and active source-of-truth list
 
-## Deprecated documents
+docs/project_overview.md
+    project purpose, current state, system parts, and active ownership overview
 
+docs/software_architecture.md
+    firmware/UI/MQTT/software boundary rules
+
+docs/ui_architecture.md
+    UI structure, screens, states, and user-visible behavior
+
+docs/hardware/v3_board_pinout.md
+    board pinout and hardware signal names
+
+components/board_config/include/vazon_board_config.h
+    firmware board configuration and signal definitions
+```
+
+## Contract Documents
+
+```text
+docs/v3_contracts/00_contract_index.md
+    contract navigation and ownership map
+
+docs/v3_contracts/*.contract.md
+    owning contracts for functional modules/entities and policies
+
+docs/v3_contracts/runtime_core.md
+    umbrella runtime overview; not a detailed logic owner
+
+docs/v3_contracts/v3_language_and_terms.md
+    terminology and language rules
+```
+
+## Boundary / Supporting Documents
+
+```text
+docs/v3_data_model.md
+    shared data-shape boundary rules; does not own module fields
+
+docs/mqtt_topic_registry.md
+    minimal MQTT namespace, retain policy, and command envelope boundary
+
+docs/firmware_skeleton.md
+    current firmware skeleton layout and next smoke-test scope
+
+docs/migration_rules.md
+    old-repository reference boundary and migration rules
+```
+
+## Workflow Documents
+
+```text
+docs/decisions/*.md
+    accepted architectural, naming, terminology, and workflow decisions
+
+docs/open_questions.md
+    unresolved items; agents must not resolve these without explicit approval
+```
+
+## Deprecated Documents
+
+```text
 None declared yet.
+```
 
-## Agent rules
-
-When auditing or editing documentation, agents must first read:
-
-1. `AGENTS.md`
-2. `docs/_index.md`
+## Authority Rule
 
 If a document is not listed here, agents must not assume its authority without checking with the user or reporting it as an undocumented source.
+
+If listed documents conflict, agents must report the conflict instead of choosing one silently. Use the conflict report format from `AGENTS.md`.
