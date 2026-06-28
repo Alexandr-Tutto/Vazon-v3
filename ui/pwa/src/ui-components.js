@@ -153,6 +153,34 @@ function renderField(field) {
   return item;
 }
 
+function renderSwitchToggle(toggle) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `switch-toggle ${toggle.enabled ? 'is-active' : 'is-passive'}`;
+  button.textContent = toggle.enabled ? 'Активний' : 'Пасивний';
+  button.dataset.action = toggle.enabled ? toggle.disableAction.id : toggle.enableAction.id;
+  button.dataset.switchName = toggle.name;
+
+  const action = toggle.enabled ? toggle.disableAction : toggle.enableAction;
+  if (action.command) {
+    button.dataset.commandTarget = action.command.target;
+    button.dataset.commandName = action.command.cmd;
+  }
+
+  return button;
+}
+
+function renderSwitch(switchItem) {
+  const item = document.createElement('div');
+  item.className = 'mini-value switch-value';
+
+  const label = document.createElement('span');
+  label.textContent = switchItem.label;
+
+  item.append(label, renderSwitchToggle(switchItem));
+  return item;
+}
+
 export function renderCard(card) {
   const article = document.createElement('article');
   article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
@@ -166,6 +194,11 @@ export function renderCard(card) {
     fieldWrap.className = 'value-pair';
     card.fields.forEach((field) => fieldWrap.append(renderField(field)));
     article.append(fieldWrap);
+  } else if (card.switches) {
+    const switchWrap = document.createElement('div');
+    switchWrap.className = 'value-pair';
+    card.switches.forEach((switchItem) => switchWrap.append(renderSwitch(switchItem)));
+    article.append(switchWrap);
   } else if (card.pairs) {
     const pairWrap = document.createElement('div');
     pairWrap.className = 'value-pair';
