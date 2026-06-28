@@ -30,11 +30,13 @@
       <div id="metricGrid" class="metric-grid" aria-label="Кліматичні дані"></div>
     </section>
 
-    <section id="detailPanel" class="detail-panel" aria-label="Деталі підсистеми">
+    <section id="detailPanel" class="detail-panel" aria-live="polite">
       <div class="detail-header">
         <div>
           <span id="detailKicker" class="detail-kicker">Деталі</span>
-          <h2 id="detailTitle" class="detail-title">Підсистема</h2>
+          <div class="detail-title-row">
+            <h2 id="detailTitle" class="detail-title">Підсистема</h2>
+          </div>
         </div>
         <button id="closeButton" class="close-button" type="button" aria-label="Закрити">×</button>
       </div>
