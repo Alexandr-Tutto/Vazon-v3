@@ -9,14 +9,15 @@ Agents must use it to understand which documents are active and how documentatio
 
 ## Current baseline
 Branch: main
-Baseline commit: TO_BE_FILLED
+Baseline commit: a9f5c3f Align V3 skeleton with contracts
 
 ## Primary documents
 
 - `AGENTS.md` — rules for AI agents working with this repository.
+- `docs/_index.md` — navigation map for active documentation.
 - `docs/ui_architecture.md` — UI structure, screens, states, and user-visible logic.
 - `docs/hardware/v3_board_pinout.md` — board pinout and hardware signal names.
-- `docs/v3_contracts/*.contract.md` — contracts for sensors, actuators, MQTT surfaces, and module interfaces.
+- `docs/v3_contracts/*.contract.md` — contracts for functional modules/entities, MQTT surfaces, and module interfaces.
 - `components/board_config/include/vazon_board_config.h` — firmware board configuration and signal definitions.
 
 ## Decision records
