@@ -3,6 +3,18 @@ import { createMenuView, MENU_LEVELS } from './ui-menu-levels.js';
 
 const noData = '—';
 
+function show(value, suffix = '') {
+  if (value === null || value === undefined || value === 'unknown') {
+    return noData;
+  }
+
+  return `${value}${suffix}`;
+}
+
+function statusText(entity) {
+  return entity.status_reason || entity.status || 'ok';
+}
+
 export function getFunctionStatusView(entity, uiState) {
   const detail = uiState.details[entity];
 
@@ -52,50 +64,60 @@ function getFunctionStatusCards(entity, uiState) {
     return [
       { label: 'Температура', pairs: [['Вгорі', uiState.climate.top.temperature_c], ['Внизу', uiState.climate.bottom.temperature_c]] },
       { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
-      { label: 'Стан', value: raw.climate.status_reason || 'Норма' },
-      { label: 'Параметри', value: 'Пороги різниці температури та вологості', action: settingsOpenAction(entity), wide: true },
+      { label: 'Різниця зон', pairs: [['Температура', show(raw.climate.temperature_delta_c, '°')], ['Вологість', show(raw.climate.rh_delta_pct, '%')]] },
+      { label: 'SHT31 0x44', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
+      { label: 'SHT31 0x45', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
+      { label: 'Стан підсистеми', value: statusText(raw.climate), wide: true },
+      { label: 'Параметри', value: 'Пороги температури, вологості, stale timeout і delta thresholds', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
   if (entity === 'pot') {
     return [
-      { label: 'Вазон 1', pairs: [['Вологість', `${raw.pot[0].soil_moisture.value_pct}%`], ['Стан', raw.pot[0].soil_moisture.class], ['Темп.', `${raw.pot[0].soil_temperature.temperature_c}°`]] },
-      { label: 'Вазон 2', pairs: [['Вологість', `${raw.pot[1].soil_moisture.value_pct}%`], ['Стан', raw.pot[1].soil_moisture.class], ['Темп.', `${raw.pot[1].soil_temperature.temperature_c}°`]] },
-      { label: 'Параметри', value: 'Датчики вазонів та калібрування', action: settingsOpenAction(entity), wide: true },
+      { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Клас', raw.pot[0].soil_moisture.class], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
+      { label: 'Вазон 1 статуси', pairs: [['Волога', raw.pot[0].soil_moisture.status], ['Температура', raw.pot[0].soil_temperature.status], ['Підсистема', raw.pot[0].status]] },
+      { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Клас', raw.pot[1].soil_moisture.class], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
+      { label: 'Вазон 2 статуси', pairs: [['Волога', raw.pot[1].soil_moisture.status], ['Температура', raw.pot[1].soil_temperature.status], ['Підсистема', raw.pot[1].status]] },
+      { label: 'Параметри', value: 'Sensor enable, calibration, stale timeout, temperature warn thresholds', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Режим', value: raw.humidifier.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
-      { label: 'Вода', value: raw.humidifier.water_status === 'present' ? 'Є вода' : 'Немає води' },
-      { label: 'Пар', value: raw.humidifier.mist_output === 'on' ? 'Працює' : 'Вимкнено' },
-      { label: 'Локальний вентилятор', value: raw.humidifier.fan_output === 'on' ? 'Працює' : 'Вимкнено' },
-      { label: 'Параметри', value: 'Режим, пороги вологості, цикл зволоження', action: settingsOpenAction(entity), wide: true },
+      { label: 'Стан', pairs: [['Вода', raw.humidifier.water_status], ['Пар', raw.humidifier.mist_output], ['Локальний вентилятор', raw.humidifier.fan_output]] },
+      { label: 'Режим', pairs: [['Mode', raw.humidifier.settings.mode], ['Runtime', raw.humidifier.settings.runtime], ['Power', raw.humidifier.settings.mist_power_level]] },
+      { label: 'Пороги', pairs: [['RH start', show(raw.humidifier.settings.rh_start, '%')], ['RH stop', show(raw.humidifier.settings.rh_stop, '%')], ['RH delta', show(raw.humidifier.settings.rh_delta, '%')]] },
+      { label: 'Цикл', pairs: [['Manual mist', show(raw.humidifier.settings.manual_mist_duration_sec, ' сек')], ['Post fan', show(raw.humidifier.settings.post_fan_sec, ' сек')]] },
+      { label: 'Стан підсистеми', value: statusText(raw.humidifier), wide: true },
+      { label: 'Параметри', value: 'Mode, runtime, manual mist, stop, mist power, RH thresholds, post fan', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
   if (entity === 'light') {
     return [
-      { label: 'Поточний стан', value: raw.light.output === 'on' ? 'Світло увімкнене' : 'Світло вимкнене' },
-      { label: 'Режим', value: raw.light.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
-      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}` },
-      { label: 'Параметри', value: 'Режим і графік світла', action: settingsOpenAction(entity), wide: true },
+      { label: 'Поточний стан', pairs: [['Output', raw.light.output], ['Mode', raw.light.settings.mode], ['Manual state', raw.light.settings.manual_state]] },
+      { label: 'Графік', pairs: [['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off], ['Active', raw.system.global_context.day_window.active ? 'yes' : 'no']] },
+      { label: 'Підтвердження', pairs: [['Last command', raw.light.last_command_result], ['Output confirmed', raw.light.last_output_confirmed]] },
+      { label: 'Стан підсистеми', value: statusText(raw.light), wide: true },
+      { label: 'Параметри', value: 'Mode, manual_state, settings', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
   if (entity === 'fan') {
     return [
-      { label: 'Поточний стан', value: raw.fan.output === 'on' ? 'Працює' : 'Пауза за режимом' },
-      { label: 'Режим', value: raw.fan.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
-      { label: 'Стратегія', value: raw.fan.settings.auto_strategy },
-      { label: 'Параметри', value: 'Режим, runtime, стратегія вентиляції', action: settingsOpenAction(entity), wide: true },
+      { label: 'Поточний стан', pairs: [['Output', raw.fan.output], ['Auto state', raw.fan.auto_state], ['Mode', raw.fan.settings.mode]] },
+      { label: 'Runtime / strategy', pairs: [['Runtime', raw.fan.settings.runtime], ['Strategy', raw.fan.settings.auto_strategy]] },
+      { label: 'Delta strategy', pairs: [['On', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Off', show(raw.fan.settings.auto_delta_off_pct, '%')]] },
+      { label: 'Timer strategy', pairs: [['On', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Off', show(raw.fan.settings.auto_timer_off_sec, ' сек')]] },
+      { label: 'Підтвердження', pairs: [['Last command', raw.fan.last_command_result], ['Output confirmed', raw.fan.last_output_confirmed]] },
+      { label: 'Стан підсистеми', value: statusText(raw.fan), wide: true },
+      { label: 'Параметри', value: 'Mode, runtime, strategy, manual_run, stop, timer/delta settings', action: settingsOpenAction(entity), wide: true },
     ];
   }
 
   if (entity === 'connection') {
     return [
-      { label: 'Звʼязок', value: raw.system.global_context.connection.wifi_state },
+      { label: 'Звʼязок', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Сервіс', raw.system.global_context.connection.mqtt_state]] },
       { label: 'Актуальність даних', value: raw.system.global_context.connection.mqtt_state === 'connected' ? 'Дані актуальні' : 'Немає актуальних даних' },
       { label: 'Примітка', value: 'Технічні параметри звʼязку приховані у сервісному рівні', wide: true },
     ];
@@ -109,89 +131,76 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'climate') {
     return [
-      { label: 'Допустима різниця', value: '3°C / 15% RH', action: getUiAction('climate.thresholds.edit') },
-      { label: 'Рекомендація', value: 'Основні параметри клімату налаштовуються тут; технічні пороги лишаються у сервісі.', wide: true },
+      { label: 'Warning limits', pairs: [['Temp low', show(raw.climate.settings.temperature_low_warn, '°')], ['Temp high', show(raw.climate.settings.temperature_high_warn, '°')], ['RH low', show(raw.climate.settings.humidity_low_warn, '%')], ['RH high', show(raw.climate.settings.humidity_high_warn, '%')]] },
+      { label: 'Sensor stale', value: show(raw.climate.settings.sht31_stale_timeout_sec, ' сек') },
+      { label: 'Delta limits', pairs: [['Temp warn', show(raw.climate.settings.temperature_delta_warn, '°')], ['Temp error', show(raw.climate.settings.temperature_delta_error, '°')]] },
+      { label: 'Команда', value: 'climate.set_settings', action: getUiAction('climate.thresholds.edit'), wide: true },
     ];
   }
 
   if (entity === 'pot') {
     return [
       {
-        label: 'Датчики вазонів',
+        label: 'Sensor enable',
         controls: [
-          getUiAction('pot[0].set_soil_moisture_enabled'),
-          getUiAction('pot[0].set_soil_temperature_enabled'),
-          getUiAction('pot[1].set_soil_moisture_enabled'),
-          getUiAction('pot[1].set_soil_temperature_enabled'),
+          getUiAction('pot[0].soil_moisture.enable'),
+          getUiAction('pot[0].soil_moisture.disable'),
+          getUiAction('pot[0].soil_temperature.enable'),
+          getUiAction('pot[0].soil_temperature.disable'),
+          getUiAction('pot[1].soil_moisture.enable'),
+          getUiAction('pot[1].soil_moisture.disable'),
+          getUiAction('pot[1].soil_temperature.enable'),
+          getUiAction('pot[1].soil_temperature.disable'),
         ],
-      },
-      {
-        label: 'Як калібрувати',
-        instructions: [
-          'Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть "Сухо".',
-          'Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть "Норма".',
-          'Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть "Мокро".',
-        ],
-        note: 'Калібрування закінчено. Переставте датчик у бажаний вазон обережно, не пошкоджуючи коріння.',
         wide: true,
       },
+      { label: 'Поточні enable settings', pairs: [['P1 moisture', raw.pot[0].settings.soil_moisture_enabled ? 'on' : 'off'], ['P1 temp', raw.pot[0].settings.soil_temperature_enabled ? 'on' : 'off'], ['P2 moisture', raw.pot[1].settings.soil_moisture_enabled ? 'on' : 'off'], ['P2 temp', raw.pot[1].settings.soil_temperature_enabled ? 'on' : 'off']] },
       {
-        label: 'Калібрування',
+        label: 'Калібрування вологості',
         controls: [
           getUiAction('pot[0].calibrate_soil_moisture.dry'),
           getUiAction('pot[0].calibrate_soil_moisture.normal'),
           getUiAction('pot[0].calibrate_soil_moisture.wet'),
-          getUiAction('pot[0].calibration.reset'),
+          getUiAction('pot[1].calibrate_soil_moisture.dry'),
+          getUiAction('pot[1].calibrate_soil_moisture.normal'),
+          getUiAction('pot[1].calibrate_soil_moisture.wet'),
         ],
         wide: true,
       },
-      { label: 'Останнє калібрування', value: 'Не змінювалось' },
+      { label: 'Stale / temperature warn', pairs: [['Moisture stale', show(raw.pot[0].settings.moisture_stale_timeout_sec, ' сек')], ['Temp stale', show(raw.pot[0].settings.temperature_stale_timeout_sec, ' сек')], ['Temp low', show(raw.pot[0].settings.temperature_low_warn_c, '°')], ['Temp high', show(raw.pot[0].settings.temperature_high_warn_c, '°')]] },
+      { label: 'Set settings', controls: [getUiAction('pot[0].settings.edit'), getUiAction('pot[1].settings.edit')] },
     ];
   }
 
   if (entity === 'humidifier') {
     return [
-      {
-        label: 'Керування режимом',
-        controls: [
-          getUiAction('humidifier.mode.auto'),
-          getUiAction('humidifier.mode.manual'),
-          getUiAction('humidifier.manual_mist'),
-          getUiAction('humidifier.stop'),
-        ],
-        wide: true,
-      },
-      { label: 'Пороги вологості', value: `Старт ${raw.humidifier.settings.rh_start}%, стоп ${raw.humidifier.settings.rh_stop}%`, action: getUiAction('humidifier.settings.edit') },
-      { label: 'Цикл', value: `${raw.humidifier.settings.manual_mist_duration_sec} сек робота / ${raw.humidifier.settings.post_fan_sec} сек продув`, action: getUiAction('humidifier.settings.edit') },
+      { label: 'Mode', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
+      { label: 'Runtime', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
+      { label: 'Manual control', controls: [getUiAction('humidifier.manual_mist'), getUiAction('humidifier.stop')] },
+      { label: 'Mist power', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
+      { label: 'RH thresholds', pairs: [['Start', show(raw.humidifier.settings.rh_start, '%')], ['Stop', show(raw.humidifier.settings.rh_stop, '%')], ['Delta', show(raw.humidifier.settings.rh_delta, '%')]], action: getUiAction('humidifier.settings.edit') },
+      { label: 'Cycle', pairs: [['Manual mist', show(raw.humidifier.settings.manual_mist_duration_sec, ' сек')], ['Post fan', show(raw.humidifier.settings.post_fan_sec, ' сек')]], action: getUiAction('humidifier.settings.edit') },
     ];
   }
 
   if (entity === 'light') {
     return [
-      {
-        label: 'Режим',
-        controls: [
-          getUiAction('light.mode.auto'),
-          getUiAction('light.manual.on'),
-          getUiAction('light.manual.off'),
-        ],
-      },
-      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}`, action: getUiAction('light.schedule.edit') },
+      { label: 'Mode', controls: [getUiAction('light.mode.auto'), getUiAction('light.mode.manual')] },
+      { label: 'Manual state', controls: [getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
+      { label: 'Current settings', pairs: [['Mode', raw.light.settings.mode], ['Manual state', raw.light.settings.manual_state]] },
+      { label: 'Day window', pairs: [['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off]], action: getUiAction('light.settings.edit') },
     ];
   }
 
   if (entity === 'fan') {
     return [
-      {
-        label: 'Режим',
-        controls: [
-          getUiAction('fan.mode.auto'),
-          getUiAction('fan.mode.manual'),
-          getUiAction('fan.runtime.day'),
-        ],
-      },
-      { label: 'Стратегія', value: raw.fan.settings.auto_strategy, action: getUiAction('fan.settings.edit') },
-      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: getUiAction('fan.settings.edit') },
+      { label: 'Mode', controls: [getUiAction('fan.mode.auto'), getUiAction('fan.mode.manual')] },
+      { label: 'Manual control', controls: [getUiAction('fan.manual_run'), getUiAction('fan.stop')] },
+      { label: 'Runtime', controls: [getUiAction('fan.runtime.day'), getUiAction('fan.runtime.always')] },
+      { label: 'Strategy', controls: [getUiAction('fan.strategy.delta'), getUiAction('fan.strategy.timer')] },
+      { label: 'Delta settings', pairs: [['On', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Off', show(raw.fan.settings.auto_delta_off_pct, '%')]], action: getUiAction('fan.settings.edit') },
+      { label: 'Timer settings', pairs: [['On', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Off', show(raw.fan.settings.auto_timer_off_sec, ' сек')]], action: getUiAction('fan.settings.edit') },
+      { label: 'Manual duration', value: show(raw.fan.settings.manual_duration_sec, ' сек'), action: getUiAction('fan.settings.edit') },
     ];
   }
 
@@ -205,14 +214,16 @@ function getFunctionSettingsCards(entity, uiState) {
 }
 
 function getAdvancedServiceCards(uiState) {
+  const raw = uiState.raw;
+
   return [
-    { label: 'Клімат', value: '3°C / 15% RH', action: getUiAction('climate.thresholds.edit') },
-    { label: 'Зволоження', value: `${uiState.raw.humidifier.settings.rh_start}% / ${uiState.raw.humidifier.settings.rh_stop}%`, action: getUiAction('humidifier.settings.edit') },
-    { label: 'Цикл зволоження', value: `${uiState.raw.humidifier.settings.manual_mist_duration_sec} сек / ${uiState.raw.humidifier.settings.post_fan_sec} сек`, action: getUiAction('humidifier.settings.edit') },
-    { label: 'Світло', value: `${uiState.raw.system.global_context.day_window.time_on} - ${uiState.raw.system.global_context.day_window.time_off}`, action: getUiAction('light.schedule.edit') },
-    { label: 'Вентиляція', value: noData, action: getUiAction('fan.settings.edit') },
-    { label: 'Оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
+    { label: 'System status', pairs: [['Status', raw.system.status], ['Reason', raw.system.status_reason || '—'], ['Affected', raw.system.affected_system || '—']] },
+    { label: 'Maintenance', pairs: [['Active', raw.system.global_context.maintenance.active ? 'yes' : 'no'], ['Reason', raw.system.global_context.maintenance.reason || '—']] },
+    { label: 'Day window', pairs: [['Enabled', raw.system.global_context.day_window.schedule_enabled ? 'yes' : 'no'], ['Active', raw.system.global_context.day_window.active ? 'yes' : 'no'], ['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off]] },
+    { label: 'Connection', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Service', raw.system.global_context.connection.mqtt_state]] },
+    { label: 'OTA / оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
     { label: 'Діагностика', value: 'Сховано', action: getUiAction('service.diagnostics.open') },
+    { label: 'Status LED', pairs: [['Red', raw.status_led.red_output], ['Green', raw.status_led.green_output], ['Pattern', raw.status_led.pattern]] },
     { label: 'Остання команда', value: 'Команд ще не було', wide: true },
     { label: 'Пристрій', value: 'Vazon V3 prototype' },
   ];
