@@ -7,25 +7,25 @@ Scope: Vazon V3 Global Core
 ## 1. Purpose
 
 ```text
-Global Core формує GlobalContext і GlobalInterlocks у normal runtime.
+Global Core forms GlobalContext and GlobalInterlocks in normal runtime.
 ```
 
 ## 2. Boot relation
 
 ```text
-Boot stage спочатку визначає boot mode:
+Boot stage first determines boot mode:
 normal / provisioning.
 
-Global Core стартує тільки в normal mode.
-У provisioning mode normal runtime не стартує.
+Global Core starts only in normal mode.
+In provisioning mode normal runtime does not start.
 ```
 
 ## 3. Ownership
 
 ```text
-Global Core володіє тільки global state normal runtime.
-Він не володіє local module state.
-Він не володіє provisioning service logic.
+Global Core owns only global state normal runtime.
+It does not own local module state.
+It does not own provisioning service logic.
 ```
 
 ## 4. Inputs
@@ -62,6 +62,18 @@ maintenance.active = true / false
 maintenance.reason = manual / external / unknown
 ```
 
+Maintenance is a global runtime state, not a direct output command.
+
+Each local module owns its own reaction to `maintenance.active`:
+
+```text
+fan: maintenance.active -> fan off
+humidifier: maintenance.active -> mist off and local fan off
+light: maintenance.active -> light on as service lighting
+```
+
+Service lighting is intentionally different from fan and humidifier maintenance behavior.
+
 ## 8. Day Window
 
 ```text
@@ -79,48 +91,48 @@ day_window is part of GlobalContext.
 ## 9. Connection
 
 ```text
-connection описує стан зв'язку.
-connection є global status signal.
-connection не є GlobalInterlock.
-connection offline не блокує local runtime.
+connection describes communication state.
+connection is a global status signal.
+connection is not a GlobalInterlock.
+connection offline does not block local runtime.
 
-MQTT offline означає втрату зовнішнього каналу.
-MQTT offline не змінює actuator outputs напряму.
-MQTT offline не переводить пристрій у provisioning.
+MQTT offline means loss of external channel.
+MQTT offline does not change actuator outputs directly.
+MQTT offline does not switch the device to provisioning.
 ```
 
 ## 10. GlobalInterlocks
 
 ```text
-Global Core формує interlocks:
+Global Core forms interlocks:
 maintenance_active
-critical_sensor_missing
-critical_actuator_failed
+sensor_missing
+actuator_failed
 
-mqtt_offline не входить у GlobalInterlocks.
+mqtt_offline is not part of GlobalInterlocks.
 ```
 
 ## 11. Command handling
 
 ```text
-Global Core приймає тільки global commands normal runtime:
+Global Core accepts only global commands in normal runtime:
 maintenance on/off
 reset defaults
 global service commands
 
-Wi-Fi provisioning не є normal runtime command flow.
+Wi-Fi provisioning is not normal runtime command flow.
 ```
 
 ## 12. Provisioning boundary
 
 ```text
-Provisioning mode вибирається тільки на boot stage.
-Provisioning button перевіряється до старту normal runtime.
-Після старту normal runtime provisioning button ігнорується.
+Provisioning mode is selected only at boot stage.
+Provisioning button is checked before normal runtime starts.
+After normal runtime starts, provisioning button is ignored.
 
-У provisioning mode:
-climate runtime не стартує
-all actuators off
+In provisioning mode:
+normal runtime does not start
+outputs remain in their board-defined safe state
 MQTT off
 telemetry off
 device starts Wi-Fi AP
@@ -130,9 +142,9 @@ accepted input: Wi-Fi credentials only
 ## 13. Forbidden
 
 ```text
-Global Core не керує actuator напряму.
-Global Core не змінює local module state напряму.
-Global Core не виконує local module logic.
-Global Core не рахує final system.status.
-Global Core не запускає provisioning з normal runtime.
+Global Core does not command actuators directly.
+Global Core does not change local module state directly.
+Global Core does not execute local module logic.
+Global Core does not calculate final system.status.
+Global Core does not start provisioning from normal runtime.
 ```
