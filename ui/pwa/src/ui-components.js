@@ -124,6 +124,28 @@ export function renderActionButton(action) {
   return button;
 }
 
+function renderField(field) {
+  const item = document.createElement('label');
+  item.className = 'mini-value';
+
+  const fieldLabel = document.createElement('span');
+  fieldLabel.textContent = field.label;
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.inputMode = 'decimal';
+  input.name = field.name;
+  input.value = field.value ?? '';
+
+  if (field.min !== undefined) input.min = String(field.min);
+  if (field.max !== undefined) input.max = String(field.max);
+  if (field.step !== undefined) input.step = String(field.step);
+  if (field.unit) input.dataset.unit = field.unit;
+
+  item.append(fieldLabel, input);
+  return item;
+}
+
 export function renderCard(card) {
   const article = document.createElement('article');
   article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
@@ -132,7 +154,12 @@ export function renderCard(card) {
   label.textContent = card.label;
   article.append(label);
 
-  if (card.pairs) {
+  if (card.fields) {
+    const fieldWrap = document.createElement('div');
+    fieldWrap.className = 'value-pair';
+    card.fields.forEach((field) => fieldWrap.append(renderField(field)));
+    article.append(fieldWrap);
+  } else if (card.pairs) {
     const pairWrap = document.createElement('div');
     pairWrap.className = 'value-pair';
     card.pairs.forEach((pair) => {
