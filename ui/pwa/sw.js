@@ -1,10 +1,13 @@
-const CACHE_NAME = 'vazon-v3-pwa-contract-alignment-v1';
+const CACHE_NAME = 'vazon-v3-pwa-ui-layers-v1';
 
 const APP_ASSETS = [
   './index.html',
   './manifest.webmanifest',
   './src/styles.css',
   './src/app.js',
+  './src/ui-actions.js',
+  './src/ui-components.js',
+  './src/ui-panels.js',
   './src/ui-state.js',
   './src/mock-state.js',
 ];
