@@ -2,6 +2,7 @@ import { mockState } from './mock-state.js';
 import { createUiState } from './ui-state.js';
 
 const uiState = createUiState(mockState);
+const noData = '—';
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
@@ -140,40 +141,211 @@ function renderMetrics(state) {
   `;
 }
 
+function renderActionButton(action) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'ghost-control';
+  button.textContent = action.label;
+  button.dataset.action = action.action;
+  return button;
+}
+
+function renderCard(card) {
+  const article = document.createElement('article');
+  article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
+
+  const label = document.createElement('span');
+  label.textContent = card.label;
+  article.append(label);
+
+  if (card.pairs) {
+    const pairWrap = document.createElement('div');
+    pairWrap.className = 'value-pair';
+    card.pairs.forEach((pair) => {
+      const mini = document.createElement('div');
+      mini.className = 'mini-value';
+      const miniLabel = document.createElement('span');
+      miniLabel.textContent = pair[0];
+      const value = document.createElement('b');
+      value.textContent = pair[1];
+      mini.append(miniLabel, value);
+      pairWrap.append(mini);
+    });
+    article.append(pairWrap);
+  } else if (card.controls) {
+    if (card.value) {
+      const value = document.createElement('strong');
+      value.textContent = card.value;
+      article.append(value);
+    }
+    const row = document.createElement('div');
+    row.className = 'control-row';
+    card.controls.forEach((control) => row.append(renderActionButton(control)));
+    article.append(row);
+  } else if (card.instructions) {
+    const list = document.createElement('ol');
+    list.className = 'instruction-list';
+    card.instructions.forEach((item) => {
+      const listItem = document.createElement('li');
+      listItem.textContent = item;
+      list.append(listItem);
+    });
+    article.append(list);
+
+    if (card.note) {
+      const note = document.createElement('p');
+      note.className = 'instruction-note';
+      note.textContent = card.note;
+      article.append(note);
+    }
+  } else {
+    const value = document.createElement('strong');
+    value.textContent = card.value || '';
+    article.append(value);
+  }
+
+  if (card.action) {
+    article.append(renderActionButton(card.action));
+  }
+
+  return article;
+}
+
+function getPanelCards(entity) {
+  const raw = uiState.raw;
+
+  if (entity === 'climate') {
+    return [
+      { label: 'Температура', pairs: [['Вгорі', uiState.climate.top.temperature_c], ['Внизу', uiState.climate.bottom.temperature_c]] },
+      { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
+      { label: 'Допустима різниця', value: '3°C / 15% RH', action: { label: 'Змінити', action: 'climate.thresholds.edit' } },
+    ];
+  }
+
+  if (entity === 'pot') {
+    return [
+      { label: 'Вазон 1', pairs: [['Вологість', `${raw.pot0.soil_moisture.value_pct}%`], ['Стан', raw.pot0.soil_moisture.class], ['Темп.', `${raw.pot0.soil_temperature.temperature_c}°`]] },
+      { label: 'Вазон 2', pairs: [['Вологість', `${raw.pot1.soil_moisture.value_pct}%`], ['Стан', raw.pot1.soil_moisture.class], ['Темп.', `${raw.pot1.soil_temperature.temperature_c}°`]] },
+      {
+        label: 'Активні вазони',
+        controls: [
+          { label: 'Вазон 1 Вкл', action: 'soil.pot.0.toggle' },
+          { label: 'Вазон 2 Вкл', action: 'soil.pot.1.toggle' },
+        ],
+      },
+      {
+        label: 'Як калібрувати',
+        instructions: [
+          'Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть "Сухо".',
+          'Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть "Норма".',
+          'Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть "Мокро".',
+        ],
+        note: 'Калібрування закінчено. Переставте датчик у бажаний вазон обережно, не пошкоджуючи коріння.',
+        wide: true,
+      },
+      {
+        label: 'Калібрування',
+        controls: [
+          { label: 'Сухо', action: 'soil.calibration.dry' },
+          { label: 'Норма', action: 'soil.calibration.normal' },
+          { label: 'Мокро', action: 'soil.calibration.wet' },
+          { label: 'Скинути', action: 'soil.calibration.reset' },
+        ],
+        wide: true,
+      },
+      { label: 'Останнє калібрування', value: 'Не змінювалось' },
+    ];
+  }
+
+  if (entity === 'humidifier') {
+    return [
+      { label: 'Режим', value: raw.humidifier.settings.mode === 'auto' ? 'Автоматичний режим' : 'Ручний режим' },
+      { label: 'Вода', value: raw.humidifier.water_status === 'present' ? 'Є вода' : 'Немає води' },
+      {
+        label: 'Керування',
+        controls: [
+          { label: 'Авто', action: 'humidity.mode.auto' },
+          { label: 'Ручний', action: 'humidity.mode.manual' },
+          { label: 'Пуск', action: 'humidity.mist.on' },
+          { label: 'Стоп', action: 'humidity.mist.off' },
+        ],
+        wide: true,
+      },
+      { label: 'Пороги вологості', value: `Старт ${raw.humidifier.settings.rh_start}%, стоп ${raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidity.thresholds.edit' } },
+      { label: 'Цикл', value: `${raw.humidifier.settings.manual_mist_duration_sec} сек робота / ${raw.humidifier.settings.post_fan_sec} сек продув`, action: { label: 'Змінити', action: 'humidity.cycle.edit' } },
+    ];
+  }
+
+  if (entity === 'light') {
+    return [
+      { label: 'Поточний стан', value: raw.light.output === 'on' ? 'Світло увімкнене' : 'Світло вимкнене' },
+      { label: 'Графік', value: `${raw.system.global_context.day_window.time_on} - ${raw.system.global_context.day_window.time_off}`, action: { label: 'Змінити', action: 'light.schedule.edit' } },
+      {
+        label: 'Режим',
+        controls: [
+          { label: 'Авто', action: 'light.mode.auto' },
+          { label: 'Увімкнути', action: 'light.manual.on' },
+          { label: 'Вимкнути', action: 'light.manual.off' },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'fan') {
+    return [
+      { label: 'Поточний стан', value: raw.fan.output === 'on' ? 'Працює' : 'Пауза за режимом' },
+      { label: 'Цикл', value: raw.fan.settings.auto_strategy === 'timer' ? `${raw.fan.settings.auto_timer_on_sec} / ${raw.fan.settings.auto_timer_off_sec} сек` : noData, action: { label: 'Змінити', action: 'fan.cycle.edit' } },
+      {
+        label: 'Режим',
+        controls: [
+          { label: 'Авто', action: 'fan.mode.auto' },
+          { label: 'Ручний', action: 'fan.mode.manual' },
+          { label: 'За світлом', action: 'fan.runtime.day' },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'connection') {
+    return [
+      { label: 'Звʼязок', value: raw.system.global_context.connection.wifi_state },
+      { label: 'Останній сигнал', value: 'Добрий, щойно' },
+      { label: 'Сервіс', value: raw.system.global_context.connection.mqtt_state === 'connected' ? 'Підключено' : 'Недоступний' },
+    ];
+  }
+
+  return [];
+}
+
 function openDetail(entity) {
   const detail = uiState.details[entity];
 
   elements.detailKicker.textContent = 'Деталі';
-  elements.detailTitle.textContent = detail.title;
-  elements.detailBody.innerHTML = `
-    <article class="panel-card is-wide">
-      <strong>${detail.summary}</strong>
-      <p>${detail.message}</p>
-    </article>
-    ${detail.rows.map((row) => `
-      <article class="panel-card">
-        <strong>${row.value}</strong>
-        <span>${row.label}</span>
-      </article>
-    `).join('')}
-  `;
+  elements.detailTitle.textContent = `${detail.title} ${detail.summary || ''}`;
+  elements.detailBody.textContent = '';
+  getPanelCards(entity).map(renderCard).forEach((card) => elements.detailBody.append(card));
 
   document.body.classList.add('has-panel');
 }
 
 function openService() {
   elements.detailKicker.textContent = 'Сервіс';
-  elements.detailTitle.textContent = 'Стан UI';
-  elements.detailBody.innerHTML = `
-    <article class="panel-card is-wide">
-      <strong>Mock state</strong>
-      <span>Реального MQTT-зʼєднання ще немає</span>
-    </article>
-    <article class="panel-card is-wide">
-      <pre class="debug-state">${JSON.stringify(uiState.raw, null, 2)}</pre>
-    </article>
-  `;
+  elements.detailTitle.textContent = 'Налаштування';
+  elements.detailBody.textContent = '';
 
+  const cards = [
+    { label: 'Клімат', value: '3°C / 15% RH', action: { label: 'Змінити', action: 'climate.thresholds.edit' } },
+    { label: 'Зволоження', value: `${uiState.raw.humidifier.settings.rh_start}% / ${uiState.raw.humidifier.settings.rh_stop}%`, action: { label: 'Змінити', action: 'humidity.thresholds.edit' } },
+    { label: 'Цикл зволоження', value: `${uiState.raw.humidifier.settings.manual_mist_duration_sec} сек / ${uiState.raw.humidifier.settings.post_fan_sec} сек`, action: { label: 'Змінити', action: 'humidity.cycle.edit' } },
+    { label: 'Світло', value: `${uiState.raw.system.global_context.day_window.time_on} - ${uiState.raw.system.global_context.day_window.time_off}`, action: { label: 'Змінити', action: 'light.schedule.edit' } },
+    { label: 'Вентиляція', value: noData, action: { label: 'Змінити', action: 'fan.cycle.edit' } },
+    { label: 'Оновлення', value: 'Vazon V3 draft', controls: [{ label: 'Перевірити', action: 'service.update.check' }, { label: 'Встановити', action: 'service.update.install' }] },
+    { label: 'Діагностика', value: 'Сховано', action: { label: 'Відкрити', action: 'service.diagnostics.open' } },
+    { label: 'Остання команда', value: 'Команд ще не було', wide: true },
+    { label: 'Пристрій', value: 'Vazon V3 prototype' },
+  ];
+
+  cards.map(renderCard).forEach((card) => elements.detailBody.append(card));
   document.body.classList.add('has-panel');
 }
 
