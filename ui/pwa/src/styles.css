@@ -441,6 +441,33 @@ body.has-panel .detail-panel {
   font-size: 11px;
 }
 
+.switch-value {
+  align-content: space-between;
+}
+
+.switch-toggle {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #cbd7d3;
+  border-radius: var(--radius);
+  background: #ffffff;
+  color: var(--text);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.switch-toggle.is-active {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.switch-toggle.is-passive {
+  border-color: var(--unknown);
+  color: var(--muted);
+  opacity: 0.58;
+}
+
 .debug-state {
   white-space: pre-wrap;
   overflow-x: auto;
@@ -451,7 +478,8 @@ body.has-panel .detail-panel {
 .status-tile:focus-visible,
 .gear:focus-visible,
 .close-button:focus-visible,
-.ghost-control:focus-visible {
+.ghost-control:focus-visible,
+.switch-toggle:focus-visible {
   outline: 3px solid rgba(20, 125, 194, 0.36);
   outline-offset: 2px;
 }
