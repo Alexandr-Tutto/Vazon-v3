@@ -63,7 +63,7 @@ export function createUiState(raw) {
   ];
 
   const details = {
-    climate: makeDetail('Клімат', raw.climate.status, 'Датчики повітря', raw.climate.status_reason || 'Показано дві зони без усереднення.', [
+    climate: makeDetail('Клімат', raw.climate.status, '', raw.climate.status_reason || 'Показано дві зони без усереднення.', [
       { label: 'SHT31 0x44 температура', value: valueOrUnknown(raw.climate.sensor_0x44.temperature_c, '°C') },
       { label: 'SHT31 0x44 вологість', value: valueOrUnknown(raw.climate.sensor_0x44.humidity_pct, '%') },
       { label: 'SHT31 0x45 температура', value: valueOrUnknown(raw.climate.sensor_0x45.temperature_c, '°C') },
