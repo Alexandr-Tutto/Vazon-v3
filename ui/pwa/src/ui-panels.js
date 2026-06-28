@@ -57,6 +57,16 @@ function settingsOpenAction(entity) {
   };
 }
 
+function sensorSwitch(label, name, enabled, enableActionId, disableActionId) {
+  return {
+    label,
+    name,
+    enabled,
+    enableAction: getUiAction(enableActionId),
+    disableAction: getUiAction(disableActionId),
+  };
+}
+
 function getFunctionStatusCards(entity, uiState) {
   const raw = uiState.raw;
 
@@ -73,9 +83,7 @@ function getFunctionStatusCards(entity, uiState) {
   if (entity === 'pot') {
     return [
       { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Клас', raw.pot[0].soil_moisture.class], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
-      { label: 'Вазон 1 статуси', pairs: [['Волога', raw.pot[0].soil_moisture.status], ['Температура', raw.pot[0].soil_temperature.status], ['Підсистема', raw.pot[0].status]] },
       { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Клас', raw.pot[1].soil_moisture.class], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
-      { label: 'Вазон 2 статуси', pairs: [['Волога', raw.pot[1].soil_moisture.status], ['Температура', raw.pot[1].soil_temperature.status], ['Підсистема', raw.pot[1].status]] },
       { label: 'Параметри', value: 'Sensor enable, calibration, stale timeout, temperature warn thresholds', action: settingsOpenAction(entity), wide: true },
     ];
   }
@@ -154,20 +162,15 @@ function getFunctionSettingsCards(entity, uiState) {
   if (entity === 'pot') {
     return [
       {
-        label: 'Sensor enable',
-        controls: [
-          getUiAction('pot[0].soil_moisture.enable'),
-          getUiAction('pot[0].soil_moisture.disable'),
-          getUiAction('pot[0].soil_temperature.enable'),
-          getUiAction('pot[0].soil_temperature.disable'),
-          getUiAction('pot[1].soil_moisture.enable'),
-          getUiAction('pot[1].soil_moisture.disable'),
-          getUiAction('pot[1].soil_temperature.enable'),
-          getUiAction('pot[1].soil_temperature.disable'),
+        label: 'Датчики',
+        switches: [
+          sensorSwitch('Вазон 1 волога', 'pot0_soil_moisture_enabled', raw.pot[0].settings.soil_moisture_enabled, 'pot[0].soil_moisture.enable', 'pot[0].soil_moisture.disable'),
+          sensorSwitch('Вазон 1 температура', 'pot0_soil_temperature_enabled', raw.pot[0].settings.soil_temperature_enabled, 'pot[0].soil_temperature.enable', 'pot[0].soil_temperature.disable'),
+          sensorSwitch('Вазон 2 волога', 'pot1_soil_moisture_enabled', raw.pot[1].settings.soil_moisture_enabled, 'pot[1].soil_moisture.enable', 'pot[1].soil_moisture.disable'),
+          sensorSwitch('Вазон 2 температура', 'pot1_soil_temperature_enabled', raw.pot[1].settings.soil_temperature_enabled, 'pot[1].soil_temperature.enable', 'pot[1].soil_temperature.disable'),
         ],
         wide: true,
       },
-      { label: 'Поточні enable settings', pairs: [['P1 moisture', raw.pot[0].settings.soil_moisture_enabled ? 'on' : 'off'], ['P1 temp', raw.pot[0].settings.soil_temperature_enabled ? 'on' : 'off'], ['P2 moisture', raw.pot[1].settings.soil_moisture_enabled ? 'on' : 'off'], ['P2 temp', raw.pot[1].settings.soil_temperature_enabled ? 'on' : 'off']] },
       {
         label: 'Калібрування вологості',
         controls: [
