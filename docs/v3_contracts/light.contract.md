@@ -7,24 +7,31 @@ Scope: Vazon V3 Light Module
 ## 1. Purpose
 
 ```text
-Light Module керує локальним освітленням.
+Light Module controls the cabinet light output.
 ```
 
 ## 2. Role
 
 ```text
-Light Module є Local Climate Module.
+Light Module is a Local Actuator Module.
+
+Its role level is the same as the Main Fan Module:
+it owns one local actuator output and its module behavior.
+
+The difference from the Main Fan Module is maintenance behavior:
+light is forced ON during maintenance as service lighting.
 ```
 
 ## 3. Ownership
 
 ```text
-Light Module володіє тільки:
+Light Module owns only:
 
 light.state
 light.settings
 light.output
 light.status
+light.status_reason
 ```
 
 ## 4. Inputs
@@ -39,8 +46,8 @@ output confirmation if available
 ## 5. Global Dependencies
 
 ```text
-maintenance: used
-day_window: used
+maintenance: used as service-light force-on condition
+day_window: used in auto mode
 connection: ignored
 global_interlocks: used
 ```
@@ -55,6 +62,9 @@ manual_state = on / off
 ## 7. State
 
 ```text
+light.output = on / off / unknown
+light.status = ok / warning / error / inactive / unknown
+light.status_reason
 output_request = on / off
 last_command_result
 last_output_confirmed
@@ -63,36 +73,40 @@ last_output_confirmed
 ## 8. Rule Order
 
 ```text
-global -> local safety -> sensor validity -> mode/runtime -> manual -> auto -> output confirmation
+global -> maintenance service light -> local safety -> mode/runtime -> manual -> auto -> output confirmation
 ```
 
-## 9. Global Logic
+## 9. Maintenance Logic
 
 ```text
 if maintenance.active:
     output_request = on
-else:
-    continue normal light logic
+    status_reason = maintenance_service_light
+    skip normal auto/manual light logic
 ```
+
+Maintenance does not mean all actuators are forced off.
+
+For Light Module only, maintenance means service lighting is enabled.
 
 ## 10. Manual Logic
 
 ```text
-if mode = manual:
+if maintenance.active = false and mode = manual:
     output_request = manual_state
 ```
 
 ## 11. Auto Logic
 
 ```text
-if mode = auto:
+if maintenance.active = false and mode = auto:
     output_request = day_window.active
 ```
 
 ## 12. Output
 
 ```text
-Light Module керує тільки light output.
+Light Module controls only light output.
 
 output_request:
 on
@@ -102,11 +116,11 @@ off
 ## 13. Status
 
 ```text
-ok       — output відповідає очікуваному стану
-warning  — confirmation unavailable
-error    — output command failed або confirmation failed
-inactive — module disabled
-unknown  — output state ще не визначений після старту
+ok       - output command accepted and no error is active
+warning  - confirmation unavailable or maintenance_service_light is active
+error    - output command failed or confirmation failed
+inactive - module disabled
+unknown  - output state is not determined after startup
 ```
 
 ## 14. MQTT Surface
@@ -116,6 +130,7 @@ MQTT namespace: light
 
 Published by module:
 light.state
+light.output
 light.status
 light.status_reason
 light.settings
@@ -141,10 +156,10 @@ last_output_confirmed
 ## 16. Forbidden
 
 ```text
-Light Module не володіє day_window schedule.
-Light Module не змінює GlobalContext.
-Light Module не рахує system.status.
-Light Module не керує чужими outputs.
-Light Module не визначає day/night для інших модулів.
-Light Module не визначає MQTT topic strings.
+Light Module does not own day_window schedule.
+Light Module does not modify GlobalContext.
+Light Module does not calculate system.status.
+Light Module does not control other outputs.
+Light Module does not define day/night for other modules.
+Light Module does not define MQTT topic strings.
 ```
