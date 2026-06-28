@@ -327,8 +327,18 @@ body.has-panel .detail-panel {
 
 .close-button {
   box-shadow: none;
-  font-size: 24px;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.close-button::before {
+  content: "×";
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 400;
   line-height: 1;
+  transform: translateY(-1px);
 }
 
 .detail-body {
