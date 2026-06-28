@@ -131,9 +131,23 @@ function getFunctionSettingsCards(entity, uiState) {
     return [
       { label: 'Верх', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
       { label: 'Низ', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
-      { label: 'Warning limits', pairs: [['Temp low', show(raw.climate.settings.temperature_low_warn, '°')], ['Temp high', show(raw.climate.settings.temperature_high_warn, '°')], ['RH low', show(raw.climate.settings.humidity_low_warn, '%')], ['RH high', show(raw.climate.settings.humidity_high_warn, '%')]] },
-      { label: 'Delta limits', pairs: [['Temp warn', show(raw.climate.settings.temperature_delta_warn, '°')], ['Temp error', show(raw.climate.settings.temperature_delta_error, '°')]] },
-      { label: 'Команда', value: 'climate.set_settings', action: getUiAction('climate.thresholds.edit'), wide: true },
+      {
+        label: 'Warning limits',
+        fields: [
+          { label: 'Temp low', name: 'temperature_low_warn', value: raw.climate.settings.temperature_low_warn, unit: '°C', step: 1 },
+          { label: 'Temp high', name: 'temperature_high_warn', value: raw.climate.settings.temperature_high_warn, unit: '°C', step: 1 },
+          { label: 'RH low', name: 'humidity_low_warn', value: raw.climate.settings.humidity_low_warn, unit: '%', step: 1 },
+          { label: 'RH high', name: 'humidity_high_warn', value: raw.climate.settings.humidity_high_warn, unit: '%', step: 1 },
+        ],
+      },
+      {
+        label: 'Delta limits',
+        fields: [
+          { label: 'Temp warn', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
+          { label: 'Temp error', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
+        ],
+      },
+      { label: 'Пороги', value: 'climate.set_settings', controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')], wide: true },
     ];
   }
 
