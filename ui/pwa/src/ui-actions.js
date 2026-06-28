@@ -1,4 +1,9 @@
 const actionRegistry = {
+  'navigation.close': {
+    label: 'Відмінити',
+    command: null,
+  },
+
   'climate.thresholds.edit': {
     label: 'Змінити пороги',
     command: {
