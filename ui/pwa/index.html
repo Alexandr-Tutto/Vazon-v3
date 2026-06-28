@@ -3,51 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101820">
+  <meta name="theme-color" content="#edf3ef">
   <title>Vazon V3</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
-  <div id="app" class="app-shell">
-    <header class="app-header">
-      <div>
-        <div class="app-title">Vazon V3</div>
-        <div id="connectionText" class="app-subtitle">Mock state</div>
-      </div>
-      <button id="serviceButton" class="header-button" type="button">Сервіс</button>
-    </header>
-
-    <main>
-      <section id="overviewScreen" class="screen active-screen" aria-label="Огляд">
-        <section id="mainMessage" class="main-message status-unknown">
-          Немає актуальних даних
-        </section>
-
-        <section id="tileGrid" class="tile-grid" aria-label="Підсистеми"></section>
-
-        <section class="climate-summary" aria-label="Клімат">
-          <h2>Клімат</h2>
-          <div id="climateNumbers" class="number-grid"></div>
-        </section>
-      </section>
-
-      <section id="detailScreen" class="screen" aria-label="Деталі підсистеми">
-        <button id="backButton" class="text-button" type="button">← Огляд</button>
-        <h1 id="detailTitle">Підсистема</h1>
-        <div id="detailBody" class="detail-body"></div>
-      </section>
-
-      <section id="serviceScreen" class="screen" aria-label="Сервіс">
-        <button id="serviceBackButton" class="text-button" type="button">← Огляд</button>
-        <h1>Сервіс</h1>
-        <div class="service-panel">
-          <h2>Стан UI</h2>
-          <pre id="debugState" class="debug-state"></pre>
+  <main id="app" class="app">
+    <section id="overviewScreen" class="overview" aria-label="Огляд">
+      <div class="topbar">
+        <div>
+          <h1 class="brand">Тропіки</h1>
+          <p id="mainStatus" class="main-status">Немає актуальних даних</p>
         </div>
-      </section>
-    </main>
-  </div>
+
+        <button id="serviceButton" class="gear" type="button" aria-label="Налаштування" title="Налаштування">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.04.04a2 2 0 0 1-2.83 2.83l-.04-.04a1.8 1.8 0 0 0-2-.36 1.8 1.8 0 0 0-1 1.63V21a2 2 0 0 1-4 0v-.06a1.8 1.8 0 0 0-1-1.63 1.8 1.8 0 0 0-2 .36l-.04.04a2 2 0 0 1-2.83-2.83l.04-.04a1.8 1.8 0 0 0 .36-2 1.8 1.8 0 0 0-1.63-1H3a2 2 0 0 1 0-4h.06a1.8 1.8 0 0 0 1.63-1 1.8 1.8 0 0 0-.36-2l-.04-.04A2 2 0 0 1 7.12 4l.04.04a1.8 1.8 0 0 0 2 .36 1.8 1.8 0 0 0 1-1.63V2a2 2 0 0 1 4 0v.77a1.8 1.8 0 0 0 1 1.63 1.8 1.8 0 0 0 2-.36L17.06 4a2 2 0 0 1 2.83 2.83l-.04.04a1.8 1.8 0 0 0-.36 2 1.8 1.8 0 0 0 1.63 1H21a2 2 0 0 1 0 4h-.06a1.8 1.8 0 0 0-1.54 1.11Z"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="statusGrid" class="status-grid" aria-label="Стани систем"></div>
+
+      <div id="metricGrid" class="metric-grid" aria-label="Кліматичні дані"></div>
+    </section>
+
+    <section id="detailPanel" class="detail-panel" aria-label="Деталі підсистеми">
+      <div class="detail-header">
+        <div>
+          <span id="detailKicker" class="detail-kicker">Деталі</span>
+          <h2 id="detailTitle" class="detail-title">Підсистема</h2>
+        </div>
+        <button id="closeButton" class="close-button" type="button" aria-label="Закрити">×</button>
+      </div>
+      <div id="detailBody" class="detail-body"></div>
+    </section>
+  </main>
 
   <script type="module" src="./src/app.js"></script>
 </body>
