@@ -45,6 +45,25 @@ software boundary rules -> docs/software_architecture.md
 old-repository migration rules -> docs/migration_rules.md
 ```
 
+## Module Groups
+
+```text
+Sensor modules:
+    door
+    climate
+    pot
+
+Actuator modules:
+    light
+    fan
+    humidifier
+
+System service modules:
+    status_led
+    provisioning_button
+    uart_debug
+```
+
 ## Rules
 
 ```text
@@ -60,3 +79,4 @@ UI implementation is postponed.
 
 - 2026-06-28: seeded clean Vazon V3 repository with active source-of-truth documents only.
 - 2026-06-28: removed obsolete air sensor contract; climate contract owns both SHT31 sensors and climate aggregation.
+- 2026-06-28: simplified module groups: light, fan, and humidifier are actuator modules.
