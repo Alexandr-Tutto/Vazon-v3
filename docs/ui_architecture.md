@@ -139,6 +139,101 @@ system.status = unknown:
 Потрібна перевірка: <підсистема>
 ```
 
+## UI-visible labels / vocabulary
+
+Цей розділ визначає український user-visible текст для contract-owned англійських entity names, state keys, settings keys, command names і code identifiers.
+
+Це UI-only presentation mapping. Він не створює нових data fields, не змінює ownership і не переносить логіку з module contracts у UI.
+
+```text
+contracts / data model / MQTT registry:
+    own English technical names, state keys, setting keys, commands, MQTT names
+
+ui_architecture:
+    owns Ukrainian user-visible labels, screen text, action text, and status_reason explanations
+
+UI code:
+    implements this vocabulary; it must not invent parallel labels silently
+```
+
+### Common labels
+
+| Contract/code term | UI label |
+|---|---|
+| `status` | Стан |
+| `settings` | Налаштування |
+| `enabled` | Активний |
+| `disabled` | Пасивний |
+| `active` | Активний |
+| `inactive` | Пасивний |
+| `cancel` | Відмінити |
+| `close` | Закрити |
+
+### Entity labels
+
+| Contract entity | UI label |
+|---|---|
+| `system` | Система |
+| `climate` | Клімат |
+| `pot` | Ґрунт |
+| `humidifier` | Зволоження |
+| `light` | Світло |
+| `fan` | Вентиляція |
+| `connection` | Wi-Fi / зв'язок |
+| `door` | Двері |
+
+### Climate labels
+
+| Contract/code term | UI label |
+|---|---|
+| `sensor_0x44` | Верх |
+| `sensor_0x45` | Низ |
+| `temperature_c` | Температура |
+| `humidity_pct` | Вологість |
+| `temperature_delta_c` | Різниця температур |
+| `rh_delta_pct` | Різниця вологості |
+| `temperature_low_warn` | Нижній поріг температури |
+| `temperature_high_warn` | Верхній поріг температури |
+| `humidity_low_warn` | Нижній поріг вологості |
+| `humidity_high_warn` | Верхній поріг вологості |
+| `temperature_delta_warn` | Попередження різниці температур |
+| `temperature_delta_error` | Критична різниця температур |
+
+### Pot / soil labels
+
+| Contract/code term | UI label |
+|---|---|
+| `pot[0]` | Вазон 1 |
+| `pot[1]` | Вазон 2 |
+| `soil_moisture` | Волога |
+| `soil_temperature` | Температура |
+| `soil_moisture_enabled` | Волога: Активний / Пасивний |
+| `soil_temperature_enabled` | Температура: Активний / Пасивний |
+| `calibrate_soil_moisture` | Калібрування вологості |
+| `moisture_stale_timeout_sec` | Таймаут вологості |
+| `temperature_stale_timeout_sec` | Таймаут температури |
+| `temperature_low_warn_c` | Нижній поріг температури |
+| `temperature_high_warn_c` | Верхній поріг температури |
+
+### Humidifier labels
+
+| Contract/code term | UI label |
+|---|---|
+| `water_status` | Вода |
+| `water_status = present` | Вода є |
+| `water_status = empty` | Немає води |
+| `water_status = unknown` | Стан води невідомий |
+| `mist_output` | Пар |
+| `fan_output` | Локальний вентилятор |
+| `mode` | Режим |
+| `runtime` | Робота за часом |
+| `mist_power_level` | Потужність пару |
+| `manual_mist_duration_sec` | Ручний запуск пару |
+| `post_fan_sec` | Продув після пару |
+| `rh_start` | Старт за вологістю |
+| `rh_stop` | Стоп за вологістю |
+| `rh_delta` | Гістерезис вологості |
+
 ## Плитки підсистем
 
 На огляді є такі плитки:
@@ -354,5 +449,6 @@ RSSI як головне технічне число
 
 ## Журнал змін
 
+- 2026-06-28: додано ownership rule для українських user-visible labels і первинний UI vocabulary mapping без зміни module contracts.
 - 2026-06-27: додано UI-only mapping `status/status_reason -> текст/колір/дія`; MQTT namespace прибрано з UI-документа.
 - 2026-06-24, v3-humidifier-ui: UI синхронізовано з V3 сутністю `humidifier`; вода і вентилятор зволожувача не є окремими плитками головного екрана.
