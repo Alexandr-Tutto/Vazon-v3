@@ -76,7 +76,7 @@ function getFunctionStatusCards(entity, uiState) {
       { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
       { label: 'Різниця зон', pairs: [['Температура', show(raw.climate.temperature_delta_c, '°')], ['Вологість', show(raw.climate.rh_delta_pct, '%')]] },
       { label: 'Стан підсистеми', value: statusText(raw.climate) },
-      { label: 'Параметри', value: 'Пороги температури, вологості, stale timeout і delta thresholds', action: settingsOpenAction(entity), wide: true },
+      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
