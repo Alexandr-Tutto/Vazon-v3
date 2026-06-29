@@ -57,9 +57,12 @@ function settingsOpenAction(entity) {
   };
 }
 
-function sensorSwitch(label, name, enabled, enableActionId, disableActionId) {
+function sensorSwitch(label, name, enabled, enableActionId, disableActionId, passiveLabel = `${label}-відкл.`) {
   return {
     label,
+    activeLabel: label,
+    passiveLabel,
+    hideLabel: true,
     name,
     enabled,
     enableAction: getUiAction(enableActionId),
@@ -73,13 +76,15 @@ function potSettingsCard(index, label, pot) {
     sections: [
       {
         label: 'Датчики',
+        inlineSwitches: true,
         switches: [
-          sensorSwitch('Волога', `pot${index}_soil_moisture_enabled`, pot.settings.soil_moisture_enabled, `pot[${index}].soil_moisture.enable`, `pot[${index}].soil_moisture.disable`),
-          sensorSwitch('Температура', `pot${index}_soil_temperature_enabled`, pot.settings.soil_temperature_enabled, `pot[${index}].soil_temperature.enable`, `pot[${index}].soil_temperature.disable`),
+          sensorSwitch('Вологість', `pot${index}_soil_moisture_enabled`, pot.settings.soil_moisture_enabled, `pot[${index}].soil_moisture.enable`, `pot[${index}].soil_moisture.disable`, 'Вологість-відкл.'),
+          sensorSwitch('Температура', `pot${index}_soil_temperature_enabled`, pot.settings.soil_temperature_enabled, `pot[${index}].soil_temperature.enable`, `pot[${index}].soil_temperature.disable`, 'Температура-відкл.'),
         ],
       },
       {
         label: 'Калібрування вологості',
+        note: 'Помістіть датчик у відповідний стан ґрунту та натисніть Сухо, Норма або Мокро для запису точки калібрування.',
         controls: [
           getUiAction(`pot[${index}].calibrate_soil_moisture.dry`),
           getUiAction(`pot[${index}].calibrate_soil_moisture.normal`),
@@ -96,7 +101,7 @@ function potSettingsCard(index, label, pot) {
         ],
       },
       {
-        label: 'Параметри',
+        label: 'Розширені параметри',
         controls: [getUiAction(`pot[${index}].settings.edit`)],
       },
     ],
