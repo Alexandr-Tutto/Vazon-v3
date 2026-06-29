@@ -441,6 +441,25 @@ body.has-panel .detail-panel {
   font-size: 11px;
 }
 
+.card-section {
+  display: grid;
+  gap: 8px;
+}
+
+.card-section + .card-section {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.card-section h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .switch-value {
   align-content: space-between;
 }
