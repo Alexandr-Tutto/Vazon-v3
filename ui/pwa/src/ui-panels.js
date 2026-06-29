@@ -67,6 +67,43 @@ function sensorSwitch(label, name, enabled, enableActionId, disableActionId) {
   };
 }
 
+function potSettingsCard(index, label, pot) {
+  return {
+    label,
+    sections: [
+      {
+        label: 'Датчики',
+        switches: [
+          sensorSwitch('Волога', `pot${index}_soil_moisture_enabled`, pot.settings.soil_moisture_enabled, `pot[${index}].soil_moisture.enable`, `pot[${index}].soil_moisture.disable`),
+          sensorSwitch('Температура', `pot${index}_soil_temperature_enabled`, pot.settings.soil_temperature_enabled, `pot[${index}].soil_temperature.enable`, `pot[${index}].soil_temperature.disable`),
+        ],
+      },
+      {
+        label: 'Калібрування вологості',
+        controls: [
+          getUiAction(`pot[${index}].calibrate_soil_moisture.dry`),
+          getUiAction(`pot[${index}].calibrate_soil_moisture.normal`),
+          getUiAction(`pot[${index}].calibrate_soil_moisture.wet`),
+        ],
+      },
+      {
+        label: 'Пороги та таймаути',
+        pairs: [
+          ['Таймаут вологості', show(pot.settings.moisture_stale_timeout_sec, ' сек')],
+          ['Таймаут температури', show(pot.settings.temperature_stale_timeout_sec, ' сек')],
+          ['Темп. мін.', show(pot.settings.temperature_low_warn_c, '°')],
+          ['Темп. макс.', show(pot.settings.temperature_high_warn_c, '°')],
+        ],
+      },
+      {
+        label: 'Параметри',
+        controls: [getUiAction(`pot[${index}].settings.edit`)],
+      },
+    ],
+    wide: true,
+  };
+}
+
 function getFunctionStatusCards(entity, uiState) {
   const raw = uiState.raw;
 
@@ -84,7 +121,7 @@ function getFunctionStatusCards(entity, uiState) {
     return [
       { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Клас', raw.pot[0].soil_moisture.class], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
       { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Клас', raw.pot[1].soil_moisture.class], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
-      { label: 'Параметри', value: 'Sensor enable, calibration, stale timeout, temperature warn thresholds', action: settingsOpenAction(entity), wide: true },
+      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
@@ -161,30 +198,8 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'pot') {
     return [
-      {
-        label: 'Датчики',
-        switches: [
-          sensorSwitch('Вазон 1 волога', 'pot0_soil_moisture_enabled', raw.pot[0].settings.soil_moisture_enabled, 'pot[0].soil_moisture.enable', 'pot[0].soil_moisture.disable'),
-          sensorSwitch('Вазон 1 температура', 'pot0_soil_temperature_enabled', raw.pot[0].settings.soil_temperature_enabled, 'pot[0].soil_temperature.enable', 'pot[0].soil_temperature.disable'),
-          sensorSwitch('Вазон 2 волога', 'pot1_soil_moisture_enabled', raw.pot[1].settings.soil_moisture_enabled, 'pot[1].soil_moisture.enable', 'pot[1].soil_moisture.disable'),
-          sensorSwitch('Вазон 2 температура', 'pot1_soil_temperature_enabled', raw.pot[1].settings.soil_temperature_enabled, 'pot[1].soil_temperature.enable', 'pot[1].soil_temperature.disable'),
-        ],
-        wide: true,
-      },
-      {
-        label: 'Калібрування вологості',
-        controls: [
-          getUiAction('pot[0].calibrate_soil_moisture.dry'),
-          getUiAction('pot[0].calibrate_soil_moisture.normal'),
-          getUiAction('pot[0].calibrate_soil_moisture.wet'),
-          getUiAction('pot[1].calibrate_soil_moisture.dry'),
-          getUiAction('pot[1].calibrate_soil_moisture.normal'),
-          getUiAction('pot[1].calibrate_soil_moisture.wet'),
-        ],
-        wide: true,
-      },
-      { label: 'Stale / temperature warn', pairs: [['Moisture stale', show(raw.pot[0].settings.moisture_stale_timeout_sec, ' сек')], ['Temp stale', show(raw.pot[0].settings.temperature_stale_timeout_sec, ' сек')], ['Temp low', show(raw.pot[0].settings.temperature_low_warn_c, '°')], ['Temp high', show(raw.pot[0].settings.temperature_high_warn_c, '°')]] },
-      { label: 'Set settings', controls: [getUiAction('pot[0].settings.edit'), getUiAction('pot[1].settings.edit')] },
+      potSettingsCard(0, 'Вазон 1', raw.pot[0]),
+      potSettingsCard(1, 'Вазон 2', raw.pot[1]),
     ];
   }
 
