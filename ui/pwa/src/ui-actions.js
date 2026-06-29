@@ -101,6 +101,14 @@ const actionRegistry = {
       args: { point: 'wet' },
     },
   },
+  'pot[0].calibrate_soil_moisture.reset': {
+    label: 'Скинути',
+    command: {
+      target: 'pot/0',
+      cmd: 'calibrate_soil_moisture',
+      args: { point: 'reset' },
+    },
+  },
   'pot[1].calibrate_soil_moisture.dry': {
     label: 'Сухо',
     command: {
@@ -123,6 +131,14 @@ const actionRegistry = {
       target: 'pot/1',
       cmd: 'calibrate_soil_moisture',
       args: { point: 'wet' },
+    },
+  },
+  'pot[1].calibrate_soil_moisture.reset': {
+    label: 'Скинути',
+    command: {
+      target: 'pot/1',
+      cmd: 'calibrate_soil_moisture',
+      args: { point: 'reset' },
     },
   },
   'pot[0].settings.edit': {
