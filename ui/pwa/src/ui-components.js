@@ -157,7 +157,7 @@ function renderSwitchToggle(toggle) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = `switch-toggle ${toggle.enabled ? 'is-active' : 'is-passive'}`;
-  button.textContent = toggle.enabled ? 'Активний' : 'Пасивний';
+  button.textContent = toggle.enabled ? (toggle.activeLabel || toggle.label) : (toggle.passiveLabel || `${toggle.label}-відкл.`);
   button.dataset.action = toggle.enabled ? toggle.disableAction.id : toggle.enableAction.id;
   button.dataset.switchName = toggle.name;
 
@@ -172,12 +172,15 @@ function renderSwitchToggle(toggle) {
 
 function renderSwitch(switchItem) {
   const item = document.createElement('div');
-  item.className = 'mini-value switch-value';
+  item.className = `mini-value switch-value${switchItem.hideLabel ? ' switch-value-compact' : ''}`;
 
-  const label = document.createElement('span');
-  label.textContent = switchItem.label;
+  if (!switchItem.hideLabel) {
+    const label = document.createElement('span');
+    label.textContent = switchItem.label;
+    item.append(label);
+  }
 
-  item.append(label, renderSwitchToggle(switchItem));
+  item.append(renderSwitchToggle(switchItem));
   return item;
 }
 
@@ -194,12 +197,19 @@ function renderPair(pair) {
 
 function renderSection(section) {
   const wrap = document.createElement('section');
-  wrap.className = 'card-section';
+  wrap.className = `card-section${section.inlineSwitches ? ' card-section-inline' : ''}`;
 
   if (section.label) {
     const heading = document.createElement('h3');
     heading.textContent = section.label;
     wrap.append(heading);
+  }
+
+  if (section.note) {
+    const note = document.createElement('p');
+    note.className = 'section-note';
+    note.textContent = section.note;
+    wrap.append(note);
   }
 
   if (section.pairs) {
