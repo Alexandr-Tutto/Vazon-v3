@@ -107,7 +107,7 @@ export function renderMetricCard(title, rows) {
 export function renderActionButton(action) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'ghost-control';
+  button.className = `ghost-control${action.inline ? ' instruction-action' : ''}`;
   button.textContent = action.label;
   button.dataset.action = action.id;
 
@@ -195,12 +195,28 @@ function renderPair(pair) {
   return mini;
 }
 
+function renderInstructionPart(part) {
+  if (typeof part === 'string') {
+    return document.createTextNode(part);
+  }
+
+  if (part.action) {
+    return renderActionButton({ ...part.action, inline: true });
+  }
+
+  return document.createTextNode(part.text || '');
+}
+
 function renderInstructionList(instructions) {
   const list = document.createElement('ol');
   list.className = 'instruction-list';
   instructions.forEach((item) => {
     const listItem = document.createElement('li');
-    listItem.textContent = item;
+    if (Array.isArray(item)) {
+      item.forEach((part) => listItem.append(renderInstructionPart(part)));
+    } else {
+      listItem.textContent = item;
+    }
     list.append(listItem);
   });
   return list;
@@ -223,7 +239,11 @@ function renderSection(section) {
   if (section.note) {
     const note = document.createElement('p');
     note.className = 'section-note';
-    note.textContent = section.note;
+    if (Array.isArray(section.note)) {
+      section.note.forEach((part) => note.append(renderInstructionPart(part)));
+    } else {
+      note.textContent = section.note;
+    }
     wrap.append(note);
   }
 
@@ -292,7 +312,11 @@ export function renderCard(card) {
     if (card.note) {
       const note = document.createElement('p');
       note.className = 'instruction-note';
-      note.textContent = card.note;
+      if (Array.isArray(card.note)) {
+        card.note.forEach((part) => note.append(renderInstructionPart(part)));
+      } else {
+        note.textContent = card.note;
+      }
       article.append(note);
     }
   } else {
