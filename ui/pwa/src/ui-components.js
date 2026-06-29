@@ -195,6 +195,17 @@ function renderPair(pair) {
   return mini;
 }
 
+function renderInstructionList(instructions) {
+  const list = document.createElement('ol');
+  list.className = 'instruction-list';
+  instructions.forEach((item) => {
+    const listItem = document.createElement('li');
+    listItem.textContent = item;
+    list.append(listItem);
+  });
+  return list;
+}
+
 function renderSection(section) {
   const wrap = document.createElement('section');
   wrap.className = `card-section${section.inlineSwitches ? ' card-section-inline' : ''}`;
@@ -203,6 +214,10 @@ function renderSection(section) {
     const heading = document.createElement('h3');
     heading.textContent = section.label;
     wrap.append(heading);
+  }
+
+  if (section.instructions) {
+    wrap.append(renderInstructionList(section.instructions));
   }
 
   if (section.note) {
@@ -272,14 +287,7 @@ export function renderCard(card) {
     card.controls.forEach((control) => row.append(renderActionButton(control)));
     article.append(row);
   } else if (card.instructions) {
-    const list = document.createElement('ol');
-    list.className = 'instruction-list';
-    card.instructions.forEach((item) => {
-      const listItem = document.createElement('li');
-      listItem.textContent = item;
-      list.append(listItem);
-    });
-    article.append(list);
+    article.append(renderInstructionList(card.instructions));
 
     if (card.note) {
       const note = document.createElement('p');
