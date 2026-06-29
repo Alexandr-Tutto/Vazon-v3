@@ -181,6 +181,51 @@ function renderSwitch(switchItem) {
   return item;
 }
 
+function renderPair(pair) {
+  const mini = document.createElement('div');
+  mini.className = 'mini-value';
+  const miniLabel = document.createElement('span');
+  miniLabel.textContent = pair[0];
+  const value = document.createElement('b');
+  value.textContent = pair[1];
+  mini.append(miniLabel, value);
+  return mini;
+}
+
+function renderSection(section) {
+  const wrap = document.createElement('section');
+  wrap.className = 'card-section';
+
+  if (section.label) {
+    const heading = document.createElement('h3');
+    heading.textContent = section.label;
+    wrap.append(heading);
+  }
+
+  if (section.pairs) {
+    const pairWrap = document.createElement('div');
+    pairWrap.className = 'value-pair';
+    section.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
+    wrap.append(pairWrap);
+  }
+
+  if (section.switches) {
+    const switchWrap = document.createElement('div');
+    switchWrap.className = 'value-pair';
+    section.switches.forEach((switchItem) => switchWrap.append(renderSwitch(switchItem)));
+    wrap.append(switchWrap);
+  }
+
+  if (section.controls) {
+    const row = document.createElement('div');
+    row.className = 'control-row';
+    section.controls.forEach((control) => row.append(renderActionButton(control)));
+    wrap.append(row);
+  }
+
+  return wrap;
+}
+
 export function renderCard(card) {
   const article = document.createElement('article');
   article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
@@ -189,7 +234,9 @@ export function renderCard(card) {
   label.textContent = card.label;
   article.append(label);
 
-  if (card.fields) {
+  if (card.sections) {
+    card.sections.forEach((section) => article.append(renderSection(section)));
+  } else if (card.fields) {
     const fieldWrap = document.createElement('div');
     fieldWrap.className = 'value-pair';
     card.fields.forEach((field) => fieldWrap.append(renderField(field)));
@@ -202,16 +249,7 @@ export function renderCard(card) {
   } else if (card.pairs) {
     const pairWrap = document.createElement('div');
     pairWrap.className = 'value-pair';
-    card.pairs.forEach((pair) => {
-      const mini = document.createElement('div');
-      mini.className = 'mini-value';
-      const miniLabel = document.createElement('span');
-      miniLabel.textContent = pair[0];
-      const value = document.createElement('b');
-      value.textContent = pair[1];
-      mini.append(miniLabel, value);
-      pairWrap.append(mini);
-    });
+    card.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
     article.append(pairWrap);
   } else if (card.controls) {
     if (card.value) {
