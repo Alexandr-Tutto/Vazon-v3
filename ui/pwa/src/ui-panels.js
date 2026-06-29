@@ -119,8 +119,8 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'pot') {
     return [
-      { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Клас', raw.pot[0].soil_moisture.class], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
-      { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Клас', raw.pot[1].soil_moisture.class], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
+      { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
+      { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
