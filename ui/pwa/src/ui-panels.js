@@ -70,6 +70,10 @@ function sensorSwitch(label, name, enabled, enableActionId, disableActionId, pas
   };
 }
 
+function potCalibrationAction(index, point) {
+  return getUiAction(`pot[${index}].calibrate_soil_moisture.${point}`);
+}
+
 function potSettingsCard(index, label, pot) {
   return {
     label,
@@ -85,17 +89,11 @@ function potSettingsCard(index, label, pot) {
       {
         label: 'Калібрування вологості',
         instructions: [
-          'Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть "Сухо".',
-          'Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть "Норма".',
-          'Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть "Мокро".',
+          ['Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'dry') }, '.'],
+          ['Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'normal') }, '.'],
+          ['Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'wet') }, '.'],
         ],
-        note: 'Калібрування закінчено. Переставте датчик у бажаний вазон обережно, \u043d\u0435 \u043f\u043e\u0448\u043a\u043e\u0434\u0436\u0443\u044e\u0447\u0438 \u043a\u043e\u0440\u0456\u043d\u043d\u044f. Якщо на якомусь етапі помилились, натисніть "Скинути" і повторіть процедуру із сухого грунту.',
-        controls: [
-          getUiAction(`pot[${index}].calibrate_soil_moisture.dry`),
-          getUiAction(`pot[${index}].calibrate_soil_moisture.normal`),
-          getUiAction(`pot[${index}].calibrate_soil_moisture.wet`),
-          getUiAction(`pot[${index}].calibrate_soil_moisture.reset`),
-        ],
+        note: ['Калібрування закінчено. Переставте датчик у бажаний вазон обережно, не пошкоджуючи коріння. Якщо на якомусь етапі помилились, натисніть ', { action: potCalibrationAction(index, 'reset') }, ' і повторіть процедуру із сухого грунту.'],
       },
       {
         label: 'Пороги та таймаути',
