@@ -14,7 +14,7 @@ const actionRegistry = {
   },
 
   'pot[0].soil_moisture.enable': {
-    label: 'Вазон 1 волога ON',
+    label: 'Активувати вологу',
     command: {
       target: 'pot/0',
       cmd: 'set_soil_moisture_enabled',
@@ -22,7 +22,7 @@ const actionRegistry = {
     },
   },
   'pot[0].soil_moisture.disable': {
-    label: 'Вазон 1 волога OFF',
+    label: 'Вимкнути вологу',
     command: {
       target: 'pot/0',
       cmd: 'set_soil_moisture_enabled',
@@ -30,7 +30,7 @@ const actionRegistry = {
     },
   },
   'pot[0].soil_temperature.enable': {
-    label: 'Вазон 1 темп. ON',
+    label: 'Активувати температуру',
     command: {
       target: 'pot/0',
       cmd: 'set_soil_temperature_enabled',
@@ -38,7 +38,7 @@ const actionRegistry = {
     },
   },
   'pot[0].soil_temperature.disable': {
-    label: 'Вазон 1 темп. OFF',
+    label: 'Вимкнути температуру',
     command: {
       target: 'pot/0',
       cmd: 'set_soil_temperature_enabled',
@@ -46,7 +46,7 @@ const actionRegistry = {
     },
   },
   'pot[1].soil_moisture.enable': {
-    label: 'Вазон 2 волога ON',
+    label: 'Активувати вологу',
     command: {
       target: 'pot/1',
       cmd: 'set_soil_moisture_enabled',
@@ -54,7 +54,7 @@ const actionRegistry = {
     },
   },
   'pot[1].soil_moisture.disable': {
-    label: 'Вазон 2 волога OFF',
+    label: 'Вимкнути вологу',
     command: {
       target: 'pot/1',
       cmd: 'set_soil_moisture_enabled',
@@ -62,7 +62,7 @@ const actionRegistry = {
     },
   },
   'pot[1].soil_temperature.enable': {
-    label: 'Вазон 2 темп. ON',
+    label: 'Активувати температуру',
     command: {
       target: 'pot/1',
       cmd: 'set_soil_temperature_enabled',
@@ -70,7 +70,7 @@ const actionRegistry = {
     },
   },
   'pot[1].soil_temperature.disable': {
-    label: 'Вазон 2 темп. OFF',
+    label: 'Вимкнути температуру',
     command: {
       target: 'pot/1',
       cmd: 'set_soil_temperature_enabled',
@@ -78,7 +78,7 @@ const actionRegistry = {
     },
   },
   'pot[0].calibrate_soil_moisture.dry': {
-    label: 'P1 сухо',
+    label: 'Сухо',
     command: {
       target: 'pot/0',
       cmd: 'calibrate_soil_moisture',
@@ -86,7 +86,7 @@ const actionRegistry = {
     },
   },
   'pot[0].calibrate_soil_moisture.normal': {
-    label: 'P1 норма',
+    label: 'Норма',
     command: {
       target: 'pot/0',
       cmd: 'calibrate_soil_moisture',
@@ -94,7 +94,7 @@ const actionRegistry = {
     },
   },
   'pot[0].calibrate_soil_moisture.wet': {
-    label: 'P1 мокро',
+    label: 'Мокро',
     command: {
       target: 'pot/0',
       cmd: 'calibrate_soil_moisture',
@@ -102,7 +102,7 @@ const actionRegistry = {
     },
   },
   'pot[1].calibrate_soil_moisture.dry': {
-    label: 'P2 сухо',
+    label: 'Сухо',
     command: {
       target: 'pot/1',
       cmd: 'calibrate_soil_moisture',
@@ -110,7 +110,7 @@ const actionRegistry = {
     },
   },
   'pot[1].calibrate_soil_moisture.normal': {
-    label: 'P2 норма',
+    label: 'Норма',
     command: {
       target: 'pot/1',
       cmd: 'calibrate_soil_moisture',
@@ -118,7 +118,7 @@ const actionRegistry = {
     },
   },
   'pot[1].calibrate_soil_moisture.wet': {
-    label: 'P2 мокро',
+    label: 'Мокро',
     command: {
       target: 'pot/1',
       cmd: 'calibrate_soil_moisture',
@@ -126,7 +126,7 @@ const actionRegistry = {
     },
   },
   'pot[0].settings.edit': {
-    label: 'P1 settings',
+    label: 'Змінити параметри',
     command: {
       target: 'pot/0',
       cmd: 'set_settings',
@@ -134,7 +134,7 @@ const actionRegistry = {
     },
   },
   'pot[1].settings.edit': {
-    label: 'P2 settings',
+    label: 'Змінити параметри',
     command: {
       target: 'pot/1',
       cmd: 'set_settings',
@@ -175,7 +175,7 @@ const actionRegistry = {
     },
   },
   'humidifier.manual_mist': {
-    label: 'Пуск',
+    label: 'Пуск пару',
     command: {
       target: 'humidifier',
       cmd: 'manual_mist',
@@ -215,7 +215,7 @@ const actionRegistry = {
     },
   },
   'humidifier.settings.edit': {
-    label: 'Змінити',
+    label: 'Змінити параметри',
     command: {
       target: 'humidifier',
       cmd: 'set_settings',
@@ -225,116 +225,60 @@ const actionRegistry = {
 
   'light.mode.auto': {
     label: 'Авто',
-    command: {
-      target: 'light',
-      cmd: 'set_mode',
-      args: { mode: 'auto' },
-    },
+    command: { target: 'light', cmd: 'set_mode', args: { mode: 'auto' } },
   },
   'light.mode.manual': {
     label: 'Ручний',
-    command: {
-      target: 'light',
-      cmd: 'set_mode',
-      args: { mode: 'manual' },
-    },
+    command: { target: 'light', cmd: 'set_mode', args: { mode: 'manual' } },
   },
   'light.manual.on': {
     label: 'Увімкнути',
-    command: {
-      target: 'light',
-      cmd: 'set_manual_state',
-      args: { state: 'on' },
-    },
+    command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'on' } },
   },
   'light.manual.off': {
     label: 'Вимкнути',
-    command: {
-      target: 'light',
-      cmd: 'set_manual_state',
-      args: { state: 'off' },
-    },
+    command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'off' } },
   },
   'light.settings.edit': {
-    label: 'Змінити',
-    command: {
-      target: 'light',
-      cmd: 'set_settings',
-      args: {},
-    },
+    label: 'Змінити графік',
+    command: { target: 'light', cmd: 'set_settings', args: {} },
   },
 
   'fan.mode.auto': {
     label: 'Авто',
-    command: {
-      target: 'fan',
-      cmd: 'set_mode',
-      args: { mode: 'auto' },
-    },
+    command: { target: 'fan', cmd: 'set_mode', args: { mode: 'auto' } },
   },
   'fan.mode.manual': {
     label: 'Ручний',
-    command: {
-      target: 'fan',
-      cmd: 'set_mode',
-      args: { mode: 'manual' },
-    },
+    command: { target: 'fan', cmd: 'set_mode', args: { mode: 'manual' } },
   },
   'fan.runtime.day': {
     label: 'День',
-    command: {
-      target: 'fan',
-      cmd: 'set_runtime',
-      args: { runtime: 'day' },
-    },
+    command: { target: 'fan', cmd: 'set_runtime', args: { runtime: 'day' } },
   },
   'fan.runtime.always': {
     label: 'Завжди',
-    command: {
-      target: 'fan',
-      cmd: 'set_runtime',
-      args: { runtime: 'always' },
-    },
+    command: { target: 'fan', cmd: 'set_runtime', args: { runtime: 'always' } },
   },
   'fan.strategy.delta': {
     label: 'Delta',
-    command: {
-      target: 'fan',
-      cmd: 'set_auto_strategy',
-      args: { auto_strategy: 'delta' },
-    },
+    command: { target: 'fan', cmd: 'set_auto_strategy', args: { auto_strategy: 'delta' } },
   },
   'fan.strategy.timer': {
     label: 'Timer',
-    command: {
-      target: 'fan',
-      cmd: 'set_auto_strategy',
-      args: { auto_strategy: 'timer' },
-    },
+    command: { target: 'fan', cmd: 'set_auto_strategy', args: { auto_strategy: 'timer' } },
   },
   'fan.manual_run': {
     label: 'Пуск',
-    command: {
-      target: 'fan',
-      cmd: 'manual_run',
-      args: {},
-    },
+    command: { target: 'fan', cmd: 'manual_run', args: {} },
   },
   'fan.stop': {
     label: 'Стоп',
-    command: {
-      target: 'fan',
-      cmd: 'stop',
-      args: {},
-    },
+    command: { target: 'fan', cmd: 'stop', args: {} },
   },
   'fan.settings.edit': {
-    label: 'Змінити',
-    command: {
-      target: 'fan',
-      cmd: 'set_settings',
-      args: {},
-    },
+    label: 'Змінити параметри',
+    command: { target: 'fan', cmd: 'set_settings', args: {} },
   },
 
   'service.update.check': {
@@ -352,18 +296,8 @@ const actionRegistry = {
 };
 
 export function getUiAction(id) {
-  const action = actionRegistry[id];
-
-  if (!action) {
-    return {
-      id,
-      label: id,
-      command: null,
-    };
-  }
-
   return {
     id,
-    ...action,
+    ...actionRegistry[id],
   };
 }
