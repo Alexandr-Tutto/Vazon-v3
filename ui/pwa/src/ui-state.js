@@ -29,6 +29,25 @@ function makeDetail(title, status, summary, message, rows) {
   return { title, status, summary, message, rows };
 }
 
+function humidifierSummary(humidifier) {
+  const reasons = {
+    door_open: '- заблоковано через відкриті двері',
+    no_water: '- немає води',
+    water_unknown: '- стан води невідомий',
+    manual_mode: '- ручний режим',
+  };
+
+  if (humidifier.status_reason) {
+    return reasons[humidifier.status_reason] || `- ${humidifier.status_reason}`;
+  }
+
+  if (humidifier.mist_output === 'on') {
+    return '- працює';
+  }
+
+  return '- норма';
+}
+
 export function createUiState(raw) {
   const system = {
     ...raw.system,
@@ -80,11 +99,10 @@ export function createUiState(raw) {
       { label: 'pot[1] temperature', value: valueOrUnknown(raw.pot[1].soil_temperature.temperature_c, '°C') },
     ]),
 
-    humidifier: makeDetail('Зволоження', raw.humidifier.status, raw.humidifier.status_reason || 'Стан зволоження', 'Вода і локальний вентилятор зволожувача належать цій підсистемі.', [
+    humidifier: makeDetail('Зволоження', raw.humidifier.status, humidifierSummary(raw.humidifier), '', [
       { label: 'Вода', value: raw.humidifier.water_status },
-      { label: 'Mist', value: raw.humidifier.mist_output },
-      { label: 'Local fan', value: raw.humidifier.fan_output },
-      { label: 'Mode', value: raw.humidifier.settings.mode },
+      { label: 'Пар', value: raw.humidifier.mist_output },
+      { label: 'Режим', value: raw.humidifier.settings.mode },
     ]),
 
     light: makeDetail('Світло', raw.light.status, raw.light.output, 'Світло є actuator-модулем. При обслуговуванні працює як сервісне підсвічування.', [
