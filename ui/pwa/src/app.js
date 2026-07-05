@@ -91,6 +91,57 @@ function closePanel() {
   document.body.classList.remove('has-panel');
 }
 
+function readStaticCommandArgs(actionButton) {
+  if (!actionButton.dataset.commandArgs) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(actionButton.dataset.commandArgs);
+  } catch {
+    return {};
+  }
+}
+
+function readFieldArgs(actionButton) {
+  const scope = actionButton.closest('.card-section') || actionButton.closest('.panel-card');
+
+  if (!scope) {
+    return {};
+  }
+
+  return Array.from(scope.querySelectorAll('input[name]')).reduce((args, input) => {
+    args[input.name] = input.value;
+    return args;
+  }, {});
+}
+
+function buildCommandPayload(actionButton) {
+  return {
+    target: actionButton.dataset.commandTarget,
+    cmd: actionButton.dataset.commandName,
+    args: {
+      ...readStaticCommandArgs(actionButton),
+      ...readFieldArgs(actionButton),
+    },
+  };
+}
+
+function emitCommand(actionButton) {
+  const payload = buildCommandPayload(actionButton);
+
+  if (!payload.target || !payload.cmd) {
+    return false;
+  }
+
+  elements.detailBody.dispatchEvent(new CustomEvent('vazon-command', {
+    bubbles: true,
+    detail: payload,
+  }));
+
+  return true;
+}
+
 function handlePanelClick(event) {
   const actionButton = event.target.closest('[data-action]');
 
@@ -114,7 +165,10 @@ function handlePanelClick(event) {
 
   if (action === 'navigation.close') {
     closePanel();
+    return;
   }
+
+  emitCommand(actionButton);
 }
 
 function registerServiceWorker() {
