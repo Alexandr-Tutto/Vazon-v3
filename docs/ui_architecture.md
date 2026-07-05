@@ -238,7 +238,6 @@ UI code:
 | `mode` | Режим |
 | `mode = auto` | авто |
 | `mode = manual` | ручний |
-| `mode = off` | вимкнено |
 | `runtime` | Час роботи |
 | `runtime = day` | денний |
 | `runtime = always` | постійний |

@@ -36,7 +36,6 @@ function humidifierModeText(settings) {
   const modeLabels = {
     auto: 'авто',
     manual: 'ручний',
-    off: 'вимкнено',
     unknown: 'невідомо',
   };
 
