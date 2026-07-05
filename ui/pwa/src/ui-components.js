@@ -119,6 +119,7 @@ export function renderActionButton(action) {
   if (action.command) {
     button.dataset.commandTarget = action.command.target;
     button.dataset.commandName = action.command.cmd;
+    button.dataset.commandArgs = JSON.stringify(action.command.args || {});
   }
 
   return button;
@@ -172,6 +173,7 @@ function renderSwitchToggle(toggle) {
   if (action.command) {
     button.dataset.commandTarget = action.command.target;
     button.dataset.commandName = action.command.cmd;
+    button.dataset.commandArgs = JSON.stringify(action.command.args || {});
   }
 
   return button;
