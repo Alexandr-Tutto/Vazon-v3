@@ -256,7 +256,7 @@ const actionRegistry = {
     command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'off' } },
   },
   'light.settings.edit': {
-    label: 'Змінити графік',
+    label: 'Змінити',
     command: { target: 'light', cmd: 'set_settings', args: {} },
   },
 
