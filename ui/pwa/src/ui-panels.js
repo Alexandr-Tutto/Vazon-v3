@@ -283,10 +283,8 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'light') {
     return [
-      { label: 'Поточний стан', pairs: [['Вихід', outputText(raw.light.output)], ['Режим', modeText(raw.light.settings.mode)], ['Ручний стан', manualStateText(raw.light.settings.manual_state)]] },
+      { label: 'Режим роботи', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto')] },
       { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off], ['Активний', yesNoText(raw.system.global_context.day_window.active)]] },
-      { label: 'Підтвердження', pairs: [['Остання команда', commandResultText(raw.light.last_command_result)], ['Вихід підтверджено', confirmationText(raw.light.last_output_confirmed)]] },
-      { label: 'Стан підсистеми', value: statusText(raw.light), wide: true },
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
