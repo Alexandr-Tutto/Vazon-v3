@@ -124,6 +124,13 @@ export function renderActionButton(action) {
   return button;
 }
 
+function renderControlRow(controls) {
+  const row = document.createElement('div');
+  row.className = 'control-row';
+  controls.forEach((control) => row.append(renderActionButton(control)));
+  return row;
+}
+
 function renderField(field) {
   const item = document.createElement('label');
   item.className = 'mini-value';
@@ -262,10 +269,7 @@ function renderSection(section) {
   }
 
   if (section.controls) {
-    const row = document.createElement('div');
-    row.className = 'control-row';
-    section.controls.forEach((control) => row.append(renderActionButton(control)));
-    wrap.append(row);
+    wrap.append(renderControlRow(section.controls));
   }
 
   return wrap;
@@ -286,6 +290,9 @@ export function renderCard(card) {
     fieldWrap.className = 'value-pair';
     card.fields.forEach((field) => fieldWrap.append(renderField(field)));
     article.append(fieldWrap);
+    if (card.controls) {
+      article.append(renderControlRow(card.controls));
+    }
   } else if (card.switches) {
     const switchWrap = document.createElement('div');
     switchWrap.className = 'value-pair';
@@ -305,10 +312,7 @@ export function renderCard(card) {
       value.textContent = card.value;
       article.append(value);
     }
-    const row = document.createElement('div');
-    row.className = 'control-row';
-    card.controls.forEach((control) => row.append(renderActionButton(control)));
-    article.append(row);
+    article.append(renderControlRow(card.controls));
   } else if (card.instructions) {
     article.append(renderInstructionList(card.instructions));
 
