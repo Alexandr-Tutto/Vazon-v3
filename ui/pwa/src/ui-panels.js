@@ -27,6 +27,33 @@ function soilClassText(value) {
   return labels[value] || value || 'невідомо';
 }
 
+function humidifierModeText(settings) {
+  const runtimeLabels = {
+    day: 'Денний',
+    always: 'Постійний',
+    unknown: 'Невідомий',
+  };
+  const modeLabels = {
+    auto: 'авто',
+    manual: 'ручний',
+    off: 'вимкнено',
+    unknown: 'невідомо',
+  };
+
+  return `${runtimeLabels[settings.runtime] || settings.runtime || 'Невідомий'}-${modeLabels[settings.mode] || settings.mode || 'невідомо'}`;
+}
+
+function mistPowerText(value) {
+  const labels = {
+    low: 'низька інтенсивність',
+    medium: 'середня інтенсивність',
+    high: 'висока інтенсивність',
+    unknown: 'невідома інтенсивність',
+  };
+
+  return `Випаровування - ${labels[value] || value || 'невідома інтенсивність'}`;
+}
+
 function potStatusCard(index, pot) {
   return {
     label: `Вазон ${index + 1} - ${soilClassText(pot.soil_moisture.class)}`,
@@ -158,7 +185,7 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Режим', pairs: [['Mode', raw.humidifier.settings.mode], ['Runtime', raw.humidifier.settings.runtime], ['Power', raw.humidifier.settings.mist_power_level]] },
+      { label: 'Режим', pairs: [['Режим роботи', humidifierModeText(raw.humidifier.settings)], ['Потужність', mistPowerText(raw.humidifier.settings.mist_power_level)]] },
       { label: 'Пороги', pairs: [['RH start', show(raw.humidifier.settings.rh_start, '%')], ['RH stop', show(raw.humidifier.settings.rh_stop, '%')], ['RH delta', show(raw.humidifier.settings.rh_delta, '%')]] },
       { label: 'Цикл', pairs: [['Manual mist', show(raw.humidifier.settings.manual_mist_duration_sec, ' сек')], ['Post fan', show(raw.humidifier.settings.post_fan_sec, ' сек')]] },
       { label: 'Параметри', value: 'Mode, runtime, manual mist, stop, mist power, RH thresholds, post fan', action: settingsOpenAction(entity), wide: true },
