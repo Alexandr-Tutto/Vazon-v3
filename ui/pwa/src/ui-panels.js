@@ -213,6 +213,20 @@ function potCalibrationAction(index, point) {
   return getUiAction(`pot[${index}].calibrate_soil_moisture.${point}`);
 }
 
+function timeField(label, name, value) {
+  return {
+    label,
+    name,
+    value,
+    type: 'time',
+    inputMode: 'numeric',
+    pattern: '[0-9:]*',
+    maxLength: 5,
+    size: 5,
+    width: '7ch',
+  };
+}
+
 function potSettingsCard(index, label, pot) {
   return {
     label,
@@ -285,12 +299,18 @@ function getFunctionStatusCards(entity, uiState) {
       {
         label: 'Режим роботи',
         sections: [
-          { label: 'Режим', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto')] },
-          { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]] },
+          { label: 'Режим', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto'), getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
+          {
+            label: 'Графік',
+            fields: [
+              timeField('Увімкнення', 'time_on', raw.system.global_context.day_window.time_on),
+              timeField('Вимкнення', 'time_off', raw.system.global_context.day_window.time_off),
+            ],
+            controls: [getUiAction('light.settings.edit')],
+          },
         ],
         wide: true,
       },
-      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
@@ -382,12 +402,7 @@ function getFunctionSettingsCards(entity, uiState) {
   }
 
   if (entity === 'light') {
-    return [
-      { label: 'Режим', controls: [getUiAction('light.mode.auto'), getUiAction('light.mode.manual')] },
-      { label: 'Ручний стан', controls: [getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
-      { label: 'Поточні налаштування', pairs: [['Режим', modeText(raw.light.settings.mode)], ['Ручний стан', manualStateText(raw.light.settings.manual_state)]] },
-      { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]], action: getUiAction('light.settings.edit') },
-    ];
+    return [];
   }
 
   if (entity === 'fan') {
