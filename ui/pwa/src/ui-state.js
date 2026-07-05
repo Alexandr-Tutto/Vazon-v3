@@ -29,6 +29,26 @@ function makeDetail(title, status, summary, message, rows) {
   return { title, status, summary, message, rows };
 }
 
+function statusSummaryText(entity) {
+  const reasons = {
+    rh_delta_high: '- різниця вологості висока',
+    temperature_delta_high: '- різниця температур висока',
+    temperature_delta_critical: '- різниця температур критична',
+    sht31_missing: '- датчик клімату не відповідає',
+    sht31_stale: '- дані клімату застаріли',
+    invalid_value: '- некоректне значення датчика',
+  };
+  const statuses = {
+    ok: '- норма',
+    warning: '- попередження',
+    error: '- помилка',
+    inactive: '- неактивно',
+    unknown: '- невідомо',
+  };
+
+  return reasons[entity.status_reason] || statuses[entity.status] || '- норма';
+}
+
 function lightOutputText(value) {
   if (value === 'on') return 'Активовано';
   if (value === 'off') return 'Вимкнено';
@@ -100,7 +120,7 @@ export function createUiState(raw) {
   ];
 
   const details = {
-    climate: makeDetail('Клімат', raw.climate.status, '', raw.climate.status_reason || 'Показано дві зони без усереднення.', [
+    climate: makeDetail('Клімат', raw.climate.status, statusSummaryText(raw.climate), 'Показано дві зони без усереднення.', [
       { label: 'SHT31 0x44 температура', value: valueOrUnknown(raw.climate.sensor_0x44.temperature_c, '°C') },
       { label: 'SHT31 0x44 вологість', value: valueOrUnknown(raw.climate.sensor_0x44.humidity_pct, '%') },
       { label: 'SHT31 0x45 температура', value: valueOrUnknown(raw.climate.sensor_0x45.temperature_c, '°C') },
