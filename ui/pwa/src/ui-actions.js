@@ -207,7 +207,7 @@ const actionRegistry = {
     },
   },
   'humidifier.power.low': {
-    label: 'Low',
+    label: 'Низька',
     command: {
       target: 'humidifier',
       cmd: 'set_mist_power_level',
@@ -215,7 +215,7 @@ const actionRegistry = {
     },
   },
   'humidifier.power.medium': {
-    label: 'Medium',
+    label: 'Помірна',
     command: {
       target: 'humidifier',
       cmd: 'set_mist_power_level',
@@ -223,7 +223,7 @@ const actionRegistry = {
     },
   },
   'humidifier.power.high': {
-    label: 'High',
+    label: 'Висока',
     command: {
       target: 'humidifier',
       cmd: 'set_mist_power_level',
