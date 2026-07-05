@@ -187,7 +187,7 @@ function getFunctionStatusCards(entity, uiState) {
     return [
       { label: 'Режим', pairs: [['Режим', humidifierModeText(raw.humidifier.settings)], ['Випаровування', mistPowerText(raw.humidifier.settings.mist_power_level)]], stacked: true },
       { label: 'Вологість,%', pairs: [['Мінімальна', show(raw.humidifier.settings.rh_start, '%')], ['Максимальна', show(raw.humidifier.settings.rh_stop, '%')]] },
-      { label: 'Розширені параметри', value: 'Mode, runtime, manual mist, stop, mist power, RH thresholds, post fan', action: settingsOpenAction(entity), wide: true },
+      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
@@ -260,11 +260,19 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Mode', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
-      { label: 'Runtime', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
+      { label: 'Режим', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
+      { label: 'Час роботи', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
       { label: 'Manual control', controls: [getUiAction('humidifier.manual_mist'), getUiAction('humidifier.stop')] },
-      { label: 'Mist power', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
-      { label: 'RH thresholds', pairs: [['Start', show(raw.humidifier.settings.rh_start, '%')], ['Stop', show(raw.humidifier.settings.rh_stop, '%')], ['Delta', show(raw.humidifier.settings.rh_delta, '%')]], action: getUiAction('humidifier.settings.edit') },
+      { label: 'Інтенсивність пару', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
+      {
+        label: 'Вологість, %',
+        fields: [
+          { label: 'Мінімальна, %', name: 'rh_start', value: raw.humidifier.settings.rh_start, step: 1 },
+          { label: 'Максимальна, %', name: 'rh_stop', value: raw.humidifier.settings.rh_stop, step: 1 },
+          { label: 'Різниця, %', name: 'rh_delta', value: raw.humidifier.settings.rh_delta, step: 1 },
+        ],
+        action: getUiAction('humidifier.settings.edit'),
+      },
       { label: 'Cycle', pairs: [['Manual mist', show(raw.humidifier.settings.manual_mist_duration_sec, ' сек')], ['Post fan', show(raw.humidifier.settings.post_fan_sec, ' сек')]], action: getUiAction('humidifier.settings.edit') },
     ];
   }
