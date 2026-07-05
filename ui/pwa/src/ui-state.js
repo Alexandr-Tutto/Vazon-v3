@@ -111,7 +111,7 @@ export function createUiState(raw) {
       { label: 'Manual state', value: raw.light.settings.manual_state },
     ]),
 
-    fan: makeDetail('Вентиляція', raw.fan.status, raw.fan.output, 'Показано основний вентилятор шафи. Вентилятор зволожувача не тут.', [
+    fan: makeDetail('Вентиляція', raw.fan.status, raw.fan.output, 'Показано основний вентилятор шафи.', [
       { label: 'Output', value: raw.fan.output },
       { label: 'Auto state', value: raw.fan.auto_state },
       { label: 'Mode', value: raw.fan.settings.mode },
