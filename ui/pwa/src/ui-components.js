@@ -139,8 +139,8 @@ function renderField(field) {
   fieldLabel.textContent = field.label;
 
   const input = document.createElement('input');
-  input.type = 'text';
-  input.inputMode = 'decimal';
+  input.type = field.type || 'text';
+  input.inputMode = field.inputMode || 'decimal';
   input.name = field.name;
   input.value = field.value ?? '';
   input.maxLength = field.maxLength || 5;
@@ -259,6 +259,13 @@ function renderSection(section) {
     pairWrap.className = 'value-pair';
     section.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
     wrap.append(pairWrap);
+  }
+
+  if (section.fields) {
+    const fieldWrap = document.createElement('div');
+    fieldWrap.className = 'value-pair';
+    section.fields.forEach((field) => fieldWrap.append(renderField(field)));
+    wrap.append(fieldWrap);
   }
 
   if (section.switches) {
