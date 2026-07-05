@@ -294,6 +294,9 @@ export function renderCard(card) {
   } else if (card.pairs) {
     const pairWrap = document.createElement('div');
     pairWrap.className = 'value-pair';
+    if (card.stacked) {
+      pairWrap.style.gridTemplateColumns = '1fr';
+    }
     card.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
     article.append(pairWrap);
   } else if (card.controls) {
