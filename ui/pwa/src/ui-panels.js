@@ -11,8 +11,99 @@ function show(value, suffix = '') {
   return `${value}${suffix}`;
 }
 
+function optionText(value, labels, fallback = noData) {
+  if (value === null || value === undefined || value === 'unknown') {
+    return fallback;
+  }
+
+  return labels[value] || value;
+}
+
+function yesNoText(value) {
+  if (value === true) return 'так';
+  if (value === false) return 'ні';
+  return noData;
+}
+
+function outputText(value) {
+  return optionText(value, {
+    on: 'увімкнено',
+    off: 'вимкнено',
+  });
+}
+
+function modeText(value) {
+  return optionText(value, {
+    auto: 'авто',
+    manual: 'ручний',
+    off: 'вимкнено',
+  });
+}
+
+function runtimeText(value) {
+  return optionText(value, {
+    day: 'день',
+    always: 'завжди',
+  });
+}
+
+function manualStateText(value) {
+  return optionText(value, {
+    on: 'увімкнено',
+    off: 'вимкнено',
+  });
+}
+
+function strategyText(value) {
+  return optionText(value, {
+    delta: 'за різницею',
+    timer: 'за таймером',
+  });
+}
+
+function autoStateText(value) {
+  return optionText(value, {
+    blocked: 'заблоковано',
+    running: 'працює',
+    idle: 'очікує',
+    off: 'вимкнено',
+  });
+}
+
+function commandResultText(value) {
+  return optionText(value, {
+    accepted: 'прийнято',
+    rejected: 'відхилено',
+    failed: 'помилка',
+  });
+}
+
+function confirmationText(value) {
+  return optionText(value, {
+    confirmed: 'підтверджено',
+    unavailable: 'недоступно',
+    failed: 'не підтверджено',
+    unknown: 'невідомо',
+  });
+}
+
 function statusText(entity) {
-  return entity.status_reason || entity.status || 'ok';
+  const reasons = {
+    door_open: 'двері відкриті',
+    manual_mode: 'ручний режим',
+    output_failed: 'вихід не виконав команду',
+    confirmation_failed: 'стан виходу не підтвердився',
+    confirmation_unavailable: 'підтвердження недоступне',
+  };
+  const statuses = {
+    ok: 'норма',
+    warning: 'попередження',
+    error: 'помилка',
+    inactive: 'неактивно',
+    unknown: 'невідомо',
+  };
+
+  return reasons[entity.status_reason] || statuses[entity.status] || 'норма';
 }
 
 function soilClassText(value) {
@@ -192,23 +283,23 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'light') {
     return [
-      { label: 'Поточний стан', pairs: [['Output', raw.light.output], ['Mode', raw.light.settings.mode], ['Manual state', raw.light.settings.manual_state]] },
-      { label: 'Графік', pairs: [['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off], ['Active', raw.system.global_context.day_window.active ? 'yes' : 'no']] },
-      { label: 'Підтвердження', pairs: [['Last command', raw.light.last_command_result], ['Output confirmed', raw.light.last_output_confirmed]] },
+      { label: 'Поточний стан', pairs: [['Вихід', outputText(raw.light.output)], ['Режим', modeText(raw.light.settings.mode)], ['Ручний стан', manualStateText(raw.light.settings.manual_state)]] },
+      { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off], ['Активний', yesNoText(raw.system.global_context.day_window.active)]] },
+      { label: 'Підтвердження', pairs: [['Остання команда', commandResultText(raw.light.last_command_result)], ['Вихід підтверджено', confirmationText(raw.light.last_output_confirmed)]] },
       { label: 'Стан підсистеми', value: statusText(raw.light), wide: true },
-      { label: 'Параметри', value: 'Mode, manual_state, settings', action: settingsOpenAction(entity), wide: true },
+      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
   if (entity === 'fan') {
     return [
-      { label: 'Поточний стан', pairs: [['Output', raw.fan.output], ['Auto state', raw.fan.auto_state], ['Mode', raw.fan.settings.mode]] },
-      { label: 'Runtime / strategy', pairs: [['Runtime', raw.fan.settings.runtime], ['Strategy', raw.fan.settings.auto_strategy]] },
-      { label: 'Delta strategy', pairs: [['On', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Off', show(raw.fan.settings.auto_delta_off_pct, '%')]] },
-      { label: 'Timer strategy', pairs: [['On', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Off', show(raw.fan.settings.auto_timer_off_sec, ' сек')]] },
-      { label: 'Підтвердження', pairs: [['Last command', raw.fan.last_command_result], ['Output confirmed', raw.fan.last_output_confirmed]] },
+      { label: 'Поточний стан', pairs: [['Вихід', outputText(raw.fan.output)], ['Автостан', autoStateText(raw.fan.auto_state)], ['Режим', modeText(raw.fan.settings.mode)]] },
+      { label: 'Робота', pairs: [['Час роботи', runtimeText(raw.fan.settings.runtime)], ['Стратегія', strategyText(raw.fan.settings.auto_strategy)]] },
+      { label: 'За різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]] },
+      { label: 'За таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]] },
+      { label: 'Підтвердження', pairs: [['Остання команда', commandResultText(raw.fan.last_command_result)], ['Вихід підтверджено', confirmationText(raw.fan.last_output_confirmed)]] },
       { label: 'Стан підсистеми', value: statusText(raw.fan), wide: true },
-      { label: 'Параметри', value: 'Mode, runtime, strategy, manual_run, stop, timer/delta settings', action: settingsOpenAction(entity), wide: true },
+      { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
 
@@ -289,22 +380,22 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'light') {
     return [
-      { label: 'Mode', controls: [getUiAction('light.mode.auto'), getUiAction('light.mode.manual')] },
-      { label: 'Manual state', controls: [getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
-      { label: 'Current settings', pairs: [['Mode', raw.light.settings.mode], ['Manual state', raw.light.settings.manual_state]] },
-      { label: 'Day window', pairs: [['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off]], action: getUiAction('light.settings.edit') },
+      { label: 'Режим', controls: [getUiAction('light.mode.auto'), getUiAction('light.mode.manual')] },
+      { label: 'Ручний стан', controls: [getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
+      { label: 'Поточні налаштування', pairs: [['Режим', modeText(raw.light.settings.mode)], ['Ручний стан', manualStateText(raw.light.settings.manual_state)]] },
+      { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]], action: getUiAction('light.settings.edit') },
     ];
   }
 
   if (entity === 'fan') {
     return [
-      { label: 'Mode', controls: [getUiAction('fan.mode.auto'), getUiAction('fan.mode.manual')] },
-      { label: 'Manual control', controls: [getUiAction('fan.manual_run'), getUiAction('fan.stop')] },
-      { label: 'Runtime', controls: [getUiAction('fan.runtime.day'), getUiAction('fan.runtime.always')] },
-      { label: 'Strategy', controls: [getUiAction('fan.strategy.delta'), getUiAction('fan.strategy.timer')] },
-      { label: 'Delta settings', pairs: [['On', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Off', show(raw.fan.settings.auto_delta_off_pct, '%')]], action: getUiAction('fan.settings.edit') },
-      { label: 'Timer settings', pairs: [['On', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Off', show(raw.fan.settings.auto_timer_off_sec, ' сек')]], action: getUiAction('fan.settings.edit') },
-      { label: 'Manual duration', value: show(raw.fan.settings.manual_duration_sec, ' сек'), action: getUiAction('fan.settings.edit') },
+      { label: 'Режим', controls: [getUiAction('fan.mode.auto'), getUiAction('fan.mode.manual')] },
+      { label: 'Ручне керування', controls: [getUiAction('fan.manual_run'), getUiAction('fan.stop')] },
+      { label: 'Час роботи', controls: [getUiAction('fan.runtime.day'), getUiAction('fan.runtime.always')] },
+      { label: 'Стратегія', controls: [getUiAction('fan.strategy.delta'), getUiAction('fan.strategy.timer')] },
+      { label: 'Налаштування за різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]], action: getUiAction('fan.settings.edit') },
+      { label: 'Налаштування за таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]], action: getUiAction('fan.settings.edit') },
+      { label: 'Ручний запуск', value: show(raw.fan.settings.manual_duration_sec, ' сек'), action: getUiAction('fan.settings.edit') },
     ];
   }
 
