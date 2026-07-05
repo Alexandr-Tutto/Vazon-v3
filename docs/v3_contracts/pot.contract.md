@@ -167,7 +167,37 @@ class thresholds:
 90..100 %  = overwet
 ```
 
-## 12. Stale Rule
+## 12. Soil Moisture Calibration Command
+
+```text
+Command:
+pot[pot_id].calibrate_soil_moisture
+
+Accepted args:
+point = dry
+point = normal
+point = wet
+point = reset
+```
+
+```text
+point = dry:
+    capture current soil moisture reading as dry_calibration_mv
+
+point = normal:
+    capture current soil moisture reading as normal_calibration_mv
+
+point = wet:
+    capture current soil moisture reading as wet_calibration_mv
+
+point = reset:
+    clear the current soil_moisture_calibration sequence for the selected pot
+    user must repeat calibration from dry point
+```
+
+The UI text and step-by-step user procedure are owned by `docs/ui_architecture.md`.
+
+## 13. Stale Rule
 
 ```text
 If enabled soil moisture reading is older than moisture_stale_timeout_sec:
@@ -180,7 +210,7 @@ If enabled soil temperature reading is older than temperature_stale_timeout_sec:
     soil_temperature.status = error
 ```
 
-## 13. Status
+## 14. Status
 
 ```text
 ok       - enabled pot sensors have valid fresh readings
@@ -190,7 +220,7 @@ inactive - both pot sensors are disabled
 unknown  - no valid state after startup
 ```
 
-## 14. MQTT Surface
+## 15. MQTT Surface
 
 ```text
 MQTT namespace: pot/{pot_id}
@@ -211,28 +241,11 @@ pot[pot_id].set_soil_temperature_enabled
 pot[pot_id].set_settings
 pot[pot_id].calibrate_soil_moisture
 
-Command payload for pot[pot_id].calibrate_soil_moisture:
-point = dry / normal / wet / reset
-
-point = dry:
-    store current valid soil_moisture.raw_mv as dry_calibration_mv
-
-point = normal:
-    store current valid soil_moisture.raw_mv as normal_calibration_mv
-
-point = wet:
-    store current valid soil_moisture.raw_mv as wet_calibration_mv
-
-point = reset:
-    clear dry_calibration_mv, normal_calibration_mv and wet_calibration_mv
-    for this pot_id
-    soil moisture calibration becomes invalid until valid calibration points exist
-
 Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
 
-## 15. Forbidden
+## 16. Forbidden
 
 ```text
 Pot Module does not control actuators.
@@ -241,7 +254,3 @@ Pot Module does not modify GlobalContext.
 Pot Module does not execute watering logic.
 Pot Module does not define MQTT topic strings.
 ```
-
-## Change Log
-
-- 2026-06-29: defined `pot[pot_id].calibrate_soil_moisture` payload `point = dry / normal / wet / reset`.
