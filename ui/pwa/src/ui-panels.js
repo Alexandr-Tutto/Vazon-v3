@@ -59,7 +59,7 @@ function potStatusCard(index, pot) {
     label: `Вазон ${index + 1} - ${soilClassText(pot.soil_moisture.class)}`,
     pairs: [
       ['Температура', show(pot.soil_temperature.temperature_c, '°')],
-      ['Вологість', show(pot.soil_moisture.value_pct, '%')],
+      ['Вологість', show(pot.soil_moisture.value, '%')],
     ],
   };
 }
