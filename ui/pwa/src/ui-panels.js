@@ -158,11 +158,9 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Стан', pairs: [['Вода', raw.humidifier.water_status], ['Пар', raw.humidifier.mist_output], ['Локальний вентилятор', raw.humidifier.fan_output]] },
       { label: 'Режим', pairs: [['Mode', raw.humidifier.settings.mode], ['Runtime', raw.humidifier.settings.runtime], ['Power', raw.humidifier.settings.mist_power_level]] },
       { label: 'Пороги', pairs: [['RH start', show(raw.humidifier.settings.rh_start, '%')], ['RH stop', show(raw.humidifier.settings.rh_stop, '%')], ['RH delta', show(raw.humidifier.settings.rh_delta, '%')]] },
       { label: 'Цикл', pairs: [['Manual mist', show(raw.humidifier.settings.manual_mist_duration_sec, ' сек')], ['Post fan', show(raw.humidifier.settings.post_fan_sec, ' сек')]] },
-      { label: 'Стан підсистеми', value: statusText(raw.humidifier), wide: true },
       { label: 'Параметри', value: 'Mode, runtime, manual mist, stop, mist power, RH thresholds, post fan', action: settingsOpenAction(entity), wide: true },
     ];
   }
