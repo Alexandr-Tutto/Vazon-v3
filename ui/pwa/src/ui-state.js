@@ -61,10 +61,61 @@ function modeText(value) {
   return value || '—';
 }
 
+function outputText(value) {
+  if (value === 'on') return 'увімкнено';
+  if (value === 'off') return 'вимкнено';
+  return value || '—';
+}
+
 function manualStateText(value) {
   if (value === 'on') return 'увімкнено';
   if (value === 'off') return 'вимкнено';
   return value || '—';
+}
+
+function fanOutputText(value) {
+  if (value === 'on') return 'працює';
+  if (value === 'off') return 'пауза';
+  return value || '—';
+}
+
+function fanAutoStateText(value) {
+  const labels = {
+    blocked: 'заблоковано',
+    running: 'працює',
+    idle: 'очікує',
+    off: 'вимкнено',
+  };
+
+  return labels[value] || value || '—';
+}
+
+function soilClassText(value) {
+  const labels = {
+    dry: 'сухо',
+    normal: 'норма',
+    wet: 'мокро',
+    overwet: 'перезволожено',
+    unknown: 'невідомо',
+  };
+
+  return labels[value] || value || 'невідомо';
+}
+
+function strategyText(value) {
+  if (value === 'delta') return 'за різницею';
+  if (value === 'timer') return 'за таймером';
+  return value || '—';
+}
+
+function waterStatusText(value) {
+  const labels = {
+    present: 'вода є',
+    empty: 'немає води',
+    unknown: 'стан води невідомий',
+  };
+
+  return labels[value] || value || '—';
 }
 
 function humidifierSummary(humidifier) {
@@ -129,18 +180,18 @@ export function createUiState(raw) {
     ]),
 
     pot: makeDetail('Ґрунт', potAggregate.status, potAggregate.summary, 'Деталі по вазонах показуються тут, не на головному екрані.', [
-      { label: 'pot[0] moisture', value: valueOrUnknown(raw.pot[0].soil_moisture.value_pct, '%') },
-      { label: 'pot[0] class', value: raw.pot[0].soil_moisture.class },
-      { label: 'pot[0] temperature', value: valueOrUnknown(raw.pot[0].soil_temperature.temperature_c, '°C') },
-      { label: 'pot[1] moisture', value: valueOrUnknown(raw.pot[1].soil_moisture.value_pct, '%') },
-      { label: 'pot[1] class', value: raw.pot[1].soil_moisture.class },
-      { label: 'pot[1] temperature', value: valueOrUnknown(raw.pot[1].soil_temperature.temperature_c, '°C') },
+      { label: 'Вазон 1 вологість', value: valueOrUnknown(raw.pot[0].soil_moisture.value, '%') },
+      { label: 'Вазон 1 стан ґрунту', value: soilClassText(raw.pot[0].soil_moisture.class) },
+      { label: 'Вазон 1 температура', value: valueOrUnknown(raw.pot[0].soil_temperature.temperature_c, '°C') },
+      { label: 'Вазон 2 вологість', value: valueOrUnknown(raw.pot[1].soil_moisture.value, '%') },
+      { label: 'Вазон 2 стан ґрунту', value: soilClassText(raw.pot[1].soil_moisture.class) },
+      { label: 'Вазон 2 температура', value: valueOrUnknown(raw.pot[1].soil_temperature.temperature_c, '°C') },
     ]),
 
     humidifier: makeDetail('Зволоження', raw.humidifier.status, humidifierSummary(raw.humidifier), '', [
-      { label: 'Вода', value: raw.humidifier.water_status },
-      { label: 'Пар', value: raw.humidifier.mist_output },
-      { label: 'Режим', value: raw.humidifier.settings.mode },
+      { label: 'Вода', value: waterStatusText(raw.humidifier.water_status) },
+      { label: 'Пар', value: outputText(raw.humidifier.mist_output) },
+      { label: 'Режим', value: modeText(raw.humidifier.settings.mode) },
     ]),
 
     light: makeDetail('Світло', raw.light.status, lightOutputText(raw.light.output), 'Світло є actuator-модулем. При обслуговуванні працює як сервісне підсвічування.', [
@@ -149,11 +200,11 @@ export function createUiState(raw) {
       { label: 'Ручний стан', value: manualStateText(raw.light.settings.manual_state) },
     ]),
 
-    fan: makeDetail('Вентиляція', raw.fan.status, raw.fan.output, 'Показано основний вентилятор шафи.', [
-      { label: 'Output', value: raw.fan.output },
-      { label: 'Auto state', value: raw.fan.auto_state },
-      { label: 'Mode', value: raw.fan.settings.mode },
-      { label: 'Strategy', value: raw.fan.settings.auto_strategy },
+    fan: makeDetail('Вентиляція', raw.fan.status, fanOutputText(raw.fan.output), 'Показано основний вентилятор шафи.', [
+      { label: 'Вихід', value: fanOutputText(raw.fan.output) },
+      { label: 'Автостан', value: fanAutoStateText(raw.fan.auto_state) },
+      { label: 'Режим', value: modeText(raw.fan.settings.mode) },
+      { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },
     ]),
 
     connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, raw.system.global_context.connection.mqtt_state, 'У звичайному UI технічне слово MQTT не показується на головному екрані.', [

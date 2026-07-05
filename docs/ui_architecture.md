@@ -1,7 +1,7 @@
 # UI-архітектура PWA
 
 Статус документа: target
-Статус коду: not implemented
+Статус коду: частково реалізовано в ui/pwa
 Repository scope: clean Vazon V3 workspace
 
 ## Мета

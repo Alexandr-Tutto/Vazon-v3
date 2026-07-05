@@ -1,13 +1,13 @@
-# Vazon V3 PWA Skeleton
+# Vazon V3 PWA
 
 Document status: draft
-Code status: static UI skeleton
-Scope: PWA UI layout and mock state rendering
+Code status: mock-driven PWA UI
+Scope: PWA UI layout, menu navigation, actions, and mock state rendering
 
 ## Purpose
 
 ```text
-Provide a minimal UI skeleton before MQTT integration and before final firmware state is available.
+Provide a mock-driven PWA UI before MQTT integration and before final firmware state is available.
 ```
 
 ## Current Scope
@@ -17,8 +17,11 @@ Overview screen
 Subsystem tiles
 Climate numbers
 Subsystem detail screen
+Subsystem settings screen
 Service/debug screen
 Mock V3 state
+UI action registry
+Menu rendering helpers
 PWA manifest
 Service worker stub
 ```
@@ -61,6 +64,10 @@ index.html
 manifest.webmanifest
 sw.js
 src/app.js
+src/ui-actions.js
+src/ui-components.js
+src/ui-menu-levels.js
+src/ui-panels.js
 src/ui-state.js
 src/mock-state.js
 src/styles.css
@@ -74,6 +81,18 @@ src/mock-state.js
 
 src/ui-state.js
     UI-only mapping from device data to screen labels and cards
+
+src/ui-actions.js
+    UI action registry for currently mocked command buttons
+
+src/ui-components.js
+    shared DOM rendering helpers
+
+src/ui-menu-levels.js
+    menu level constants and menu view construction
+
+src/ui-panels.js
+    subsystem status, settings, and service panel definitions
 
 src/app.js
     rendering and screen navigation only

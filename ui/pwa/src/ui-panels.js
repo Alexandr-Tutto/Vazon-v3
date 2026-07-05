@@ -345,19 +345,19 @@ function getFunctionSettingsCards(entity, uiState) {
       { label: 'Верх', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
       { label: 'Низ', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
       {
-        label: 'Warning limits',
+        label: 'Пороги попередження',
         fields: [
-          { label: 'Temp low', name: 'temperature_low_warn', value: raw.climate.settings.temperature_low_warn, unit: '°C', step: 1 },
-          { label: 'Temp high', name: 'temperature_high_warn', value: raw.climate.settings.temperature_high_warn, unit: '°C', step: 1 },
-          { label: 'RH low', name: 'humidity_low_warn', value: raw.climate.settings.humidity_low_warn, unit: '%', step: 1 },
-          { label: 'RH high', name: 'humidity_high_warn', value: raw.climate.settings.humidity_high_warn, unit: '%', step: 1 },
+          { label: 'Нижній поріг температури', name: 'temperature_low_warn', value: raw.climate.settings.temperature_low_warn, unit: '°C', step: 1 },
+          { label: 'Верхній поріг температури', name: 'temperature_high_warn', value: raw.climate.settings.temperature_high_warn, unit: '°C', step: 1 },
+          { label: 'Нижній поріг вологості', name: 'humidity_low_warn', value: raw.climate.settings.humidity_low_warn, unit: '%', step: 1 },
+          { label: 'Верхній поріг вологості', name: 'humidity_high_warn', value: raw.climate.settings.humidity_high_warn, unit: '%', step: 1 },
         ],
       },
       {
-        label: 'Delta limits',
+        label: 'Пороги різниці',
         fields: [
-          { label: 'Temp warn', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
-          { label: 'Temp error', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
+          { label: 'Попередження різниці температур', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
+          { label: 'Критична різниця температур', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
         ],
       },
       { label: 'Пороги', value: 'climate.set_settings', controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')], wide: true },
@@ -430,10 +430,10 @@ function getAdvancedServiceCards(uiState) {
   const raw = uiState.raw;
 
   return [
-    { label: 'System status', pairs: [['Status', raw.system.status], ['Reason', raw.system.status_reason || '—'], ['Affected', raw.system.affected_system || '—']] },
-    { label: 'Maintenance', pairs: [['Active', raw.system.global_context.maintenance.active ? 'yes' : 'no'], ['Reason', raw.system.global_context.maintenance.reason || '—']] },
-    { label: 'Day window', pairs: [['Enabled', raw.system.global_context.day_window.schedule_enabled ? 'yes' : 'no'], ['Active', raw.system.global_context.day_window.active ? 'yes' : 'no'], ['On', raw.system.global_context.day_window.time_on], ['Off', raw.system.global_context.day_window.time_off]] },
-    { label: 'Connection', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Service', raw.system.global_context.connection.mqtt_state]] },
+    { label: 'Стан системи', pairs: [['Стан', raw.system.status], ['Причина', raw.system.status_reason || '—'], ['Підсистема', raw.system.affected_system || '—']] },
+    { label: 'Обслуговування', pairs: [['Активне', yesNoText(raw.system.global_context.maintenance.active)], ['Причина', raw.system.global_context.maintenance.reason || '—']] },
+    { label: 'Денний графік', pairs: [['Увімкнений', yesNoText(raw.system.global_context.day_window.schedule_enabled)], ['Активний', yesNoText(raw.system.global_context.day_window.active)], ['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]] },
+    { label: 'Звʼязок', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Сервіс', raw.system.global_context.connection.mqtt_state]] },
     { label: 'OTA / оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
     { label: 'Діагностика', value: 'Сховано', action: getUiAction('service.diagnostics.open') },
     { label: 'Status LED', pairs: [['Red', raw.status_led.red_output], ['Green', raw.status_led.green_output], ['Pattern', raw.status_led.pattern]] },
