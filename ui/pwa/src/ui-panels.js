@@ -260,7 +260,6 @@ function getFunctionStatusCards(entity, uiState) {
       { label: 'Температура', pairs: [['Вгорі', uiState.climate.top.temperature_c], ['Внизу', uiState.climate.bottom.temperature_c]] },
       { label: 'Вологість', pairs: [['Вгорі', uiState.climate.top.humidity_pct], ['Внизу', uiState.climate.bottom.humidity_pct]] },
       { label: 'Різниця зон', pairs: [['Температура', show(raw.climate.temperature_delta_c, '°')], ['Вологість', show(raw.climate.rh_delta_pct, '%')]] },
-      { label: 'Стан підсистеми', value: statusText(raw.climate) },
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
