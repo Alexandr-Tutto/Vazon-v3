@@ -277,11 +277,11 @@ const actionRegistry = {
     command: { target: 'fan', cmd: 'set_runtime', args: { runtime: 'always' } },
   },
   'fan.strategy.delta': {
-    label: 'Delta',
+    label: 'За різницею',
     command: { target: 'fan', cmd: 'set_auto_strategy', args: { auto_strategy: 'delta' } },
   },
   'fan.strategy.timer': {
-    label: 'Timer',
+    label: 'За таймером',
     command: { target: 'fan', cmd: 'set_auto_strategy', args: { auto_strategy: 'timer' } },
   },
   'fan.manual_run': {
