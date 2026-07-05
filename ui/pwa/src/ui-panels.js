@@ -260,8 +260,14 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'humidifier') {
     return [
-      { label: 'Режим', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
-      { label: 'Час роботи', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
+      {
+        label: 'Режим',
+        sections: [
+          { label: 'Режим', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
+          { label: 'Час роботи', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
+          { label: 'Інтенсивність пару', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
+        ],
+      },
       {
         label: 'Ручне керування',
         fields: [
@@ -270,7 +276,6 @@ function getFunctionSettingsCards(entity, uiState) {
         ],
         controls: [getUiAction('humidifier.manual_mist'), getUiAction('humidifier.stop'), getUiAction('humidifier.settings.edit')],
       },
-      { label: 'Інтенсивність пару', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
       {
         label: 'Вологість, %',
         fields: [
