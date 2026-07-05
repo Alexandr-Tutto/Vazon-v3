@@ -283,8 +283,14 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'light') {
     return [
-      { label: 'Режим роботи', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto')] },
-      { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off], ['Активний', yesNoText(raw.system.global_context.day_window.active)]] },
+      {
+        label: 'Режим роботи',
+        sections: [
+          { label: 'Режим', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto')] },
+          { label: 'Графік', pairs: [['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]] },
+        ],
+        wide: true,
+      },
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
