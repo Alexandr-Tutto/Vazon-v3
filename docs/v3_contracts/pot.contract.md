@@ -211,6 +211,23 @@ pot[pot_id].set_soil_temperature_enabled
 pot[pot_id].set_settings
 pot[pot_id].calibrate_soil_moisture
 
+Command payload for pot[pot_id].calibrate_soil_moisture:
+point = dry / normal / wet / reset
+
+point = dry:
+    store current valid soil_moisture.raw_mv as dry_calibration_mv
+
+point = normal:
+    store current valid soil_moisture.raw_mv as normal_calibration_mv
+
+point = wet:
+    store current valid soil_moisture.raw_mv as wet_calibration_mv
+
+point = reset:
+    clear dry_calibration_mv, normal_calibration_mv and wet_calibration_mv
+    for this pot_id
+    soil moisture calibration becomes invalid until valid calibration points exist
+
 Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
@@ -224,3 +241,7 @@ Pot Module does not modify GlobalContext.
 Pot Module does not execute watering logic.
 Pot Module does not define MQTT topic strings.
 ```
+
+## Change Log
+
+- 2026-06-29: defined `pot[pot_id].calibrate_soil_moisture` payload `point = dry / normal / wet / reset`.
