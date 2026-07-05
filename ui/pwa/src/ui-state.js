@@ -29,6 +29,24 @@ function makeDetail(title, status, summary, message, rows) {
   return { title, status, summary, message, rows };
 }
 
+function lightOutputText(value) {
+  if (value === 'on') return 'Активовано';
+  if (value === 'off') return 'Вимкнено';
+  return '—';
+}
+
+function modeText(value) {
+  if (value === 'auto') return 'авто';
+  if (value === 'manual') return 'ручний';
+  return value || '—';
+}
+
+function manualStateText(value) {
+  if (value === 'on') return 'увімкнено';
+  if (value === 'off') return 'вимкнено';
+  return value || '—';
+}
+
 function humidifierSummary(humidifier) {
   const reasons = {
     door_open: '- заблоковано через відкриті двері',
@@ -76,7 +94,7 @@ export function createUiState(raw) {
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
-    tile('light', 'Світло', raw.light.status, raw.light.output === 'on' ? 'Увімкнено' : 'Вимкнено', raw.light.output === 'on'),
+    tile('light', 'Світло', raw.light.status, lightOutputText(raw.light.output), raw.light.output === 'on'),
     tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Пауза', raw.fan.output === 'on'),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', 'Добрий'),
   ];
@@ -105,10 +123,10 @@ export function createUiState(raw) {
       { label: 'Режим', value: raw.humidifier.settings.mode },
     ]),
 
-    light: makeDetail('Світло', raw.light.status, raw.light.output, 'Світло є actuator-модулем. При обслуговуванні працює як сервісне підсвічування.', [
-      { label: 'Output', value: raw.light.output },
-      { label: 'Mode', value: raw.light.settings.mode },
-      { label: 'Manual state', value: raw.light.settings.manual_state },
+    light: makeDetail('Світло', raw.light.status, lightOutputText(raw.light.output), 'Світло є actuator-модулем. При обслуговуванні працює як сервісне підсвічування.', [
+      { label: 'Вихід', value: lightOutputText(raw.light.output) },
+      { label: 'Режим', value: modeText(raw.light.settings.mode) },
+      { label: 'Ручний стан', value: manualStateText(raw.light.settings.manual_state) },
     ]),
 
     fan: makeDetail('Вентиляція', raw.fan.status, raw.fan.output, 'Показано основний вентилятор шафи.', [
