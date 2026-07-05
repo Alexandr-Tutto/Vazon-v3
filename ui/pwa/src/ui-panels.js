@@ -218,12 +218,12 @@ function timeField(label, name, value) {
     label,
     name,
     value,
-    type: 'time',
+    type: 'text',
     inputMode: 'numeric',
-    pattern: '[0-9:]*',
+    pattern: '[0-9]{2}\\.[0-9]{2}',
     maxLength: 5,
     size: 5,
-    width: '7ch',
+    width: '5ch',
   };
 }
 
