@@ -47,7 +47,7 @@ export const mockState = {
       soil_moisture: {
         raw_adc_value: 1900,
         raw_mv: 1510,
-        value_pct: 62,
+        value: 62,
         class: 'normal',
         status: 'ok',
         status_reason: null,
@@ -68,7 +68,7 @@ export const mockState = {
       soil_moisture: {
         raw_adc_value: 2020,
         raw_mv: 1580,
-        value_pct: 55,
+        value: 55,
         class: 'normal',
         status: 'ok',
         status_reason: null,
