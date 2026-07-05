@@ -15,6 +15,28 @@ function statusText(entity) {
   return entity.status_reason || entity.status || 'ok';
 }
 
+function soilClassText(value) {
+  const labels = {
+    dry: 'сухо',
+    normal: 'норма',
+    wet: 'мокро',
+    overwet: 'перезволожено',
+    unknown: 'невідомо',
+  };
+
+  return labels[value] || value || 'невідомо';
+}
+
+function potStatusCard(index, pot) {
+  return {
+    label: `Вазон ${index + 1} - ${soilClassText(pot.soil_moisture.class)}`,
+    pairs: [
+      ['Температура', show(pot.soil_temperature.temperature_c, '°')],
+      ['Вологість', show(pot.soil_moisture.value_pct, '%')],
+    ],
+  };
+}
+
 export function getFunctionStatusView(entity, uiState) {
   const detail = uiState.details[entity];
 
@@ -128,8 +150,8 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'pot') {
     return [
-      { label: 'Вазон 1', pairs: [['Вологість', show(raw.pot[0].soil_moisture.value_pct, '%')], ['Клас', raw.pot[0].soil_moisture.class], ['Темп.', show(raw.pot[0].soil_temperature.temperature_c, '°')]] },
-      { label: 'Вазон 2', pairs: [['Вологість', show(raw.pot[1].soil_moisture.value_pct, '%')], ['Клас', raw.pot[1].soil_moisture.class], ['Темп.', show(raw.pot[1].soil_temperature.temperature_c, '°')]] },
+      potStatusCard(0, raw.pot[0]),
+      potStatusCard(1, raw.pot[1]),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
