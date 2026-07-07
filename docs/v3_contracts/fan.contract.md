@@ -73,6 +73,8 @@ auto_strategy = delta
 auto_strategy = timer
 ```
 
+UI status panel shows these settings as current values only. Editing is in extended settings.
+
 ## 7. State
 
 ```text
