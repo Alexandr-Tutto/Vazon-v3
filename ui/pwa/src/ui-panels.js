@@ -235,20 +235,22 @@ function timeField(label, name, value) {
   };
 }
 
-function fanModeStatusCard(fan) {
+function fanManualModeCard(fan) {
+  return {
+    label: 'Режим',
+    controls: [
+      activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
+      activeAction('fan.manual_run', fan.output === 'on', 'Включити'),
+      activeAction('fan.stop', fan.output === 'off', 'Виключити'),
+    ],
+  };
+}
+
+function fanAutoModeCard(fan) {
   return {
     label: 'Режим',
     sections: [
       {
-        label: 'Режим',
-        controls: [
-          activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
-          activeAction('fan.manual_run', fan.output === 'on', 'Включити'),
-          activeAction('fan.stop', fan.output === 'off', 'Виключити'),
-        ],
-      },
-      {
-        label: 'Режим',
         controls: [activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто')],
       },
       {
@@ -371,7 +373,8 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'fan') {
     return [
-      fanModeStatusCard(raw.fan),
+      fanManualModeCard(raw.fan),
+      fanAutoModeCard(raw.fan),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
