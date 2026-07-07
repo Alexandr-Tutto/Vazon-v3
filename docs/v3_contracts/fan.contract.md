@@ -64,6 +64,15 @@ auto_timer_on_sec
 auto_timer_off_sec
 ```
 
+Mode combinations used by UI:
+
+```text
+mode = auto + runtime = day
+mode = auto + runtime = always
+auto_strategy = delta
+auto_strategy = timer
+```
+
 ## 7. State
 
 ```text
