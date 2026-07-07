@@ -204,16 +204,6 @@ function activeAction(id, active, label = null) {
   };
 }
 
-function numberField(label, name, value, unit = '') {
-  return {
-    label,
-    name,
-    value,
-    unit,
-    step: 1,
-  };
-}
-
 function sensorSwitch(label, name, enabled, enableActionId, disableActionId, passiveLabel = `${label}-відкл.`) {
   return {
     label,
@@ -261,21 +251,22 @@ function fanModeStatusCard(fan) {
         ],
       },
       {
-        label: 'Стратегія',
-        inlineControls: true,
-        controls: [activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта')],
-        fields: [
-          numberField('Включення', 'auto_delta_on_pct', fan.settings.auto_delta_on_pct, '%'),
-          numberField('Виключення', 'auto_delta_off_pct', fan.settings.auto_delta_off_pct, '%'),
-        ],
-      },
-      {
-        label: 'Стратегія',
-        inlineControls: true,
-        controls: [activeAction('fan.strategy.timer', fan.settings.auto_strategy === 'timer', 'Таймер')],
-        fields: [
-          numberField('Робота', 'auto_timer_on_sec', fan.settings.auto_timer_on_sec, 'сек'),
-          numberField('Пауза', 'auto_timer_off_sec', fan.settings.auto_timer_off_sec, 'сек'),
+        label: 'Автоматизація',
+        columns: [
+          {
+            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта'),
+            pairs: [
+              ['Включення', show(fan.settings.auto_delta_on_pct, '%')],
+              ['Виключення', show(fan.settings.auto_delta_off_pct, '%')],
+            ],
+          },
+          {
+            control: activeAction('fan.strategy.timer', fan.settings.auto_strategy === 'timer', 'Таймер'),
+            pairs: [
+              ['Робота', show(fan.settings.auto_timer_on_sec, ' сек')],
+              ['Пауза', show(fan.settings.auto_timer_off_sec, ' сек')],
+            ],
+          },
         ],
       },
     ],
