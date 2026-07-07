@@ -316,12 +316,10 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'fan') {
     return [
-      { label: 'Поточний стан', pairs: [['Вихід', outputText(raw.fan.output)], ['Автостан', autoStateText(raw.fan.auto_state)], ['Режим', modeText(raw.fan.settings.mode)]] },
+      { label: 'Режим', pairs: [['Автостан', autoStateText(raw.fan.auto_state)], ['Режим', modeText(raw.fan.settings.mode)]] },
       { label: 'Робота', pairs: [['Час роботи', runtimeText(raw.fan.settings.runtime)], ['Стратегія', strategyText(raw.fan.settings.auto_strategy)]] },
       { label: 'За різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]] },
       { label: 'За таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]] },
-      { label: 'Підтвердження', pairs: [['Остання команда', commandResultText(raw.fan.last_command_result)], ['Вихід підтверджено', confirmationText(raw.fan.last_output_confirmed)]] },
-      { label: 'Стан підсистеми', value: statusText(raw.fan), wide: true },
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
