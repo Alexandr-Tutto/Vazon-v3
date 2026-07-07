@@ -75,7 +75,7 @@ function manualStateText(value) {
 
 function fanOutputText(value) {
   if (value === 'on') return 'працює';
-  if (value === 'off') return 'пауза';
+  if (value === 'off') return 'заблоковано через відкриті двері';
   return value || '—';
 }
 
@@ -166,7 +166,7 @@ export function createUiState(raw) {
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
     tile('light', 'Світло', raw.light.status, lightOutputText(raw.light.output), raw.light.output === 'on'),
-    tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Пауза', raw.fan.output === 'on'),
+    tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Заблоковано через відкриті двері', raw.fan.output === 'on'),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', 'Добрий'),
   ];
 
@@ -201,7 +201,6 @@ export function createUiState(raw) {
     ]),
 
     fan: makeDetail('Вентиляція', raw.fan.status, fanOutputText(raw.fan.output), 'Показано основний вентилятор шафи.', [
-      { label: 'Вихід', value: fanOutputText(raw.fan.output) },
       { label: 'Автостан', value: fanAutoStateText(raw.fan.auto_state) },
       { label: 'Режим', value: modeText(raw.fan.settings.mode) },
       { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },
