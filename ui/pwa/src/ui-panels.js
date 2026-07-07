@@ -11,6 +11,14 @@ function show(value, suffix = '') {
   return `${value}${suffix}`;
 }
 
+function secondsToMinutes(value) {
+  if (value === null || value === undefined || value === 'unknown') {
+    return value;
+  }
+
+  return Math.round(value / 60);
+}
+
 function optionText(value, labels, fallback = noData) {
   if (value === null || value === undefined || value === 'unknown') {
     return fallback;
@@ -462,7 +470,7 @@ function getFunctionSettingsCards(entity, uiState) {
   if (entity === 'fan') {
     return [
       {
-        label: 'Налаштування за різницею',
+        label: 'Налаштування за різницею, %',
         fields: [
           { label: 'Увімкнення', name: 'auto_delta_on_pct', value: raw.fan.settings.auto_delta_on_pct, unit: '%', step: 1 },
           { label: 'Вимкнення', name: 'auto_delta_off_pct', value: raw.fan.settings.auto_delta_off_pct, unit: '%', step: 1 },
@@ -470,17 +478,17 @@ function getFunctionSettingsCards(entity, uiState) {
         controls: [getUiAction('fan.settings.edit')],
       },
       {
-        label: 'Налаштування за таймером',
+        label: 'Налаштування за таймером, хв',
         fields: [
-          { label: 'Увімкнення', name: 'auto_timer_on_sec', value: raw.fan.settings.auto_timer_on_sec, unit: 'сек', step: 1 },
-          { label: 'Вимкнення', name: 'auto_timer_off_sec', value: raw.fan.settings.auto_timer_off_sec, unit: 'сек', step: 1 },
+          { label: 'Увімкнення', name: 'auto_timer_on_min', value: secondsToMinutes(raw.fan.settings.auto_timer_on_sec), unit: 'хв', step: 1 },
+          { label: 'Вимкнення', name: 'auto_timer_off_min', value: secondsToMinutes(raw.fan.settings.auto_timer_off_sec), unit: 'хв', step: 1 },
         ],
         controls: [getUiAction('fan.settings.edit')],
       },
       {
-        label: 'Ручний запуск',
+        label: 'Ручний запуск, хв',
         fields: [
-          { label: 'Тривалість', name: 'manual_duration_sec', value: raw.fan.settings.manual_duration_sec, unit: 'сек', step: 1 },
+          { label: 'Тривалість', name: 'manual_duration_min', value: secondsToMinutes(raw.fan.settings.manual_duration_sec), unit: 'хв', step: 1 },
         ],
         controls: [getUiAction('fan.settings.edit')],
       },
