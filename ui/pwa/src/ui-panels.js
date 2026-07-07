@@ -19,6 +19,10 @@ function secondsToMinutes(value) {
   return Math.round(value / 60);
 }
 
+function showMinutes(value) {
+  return show(secondsToMinutes(value), ' хв');
+}
+
 function optionText(value, labels, fallback = noData) {
   if (value === null || value === undefined || value === 'unknown') {
     return fallback;
@@ -248,7 +252,7 @@ function fanManualModeCard(fan) {
     label: 'Режим',
     controls: [
       activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
-      activeAction('fan.manual_run', fan.output === 'on', 'Включити'),
+      activeAction('fan.manual_run', fan.output === 'on', `Включити - ${showMinutes(fan.settings.manual_duration_sec)}`),
       activeAction('fan.stop', fan.output === 'off', 'Виключити'),
     ],
     wide: true,
@@ -273,17 +277,17 @@ function fanAutoModeCard(fan) {
         label: 'Автоматизація',
         columns: [
           {
-            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Різниця вологості'),
+            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Різниця вологості, %'),
             pairs: [
               ['Включення', show(fan.settings.auto_delta_on_pct, '%')],
               ['Виключення', show(fan.settings.auto_delta_off_pct, '%')],
             ],
           },
           {
-            control: activeAction('fan.strategy.timer', fan.settings.auto_strategy === 'timer', 'Таймер'),
+            control: activeAction('fan.strategy.timer', fan.settings.auto_strategy === 'timer', 'Таймер, хв'),
             pairs: [
-              ['Робота', show(fan.settings.auto_timer_on_sec, ' сек')],
-              ['Пауза', show(fan.settings.auto_timer_off_sec, ' сек')],
+              ['Робота', showMinutes(fan.settings.auto_timer_on_sec)],
+              ['Пауза', showMinutes(fan.settings.auto_timer_off_sec)],
             ],
           },
         ],
