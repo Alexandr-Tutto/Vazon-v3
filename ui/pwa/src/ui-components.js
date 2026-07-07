@@ -246,6 +246,35 @@ function renderInlineControls(section) {
   return pairWrap;
 }
 
+function renderColumn(column) {
+  const item = document.createElement('div');
+  item.className = 'mini-value';
+  item.style.alignContent = 'start';
+  item.style.gap = '8px';
+
+  if (column.control) {
+    item.append(renderActionButton(column.control));
+  }
+
+  if (column.pairs) {
+    const pairWrap = document.createElement('div');
+    pairWrap.className = 'value-pair';
+    pairWrap.style.gridTemplateColumns = '1fr';
+    column.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
+    item.append(pairWrap);
+  }
+
+  return item;
+}
+
+function renderColumns(section) {
+  const pairWrap = document.createElement('div');
+  pairWrap.className = 'value-pair';
+  pairWrap.style.gridTemplateColumns = `repeat(${section.columns.length}, minmax(0, 1fr))`;
+  section.columns.forEach((column) => pairWrap.append(renderColumn(column)));
+  return pairWrap;
+}
+
 function renderSection(section) {
   const wrap = document.createElement('section');
   wrap.className = `card-section${section.inlineSwitches ? ' card-section-inline' : ''}`;
@@ -269,6 +298,11 @@ function renderSection(section) {
       note.textContent = section.note;
     }
     wrap.append(note);
+  }
+
+  if (section.columns) {
+    wrap.append(renderColumns(section));
+    return wrap;
   }
 
   if (section.inlineControls) {
