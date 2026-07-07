@@ -107,9 +107,15 @@ export function renderMetricCard(title, rows) {
 export function renderActionButton(action) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = `ghost-control${action.inline ? ' instruction-action' : ''}`;
+  button.className = `ghost-control${action.inline ? ' instruction-action' : ''}${action.active ? ' is-active' : ''}`;
   button.textContent = action.label;
   button.dataset.action = action.id;
+
+  if (action.active) {
+    button.setAttribute('aria-pressed', 'true');
+    button.style.borderColor = 'var(--ok)';
+    button.style.color = 'var(--ok)';
+  }
 
   if (action.menuTarget) {
     button.dataset.menuLevel = String(action.menuTarget.level);
@@ -231,6 +237,15 @@ function renderInstructionList(instructions) {
   return list;
 }
 
+function renderInlineControls(section) {
+  const pairWrap = document.createElement('div');
+  pairWrap.className = 'value-pair';
+  pairWrap.style.gridTemplateColumns = `repeat(${(section.controls || []).length + (section.fields || []).length}, minmax(0, 1fr))`;
+  (section.controls || []).forEach((control) => pairWrap.append(renderActionButton(control)));
+  (section.fields || []).forEach((field) => pairWrap.append(renderField(field)));
+  return pairWrap;
+}
+
 function renderSection(section) {
   const wrap = document.createElement('section');
   wrap.className = `card-section${section.inlineSwitches ? ' card-section-inline' : ''}`;
@@ -254,6 +269,11 @@ function renderSection(section) {
       note.textContent = section.note;
     }
     wrap.append(note);
+  }
+
+  if (section.inlineControls) {
+    wrap.append(renderInlineControls(section));
+    return wrap;
   }
 
   if (section.pairs) {
