@@ -95,6 +95,9 @@ if maintenance.active:
 
 if door.state = open:
     fan off
+    fan.auto_state = blocked
+    fan.status = warning
+    fan.status_reason = door_open
 
 if mode = manual:
     accepted manual command runs fan for manual_duration_sec
