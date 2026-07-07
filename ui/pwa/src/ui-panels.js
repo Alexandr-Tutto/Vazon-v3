@@ -248,6 +248,7 @@ function fanModeStatusCard(fan) {
         ],
       },
       {
+        label: 'Режим',
         controls: [activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто')],
       },
       {
@@ -261,7 +262,7 @@ function fanModeStatusCard(fan) {
         label: 'Автоматизація',
         columns: [
           {
-            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта'),
+            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта вологості'),
             pairs: [
               ['Включення', show(fan.settings.auto_delta_on_pct, '%')],
               ['Виключення', show(fan.settings.auto_delta_off_pct, '%')],
