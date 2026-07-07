@@ -265,7 +265,7 @@ function fanAutoModeCard(fan) {
         label: 'Автоматизація',
         columns: [
           {
-            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта вологості'),
+            control: activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Різниця вологості'),
             pairs: [
               ['Включення', show(fan.settings.auto_delta_on_pct, '%')],
               ['Виключення', show(fan.settings.auto_delta_off_pct, '%')],
@@ -462,9 +462,6 @@ function getFunctionSettingsCards(entity, uiState) {
   if (entity === 'fan') {
     return [
       { label: 'Режим', controls: [getUiAction('fan.mode.auto'), getUiAction('fan.mode.manual')] },
-      { label: 'Ручне керування', controls: [getUiAction('fan.manual_run'), getUiAction('fan.stop')] },
-      { label: 'Час роботи', controls: [getUiAction('fan.runtime.day'), getUiAction('fan.runtime.always')] },
-      { label: 'Стратегія', controls: [getUiAction('fan.strategy.delta'), getUiAction('fan.strategy.timer')] },
       { label: 'Налаштування за різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]], action: getUiAction('fan.settings.edit') },
       { label: 'Налаштування за таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]], action: getUiAction('fan.settings.edit') },
       { label: 'Ручний запуск', value: show(raw.fan.settings.manual_duration_sec, ' сек'), action: getUiAction('fan.settings.edit') },
