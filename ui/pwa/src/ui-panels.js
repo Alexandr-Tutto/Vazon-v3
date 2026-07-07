@@ -196,6 +196,24 @@ function settingsOpenAction(entity) {
   };
 }
 
+function activeAction(id, active, label = null) {
+  return {
+    ...getUiAction(id),
+    ...(label ? { label } : {}),
+    active,
+  };
+}
+
+function numberField(label, name, value, unit = '') {
+  return {
+    label,
+    name,
+    value,
+    unit,
+    step: 1,
+  };
+}
+
 function sensorSwitch(label, name, enabled, enableActionId, disableActionId, passiveLabel = `${label}-відкл.`) {
   return {
     label,
@@ -224,6 +242,44 @@ function timeField(label, name, value) {
     maxLength: 5,
     size: 5,
     width: '5ch',
+  };
+}
+
+function fanModeStatusCard(fan) {
+  return {
+    label: 'Режим',
+    sections: [
+      {
+        label: 'Автоматично',
+        controls: [activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто')],
+      },
+      {
+        label: 'Час роботи',
+        controls: [
+          activeAction('fan.runtime.always', fan.settings.runtime === 'always', 'Цілодобово'),
+          activeAction('fan.runtime.day', fan.settings.runtime === 'day', 'Денний'),
+        ],
+      },
+      {
+        label: 'Стратегія',
+        inlineControls: true,
+        controls: [activeAction('fan.strategy.delta', fan.settings.auto_strategy === 'delta', 'Дельта')],
+        fields: [
+          numberField('Включення', 'auto_delta_on_pct', fan.settings.auto_delta_on_pct, '%'),
+          numberField('Виключення', 'auto_delta_off_pct', fan.settings.auto_delta_off_pct, '%'),
+        ],
+      },
+      {
+        label: 'Стратегія',
+        inlineControls: true,
+        controls: [activeAction('fan.strategy.timer', fan.settings.auto_strategy === 'timer', 'Таймер')],
+        fields: [
+          numberField('Робота', 'auto_timer_on_sec', fan.settings.auto_timer_on_sec, 'сек'),
+          numberField('Пауза', 'auto_timer_off_sec', fan.settings.auto_timer_off_sec, 'сек'),
+        ],
+      },
+    ],
+    wide: true,
   };
 }
 
@@ -316,10 +372,7 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'fan') {
     return [
-      { label: 'Режим', pairs: [['Автостан', autoStateText(raw.fan.auto_state)], ['Режим', modeText(raw.fan.settings.mode)]] },
-      { label: 'Робота', pairs: [['Час роботи', runtimeText(raw.fan.settings.runtime)], ['Стратегія', strategyText(raw.fan.settings.auto_strategy)]] },
-      { label: 'За різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]] },
-      { label: 'За таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]] },
+      fanModeStatusCard(raw.fan),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
