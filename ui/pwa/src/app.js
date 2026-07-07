@@ -105,6 +105,57 @@ function closePanel() {
   document.body.classList.remove('has-panel');
 }
 
+function openParentView() {
+  if (!currentView) {
+    return;
+  }
+
+  if (currentView.level === MENU_LEVELS.FUNCTION_SETTINGS && currentView.context.entity) {
+    openFunctionStatus(currentView.context.entity);
+    return;
+  }
+
+  closePanel();
+}
+
+function isTextInput(element) {
+  return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement;
+}
+
+function rememberInputStartValue(event) {
+  if (!isTextInput(event.target)) {
+    return;
+  }
+
+  event.target.dataset.editStartValue = event.target.value;
+}
+
+function cancelInputEdit(input) {
+  input.value = input.dataset.editStartValue ?? input.value;
+  delete input.dataset.editStartValue;
+  input.blur();
+}
+
+function handleEscape(event) {
+  if (event.key !== 'Escape') {
+    return;
+  }
+
+  if (isTextInput(event.target)) {
+    event.preventDefault();
+    event.stopPropagation();
+    cancelInputEdit(event.target);
+    return;
+  }
+
+  if (!currentView) {
+    return;
+  }
+
+  event.preventDefault();
+  openParentView();
+}
+
 function readStaticCommandArgs(actionButton) {
   if (!actionButton.dataset.commandArgs) {
     return {};
@@ -204,6 +255,8 @@ function render() {
 elements.closeButton.addEventListener('click', closePanel);
 elements.serviceButton.addEventListener('click', openAdvancedService);
 elements.detailBody.addEventListener('click', handlePanelClick);
+elements.detailBody.addEventListener('focusin', rememberInputStartValue);
+document.addEventListener('keydown', handleEscape);
 
 render();
 registerServiceWorker();
