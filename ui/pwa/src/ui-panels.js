@@ -240,7 +240,14 @@ function fanModeStatusCard(fan) {
     label: 'Режим',
     sections: [
       {
-        label: 'Автоматично',
+        label: 'Режим',
+        controls: [
+          activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
+          activeAction('fan.manual_run', fan.output === 'on', 'Включити'),
+          activeAction('fan.stop', fan.output === 'off', 'Виключити'),
+        ],
+      },
+      {
         controls: [activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто')],
       },
       {
