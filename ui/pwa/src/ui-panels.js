@@ -243,6 +243,7 @@ function fanManualModeCard(fan) {
       activeAction('fan.manual_run', fan.output === 'on', 'Включити'),
       activeAction('fan.stop', fan.output === 'off', 'Виключити'),
     ],
+    wide: true,
   };
 }
 
