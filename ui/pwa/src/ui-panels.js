@@ -461,10 +461,29 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'fan') {
     return [
-      { label: 'Режим', controls: [getUiAction('fan.mode.auto'), getUiAction('fan.mode.manual')] },
-      { label: 'Налаштування за різницею', pairs: [['Увімкнення', show(raw.fan.settings.auto_delta_on_pct, '%')], ['Вимкнення', show(raw.fan.settings.auto_delta_off_pct, '%')]], action: getUiAction('fan.settings.edit') },
-      { label: 'Налаштування за таймером', pairs: [['Увімкнення', show(raw.fan.settings.auto_timer_on_sec, ' сек')], ['Вимкнення', show(raw.fan.settings.auto_timer_off_sec, ' сек')]], action: getUiAction('fan.settings.edit') },
-      { label: 'Ручний запуск', value: show(raw.fan.settings.manual_duration_sec, ' сек'), action: getUiAction('fan.settings.edit') },
+      {
+        label: 'Налаштування за різницею',
+        fields: [
+          { label: 'Увімкнення', name: 'auto_delta_on_pct', value: raw.fan.settings.auto_delta_on_pct, unit: '%', step: 1 },
+          { label: 'Вимкнення', name: 'auto_delta_off_pct', value: raw.fan.settings.auto_delta_off_pct, unit: '%', step: 1 },
+        ],
+        controls: [getUiAction('fan.settings.edit')],
+      },
+      {
+        label: 'Налаштування за таймером',
+        fields: [
+          { label: 'Увімкнення', name: 'auto_timer_on_sec', value: raw.fan.settings.auto_timer_on_sec, unit: 'сек', step: 1 },
+          { label: 'Вимкнення', name: 'auto_timer_off_sec', value: raw.fan.settings.auto_timer_off_sec, unit: 'сек', step: 1 },
+        ],
+        controls: [getUiAction('fan.settings.edit')],
+      },
+      {
+        label: 'Ручний запуск',
+        fields: [
+          { label: 'Тривалість', name: 'manual_duration_sec', value: raw.fan.settings.manual_duration_sec, unit: 'сек', step: 1 },
+        ],
+        controls: [getUiAction('fan.settings.edit')],
+      },
     ];
   }
 
