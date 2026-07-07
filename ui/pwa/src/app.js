@@ -7,6 +7,20 @@ import { getAdvancedServiceView, getFunctionSettingsView, getFunctionStatusView 
 const uiState = createUiState(mockState);
 let currentView = null;
 
+function applyFanPresentation(state) {
+  const fanTile = state.tiles.find((tile) => tile.entity === 'fan');
+
+  if (fanTile && state.raw.fan.status_reason) {
+    fanTile.summary = 'Увага';
+  }
+
+  if (state.details.fan && state.raw.fan.status_reason === 'door_open') {
+    state.details.fan.summary = '- заблоковано через відкриті двері';
+  }
+}
+
+applyFanPresentation(uiState);
+
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
   statusGrid: document.getElementById('statusGrid'),
