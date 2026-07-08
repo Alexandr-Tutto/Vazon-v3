@@ -536,13 +536,10 @@ function getAdvancedServiceCards(uiState) {
   const maintenanceActive = raw.system.global_context.maintenance.active;
 
   return [
-    { label: 'Стан системи', pairs: [['Стан', raw.system.status], ['Причина', raw.system.status_reason || '—'], ['Підсистема', raw.system.affected_system || '—']] },
     {
       label: 'Обслуговування',
-      sections: [
-        { controls: [maintenanceAction(maintenanceActive)] },
-        { note: maintenanceActive ? 'Автоматичне зволоження та вентиляція відключені' : 'Буде відключено автоматичне зволоження та вентиляція' },
-      ],
+      value: maintenanceActive ? 'Автоматичне зволоження та вентиляція відключені' : 'Буде відключено автоматичне зволоження та вентиляція',
+      controls: [maintenanceAction(maintenanceActive)],
       wide: true,
     },
     { label: 'Звʼязок', pairs: [['Wi-Fi', connectionTileSummary(uiState)], ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)]] },
