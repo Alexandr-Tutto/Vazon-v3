@@ -5,7 +5,7 @@ const actionRegistry = {
   },
 
   'climate.thresholds.edit': {
-    label: 'Змінити пороги',
+    label: 'Зберегти налаштування',
     command: {
       target: 'climate',
       cmd: 'set_settings',
