@@ -162,16 +162,22 @@ function renderField(field) {
   if (field.max !== undefined) input.dataset.max = String(field.max);
   if (field.step !== undefined) input.dataset.step = String(field.step);
 
-  item.append(fieldLabel, input);
+  const inputRow = document.createElement('span');
+  inputRow.style.display = 'inline-flex';
+  inputRow.style.alignItems = 'center';
+  inputRow.style.gap = '4px';
+  inputRow.style.minWidth = '0';
+  inputRow.append(input);
 
   if (field.unit) {
     input.dataset.unit = field.unit;
     const unit = document.createElement('span');
     unit.textContent = field.unit;
     unit.setAttribute('aria-hidden', 'true');
-    item.append(unit);
+    inputRow.append(unit);
   }
 
+  item.append(fieldLabel, inputRow);
   return item;
 }
 
@@ -353,6 +359,12 @@ function renderCardValue(card) {
 }
 
 export function renderCard(card) {
+  if (card.bare) {
+    const row = renderControlRow(card.controls || []);
+    row.style.gridColumn = '1 / -1';
+    return row;
+  }
+
   const article = document.createElement('article');
   article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
 
