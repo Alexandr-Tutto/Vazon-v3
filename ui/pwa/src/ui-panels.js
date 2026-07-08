@@ -23,6 +23,15 @@ function showMinutes(value) {
   return show(secondsToMinutes(value), ' хв');
 }
 
+function serverStateText(value) {
+  if (value === 'connected') return 'Підʼєднано';
+  return 'Недоступний';
+}
+
+function connectionTileSummary(uiState) {
+  return uiState.tiles.find((tile) => tile.entity === 'connection')?.summary || noData;
+}
+
 function optionText(value, labels, fallback = noData) {
   if (value === null || value === undefined || value === 'unknown') {
     return fallback;
@@ -394,9 +403,14 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'connection') {
     return [
-      { label: 'Звʼязок', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Сервіс', raw.system.global_context.connection.mqtt_state]] },
+      {
+        label: 'Звʼязок',
+        pairs: [
+          ['Wi-Fi', connectionTileSummary(uiState)],
+          ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)],
+        ],
+      },
       { label: 'Актуальність даних', value: raw.system.global_context.connection.mqtt_state === 'connected' ? 'Дані актуальні' : 'Немає актуальних даних' },
-      { label: 'Примітка', value: 'Технічні параметри звʼязку приховані у сервісному рівні', wide: true },
     ];
   }
 
