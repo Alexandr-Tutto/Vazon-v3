@@ -540,6 +540,7 @@ function getAdvancedServiceCards(uiState) {
       label: 'Обслуговування',
       value: maintenanceActive ? 'Автоматичне зволоження та вентиляція відключені' : 'Буде відключено автоматичне зволоження та вентиляція',
       controls: [maintenanceAction(maintenanceActive)],
+      controlsFirst: true,
       wide: true,
     },
     { label: 'Звʼязок', pairs: [['Wi-Fi', connectionTileSummary(uiState)], ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)]] },
