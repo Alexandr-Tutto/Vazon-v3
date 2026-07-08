@@ -200,7 +200,7 @@ export function getFunctionSettingsView(entity, uiState) {
 export function getAdvancedServiceView(uiState) {
   return createMenuView(
     MENU_LEVELS.ADVANCED_SERVICE,
-    'Сервіс / розширено',
+    'Система налаштувань',
     getAdvancedServiceCards(uiState),
   );
 }
@@ -221,6 +221,15 @@ function activeAction(id, active, label = null) {
   return {
     ...getUiAction(id),
     ...(label ? { label } : {}),
+    active,
+  };
+}
+
+function maintenanceAction(active) {
+  return {
+    id: 'service.maintenance.toggle',
+    label: active ? 'Обслуговування активовано' : 'Перейти до обслуговування',
+    command: null,
     active,
   };
 }
@@ -524,16 +533,20 @@ function getFunctionSettingsCards(entity, uiState) {
 
 function getAdvancedServiceCards(uiState) {
   const raw = uiState.raw;
+  const maintenanceActive = raw.system.global_context.maintenance.active;
 
   return [
     { label: 'Стан системи', pairs: [['Стан', raw.system.status], ['Причина', raw.system.status_reason || '—'], ['Підсистема', raw.system.affected_system || '—']] },
-    { label: 'Обслуговування', pairs: [['Активне', yesNoText(raw.system.global_context.maintenance.active)], ['Причина', raw.system.global_context.maintenance.reason || '—']] },
-    { label: 'Денний графік', pairs: [['Увімкнений', yesNoText(raw.system.global_context.day_window.schedule_enabled)], ['Активний', yesNoText(raw.system.global_context.day_window.active)], ['Увімкнення', raw.system.global_context.day_window.time_on], ['Вимкнення', raw.system.global_context.day_window.time_off]] },
-    { label: 'Звʼязок', pairs: [['Wi-Fi', raw.system.global_context.connection.wifi_state], ['Сервіс', raw.system.global_context.connection.mqtt_state]] },
+    {
+      label: 'Обслуговування',
+      sections: [
+        { controls: [maintenanceAction(maintenanceActive)] },
+        { note: maintenanceActive ? 'Автоматичне зволоження та вентиляція відключені' : 'Буде відключено автоматичне зволоження та вентиляція' },
+      ],
+      wide: true,
+    },
+    { label: 'Звʼязок', pairs: [['Wi-Fi', connectionTileSummary(uiState)], ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)]] },
     { label: 'OTA / оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
-    { label: 'Діагностика', value: 'Сховано', action: getUiAction('service.diagnostics.open') },
-    { label: 'Status LED', pairs: [['Red', raw.status_led.red_output], ['Green', raw.status_led.green_output], ['Pattern', raw.status_led.pattern]] },
     { label: 'Остання команда', value: 'Команд ще не було', wide: true },
-    { label: 'Пристрій', value: 'Vazon V3 prototype' },
   ];
 }
