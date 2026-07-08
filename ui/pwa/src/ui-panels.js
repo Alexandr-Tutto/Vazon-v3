@@ -391,8 +391,8 @@ function getFunctionStatusCards(entity, uiState) {
           {
             label: 'Графік',
             fields: [
-              timeField('Увімкнення', 'time_on', raw.system.global_context.day_window.time_on),
-              timeField('Вимкнення', 'time_off', raw.system.global_context.day_window.time_off),
+              timeField('Час включення', 'time_on', raw.system.global_context.day_window.time_on),
+              timeField('Час відключення', 'time_off', raw.system.global_context.day_window.time_off),
             ],
             controls: [getUiAction('light.settings.edit')],
           },
