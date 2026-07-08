@@ -338,6 +338,12 @@ function renderSection(section) {
   return wrap;
 }
 
+function renderCardValue(card) {
+  const value = document.createElement('strong');
+  value.textContent = card.value || '';
+  return value;
+}
+
 export function renderCard(card) {
   const article = document.createElement('article');
   article.className = `panel-card${card.wide ? ' is-wide' : ''}`;
@@ -370,12 +376,17 @@ export function renderCard(card) {
     card.pairs.forEach((pair) => pairWrap.append(renderPair(pair)));
     article.append(pairWrap);
   } else if (card.controls) {
-    if (card.value) {
-      const value = document.createElement('strong');
-      value.textContent = card.value;
-      article.append(value);
+    if (card.controlsFirst) {
+      article.append(renderControlRow(card.controls));
+      if (card.value) {
+        article.append(renderCardValue(card));
+      }
+    } else {
+      if (card.value) {
+        article.append(renderCardValue(card));
+      }
+      article.append(renderControlRow(card.controls));
     }
-    article.append(renderControlRow(card.controls));
   } else if (card.instructions) {
     article.append(renderInstructionList(card.instructions));
 
@@ -390,9 +401,7 @@ export function renderCard(card) {
       article.append(note);
     }
   } else {
-    const value = document.createElement('strong');
-    value.textContent = card.value || '';
-    article.append(value);
+    article.append(renderCardValue(card));
   }
 
   if (card.action) {
