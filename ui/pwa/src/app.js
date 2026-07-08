@@ -156,6 +156,13 @@ function handleEscape(event) {
   openParentView();
 }
 
+function toggleMaintenanceMode() {
+  const maintenance = uiState.raw.system.global_context.maintenance;
+  maintenance.active = !maintenance.active;
+  maintenance.reason = maintenance.active ? 'manual_service' : null;
+  openAdvancedService();
+}
+
 function readStaticCommandArgs(actionButton) {
   if (!actionButton.dataset.commandArgs) {
     return {};
@@ -230,6 +237,11 @@ function handlePanelClick(event) {
 
   if (action === 'navigation.close') {
     closePanel();
+    return;
+  }
+
+  if (action === 'service.maintenance.toggle') {
+    toggleMaintenanceMode();
     return;
   }
 
