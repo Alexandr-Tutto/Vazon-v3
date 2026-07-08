@@ -9,7 +9,7 @@ const levelLabels = {
   [MENU_LEVELS.OVERVIEW]: 'Огляд',
   [MENU_LEVELS.FUNCTION_STATUS]: 'Стан підсистеми',
   [MENU_LEVELS.FUNCTION_SETTINGS]: 'Налаштування підсистеми',
-  [MENU_LEVELS.ADVANCED_SERVICE]: 'Сервіс / розширено',
+  [MENU_LEVELS.ADVANCED_SERVICE]: 'Система налаштувань',
 };
 
 export function getMenuLevelLabel(level) {
