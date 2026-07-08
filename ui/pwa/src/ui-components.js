@@ -161,9 +161,17 @@ function renderField(field) {
   if (field.min !== undefined) input.dataset.min = String(field.min);
   if (field.max !== undefined) input.dataset.max = String(field.max);
   if (field.step !== undefined) input.dataset.step = String(field.step);
-  if (field.unit) input.dataset.unit = field.unit;
 
   item.append(fieldLabel, input);
+
+  if (field.unit) {
+    input.dataset.unit = field.unit;
+    const unit = document.createElement('span');
+    unit.textContent = field.unit;
+    unit.setAttribute('aria-hidden', 'true');
+    item.append(unit);
+  }
+
   return item;
 }
 
