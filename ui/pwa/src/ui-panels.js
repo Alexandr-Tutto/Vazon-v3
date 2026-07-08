@@ -387,7 +387,7 @@ function getFunctionStatusCards(entity, uiState) {
       {
         label: 'Режим роботи',
         sections: [
-          { label: 'Режим', controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto'), getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
+          { controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto'), getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
           {
             label: 'Графік',
             fields: [
