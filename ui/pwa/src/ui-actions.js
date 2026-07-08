@@ -248,11 +248,11 @@ const actionRegistry = {
     command: { target: 'light', cmd: 'set_mode', args: { mode: 'manual' } },
   },
   'light.manual.on': {
-    label: 'Увімкнути',
+    label: 'Включити',
     command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'on' } },
   },
   'light.manual.off': {
-    label: 'Вимкнути',
+    label: 'Відключити',
     command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'off' } },
   },
   'light.settings.edit': {
