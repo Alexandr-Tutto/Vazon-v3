@@ -443,10 +443,10 @@ function getFunctionSettingsCards(entity, uiState) {
         ],
       },
       {
-        label: 'Пороги різниці',
+        label: 'Аномальна різниця температур',
         fields: [
-          { label: 'Попередження різниці температур', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
-          { label: 'Критична різниця температур', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
+          { label: 'Жовте попередження', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
+          { label: 'Критичне попередження', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
         ],
       },
       { label: 'Пороги', value: 'climate.set_settings', controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')], wide: true },
