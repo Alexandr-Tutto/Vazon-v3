@@ -55,6 +55,25 @@ function lightOutputText(value) {
   return '—';
 }
 
+function wifiStateText(value) {
+  const labels = {
+    connected: 'Добрий',
+    good: 'Добрий',
+    medium: 'Середній',
+    weak: 'Середній',
+    poor: 'Слабкий',
+    disconnected: 'Недоступний',
+    offline: 'Недоступний',
+  };
+
+  return labels[value] || value || '—';
+}
+
+function serverStateText(value) {
+  if (value === 'connected') return 'Підʼєднано';
+  return 'Недоступний';
+}
+
 function modeText(value) {
   if (value === 'auto') return 'авто';
   if (value === 'manual') return 'ручний';
@@ -167,7 +186,7 @@ export function createUiState(raw) {
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
     tile('light', 'Світло', raw.light.status, lightOutputText(raw.light.output), raw.light.output === 'on'),
     tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Заблоковано через відкриті двері', raw.fan.output === 'on'),
-    tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', 'Добрий'),
+    tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
 
   const details = {
@@ -206,9 +225,9 @@ export function createUiState(raw) {
       { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },
     ]),
 
-    connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, raw.system.global_context.connection.mqtt_state, 'У звичайному UI технічне слово MQTT не показується на головному екрані.', [
-      { label: 'Wi-Fi', value: raw.system.global_context.connection.wifi_state },
-      { label: 'Сервіс', value: raw.system.global_context.connection.mqtt_state },
+    connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, serverStateText(raw.system.global_context.connection.mqtt_state), '', [
+      { label: 'Wi-Fi', value: wifiStateText(raw.system.global_context.connection.wifi_state) },
+      { label: 'Сервер', value: serverStateText(raw.system.global_context.connection.mqtt_state) },
     ]),
   };
 
@@ -218,6 +237,6 @@ export function createUiState(raw) {
     climate,
     tiles,
     details,
-    connectionLabel: `${raw.system.global_context.connection.wifi_state} / ${raw.system.global_context.connection.mqtt_state}`,
+    connectionLabel: `${wifiStateText(raw.system.global_context.connection.wifi_state)} / ${serverStateText(raw.system.global_context.connection.mqtt_state)}`,
   };
 }
