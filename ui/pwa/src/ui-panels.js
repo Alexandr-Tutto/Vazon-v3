@@ -431,25 +431,39 @@ function getFunctionSettingsCards(entity, uiState) {
 
   if (entity === 'climate') {
     return [
-      { label: 'Верх', pairs: [['Статус', raw.climate.sensor_0x44.status], ['Причина', raw.climate.sensor_0x44.status_reason || '—']] },
-      { label: 'Низ', pairs: [['Статус', raw.climate.sensor_0x45.status], ['Причина', raw.climate.sensor_0x45.status_reason || '—']] },
       {
-        label: 'Пороги попередження',
-        fields: [
-          { label: 'Нижній поріг температури', name: 'temperature_low_warn', value: raw.climate.settings.temperature_low_warn, unit: '°C', step: 1 },
-          { label: 'Верхній поріг температури', name: 'temperature_high_warn', value: raw.climate.settings.temperature_high_warn, unit: '°C', step: 1 },
-          { label: 'Нижній поріг вологості', name: 'humidity_low_warn', value: raw.climate.settings.humidity_low_warn, unit: '%', step: 1 },
-          { label: 'Верхній поріг вологості', name: 'humidity_high_warn', value: raw.climate.settings.humidity_high_warn, unit: '%', step: 1 },
+        label: 'Датчики',
+        pairs: [
+          ['Верх стан', raw.climate.sensor_0x44.status],
+          ['Верх причина', raw.climate.sensor_0x44.status_reason || '—'],
+          ['Низ стан', raw.climate.sensor_0x45.status],
+          ['Низ причина', raw.climate.sensor_0x45.status_reason || '—'],
         ],
+        wide: true,
       },
       {
-        label: 'Аномальна різниця температур',
-        fields: [
-          { label: 'Жовте попередження', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
-          { label: 'Критичне попередження', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
+        label: 'Налаштування попереджень',
+        sections: [
+          {
+            label: 'Пороги попередження',
+            fields: [
+              { label: 'Нижній поріг температури', name: 'temperature_low_warn', value: raw.climate.settings.temperature_low_warn, unit: '°C', step: 1 },
+              { label: 'Верхній поріг температури', name: 'temperature_high_warn', value: raw.climate.settings.temperature_high_warn, unit: '°C', step: 1 },
+              { label: 'Нижній поріг вологості', name: 'humidity_low_warn', value: raw.climate.settings.humidity_low_warn, unit: '%', step: 1 },
+              { label: 'Верхній поріг вологості', name: 'humidity_high_warn', value: raw.climate.settings.humidity_high_warn, unit: '%', step: 1 },
+            ],
+          },
+          {
+            label: 'Аномальна різниця температур',
+            fields: [
+              { label: 'Жовте попередження', name: 'temperature_delta_warn', value: raw.climate.settings.temperature_delta_warn, unit: '°C', step: 1 },
+              { label: 'Критичне попередження', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
+            ],
+          },
         ],
+        wide: true,
       },
-      { label: 'Пороги', value: 'climate.set_settings', controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')], wide: true },
+      { bare: true, controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')] },
     ];
   }
 
