@@ -10,11 +10,12 @@ This file is the navigation map for active project documentation.
 
 Agents must read it to understand which documents are active and how documentation is organized. This file does not replace the owning documents listed below.
 
-## Current Baselines
+## Current Working Baseline
 
 ```text
-Project skeleton baseline: a9f5c3f Align V3 skeleton with contracts
-Documentation workflow baseline: 4316d01 docs: add documentation workflow decision
+UI baseline: V3.0 starting UI design is fixed by the current main branch state.
+Firmware baseline: PCB v1.0 board bring-up skeleton is the active embedded focus.
+Hardware baseline: docs/hardware/v3_board_pinout.md and board_config must match.
 Branch: main
 ```
 

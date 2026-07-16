@@ -30,10 +30,13 @@ Contracts: active source of truth
 Pinout: active V3 PCB reference
 Board config scaffold: active firmware-facing pinout seed
 UI architecture: active presentation boundary
+UI implementation: V3.0 starting UI design baseline
 Data model: active minimal boundary
 MQTT topic registry: active minimal boundary
 Software architecture: active ownership/boundary reference
 Migration rules: active old-repo reference boundary
+Firmware implementation: board bring-up skeleton active
+Production module implementation: postponed
 Settings persistence implementation: postponed
 Remaining hardware confirmations: none
 ```

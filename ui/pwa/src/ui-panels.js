@@ -86,7 +86,8 @@ function autoStateText(value) {
   return optionText(value, {
     blocked: 'заблоковано',
     running: 'працює',
-    idle: 'очікує',
+    pause: 'пауза',
+    alert: 'увага',
     off: 'вимкнено',
   });
 }
@@ -258,10 +259,10 @@ function timeField(label, name, value) {
     value,
     type: 'text',
     inputMode: 'numeric',
-    pattern: '[0-9]{2}\\.[0-9]{2}',
+    pattern: '[0-9]{2}:[0-9]{2}',
     maxLength: 5,
     size: 5,
-    width: '5ch',
+    width: '7ch',
   };
 }
 
@@ -394,7 +395,7 @@ function getFunctionStatusCards(entity, uiState) {
               timeField('Час включення', 'time_on', raw.system.global_context.day_window.time_on),
               timeField('Час відключення', 'time_off', raw.system.global_context.day_window.time_off),
             ],
-            controls: [getUiAction('light.settings.edit')],
+            controls: [getUiAction('system.day_window.edit')],
           },
         ],
         wide: true,

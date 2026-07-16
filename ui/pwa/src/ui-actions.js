@@ -255,9 +255,9 @@ const actionRegistry = {
     label: 'Відключити',
     command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'off' } },
   },
-  'light.settings.edit': {
+  'system.day_window.edit': {
     label: 'Змінити',
-    command: { target: 'light', cmd: 'set_settings', args: {} },
+    command: { target: 'system', cmd: 'set_day_window', args: {} },
   },
 
   'fan.mode.auto': {

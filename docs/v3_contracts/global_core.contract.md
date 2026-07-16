@@ -1,6 +1,6 @@
 # Global Core Contract
 
-Document status: skeleton
+Document status: active bring-up contract
 Code status: architecture contract
 Scope: Vazon V3 Global Core
 
@@ -117,10 +117,20 @@ mqtt_offline is not part of GlobalInterlocks.
 ```text
 Global Core accepts only global commands in normal runtime:
 maintenance on/off
+system.set_day_window
 reset defaults
 global service commands
 
 Wi-Fi provisioning is not normal runtime command flow.
+```
+
+`system.set_day_window` updates provided `day_window` fields.
+
+```text
+Accepted args:
+schedule_enabled = true / false, optional
+time_on = HH:MM, optional
+time_off = HH:MM, optional
 ```
 
 ## 12. Provisioning boundary

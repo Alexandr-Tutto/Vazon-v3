@@ -1,13 +1,16 @@
 # Vazon V3 Firmware Skeleton
 
-Document status: draft
-Code status: skeleton reference
-Scope: current firmware directory layout
+Document status: active draft
+Code status: board bring-up skeleton
+Scope: current firmware directory layout and PCB v1.0 smoke-test scope
 
 ## Current Goal
 
 ```text
-Create a minimal ESP-IDF project skeleton before porting old implementation code.
+Keep a minimal ESP-IDF project skeleton ready for PCB v1.0 board bring-up.
+
+Tomorrow's embedded focus is hardware smoke testing, not production module
+implementation.
 ```
 
 ## Current Build Entry
@@ -51,7 +54,9 @@ components/board_config/include/vazon_gpio_levels.h
 hardware smoke test
 ```
 
-Expected smoke-test scope:
+## PCB v1.0 Smoke-Test Checklist
+
+Run this scope before porting production module behavior:
 
 ```text
 UART boot log
@@ -64,6 +69,43 @@ OneWire scan for DS18B20
 ADC raw read for pot[0] and pot[1]
 manual output toggle test through temporary serial commands
 ```
+
+Expected initial safe states:
+
+```text
+LIGHT_GPIO            OFF = 1
+MAIN_FAN_GPIO         OFF = 1
+HUMIDIFIER_FAN_GPIO   OFF = 1
+HUMIDIFIER_MIST_GPIO  OFF = 1
+```
+
+Expected input checks:
+
+```text
+DOOR_REED_GPIO:
+    closed = 0
+    open = 1
+
+HUMIDIFIER_WATER_PRESENT_GPIO:
+    water empty = 0
+    water present = 1
+```
+
+Expected bus checks:
+
+```text
+I2C:
+    detect two SHT31 sensors or record the observed addresses
+
+OneWire:
+    detect DS18B20 sensors on POT_TEMP_ONEWIRE_GPIO
+
+ADC:
+    read raw values from pot[0] and pot[1] channels
+```
+
+Temporary serial commands are allowed only for bring-up output toggles and raw
+sensor reads. They must not define production command names or UI/MQTT behavior.
 
 ## Forbidden In Skeleton Phase
 

@@ -159,7 +159,7 @@ function handleEscape(event) {
 function toggleMaintenanceMode() {
   const maintenance = uiState.raw.system.global_context.maintenance;
   maintenance.active = !maintenance.active;
-  maintenance.reason = maintenance.active ? 'manual_service' : null;
+  maintenance.reason = maintenance.active ? 'manual' : null;
   openAdvancedService();
 }
 

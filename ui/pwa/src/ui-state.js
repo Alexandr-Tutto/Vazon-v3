@@ -102,7 +102,8 @@ function fanAutoStateText(value) {
   const labels = {
     blocked: 'заблоковано',
     running: 'працює',
-    idle: 'очікує',
+    pause: 'пауза',
+    alert: 'увага',
     off: 'вимкнено',
   };
 

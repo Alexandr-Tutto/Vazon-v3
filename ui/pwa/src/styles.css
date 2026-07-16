@@ -441,6 +441,11 @@ body.has-panel .detail-panel {
   font-size: 11px;
 }
 
+input[name="time_on"],
+input[name="time_off"] {
+  width: 7ch !important;
+}
+
 .card-section {
   display: grid;
   gap: 8px;

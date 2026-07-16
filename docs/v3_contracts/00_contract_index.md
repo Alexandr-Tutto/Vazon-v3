@@ -73,12 +73,7 @@ One fact must have one owner file.
 Other files may reference that fact but must not restate or reinterpret it.
 Data model and MQTT registry are boundary documents, not module logic owners.
 Settings persistence implementation is postponed.
-Firmware/UI skeletons are active; production implementation is postponed.
+Firmware board bring-up skeleton is active.
+V3.0 starting UI design baseline is active.
+Production module implementation is postponed.
 ```
-
-## Change Log
-
-- 2026-06-28: seeded clean Vazon V3 repository with active source-of-truth documents only.
-- 2026-06-28: removed obsolete air sensor contract; climate contract owns both SHT31 sensors and climate aggregation.
-- 2026-06-28: simplified module groups: light, fan, and humidifier are actuator modules.
-- 2026-06-28: narrowed data model and MQTT registry to boundary ownership only; module fields remain owned by contracts.

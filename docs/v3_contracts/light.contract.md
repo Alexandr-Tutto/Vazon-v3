@@ -144,6 +144,9 @@ Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
 
+`light.set_settings` does not accept `day_window` schedule fields.
+`day_window` is owned by Global Core.
+
 ## 15. Output Confirmation
 
 ```text

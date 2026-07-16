@@ -1,6 +1,6 @@
 # Vazon V3 Runtime Core
 
-Document status: skeleton
+Document status: active bring-up overview
 Code status: architecture overview
 Scope: Vazon V3 firmware runtime overview
 

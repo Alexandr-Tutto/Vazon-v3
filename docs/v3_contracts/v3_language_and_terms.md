@@ -1,7 +1,7 @@
 # V3 language and terminology rules
 
 Document status: rule
-Code status: not implemented
+Code status: documentation rule
 Repository scope: clean Vazon V3 workspace
 Status note: active V3 documentation rule
 
@@ -148,9 +148,3 @@ Current known-term list:
 ```text
 not filled yet
 ```
-
-## 8. Change Log
-
-- 2026-06-25, v3-chat-terms-only: corrected rule; term explanations are for chat, not normal project documentation.
-- 2026-06-25, v3-language-rules: added terminology and language rules for docs, firmware/code naming and Ukrainian-only UI output.
-- 2026-06-28, seeded as active V3 documentation rule in clean Vazon V3 repository.
