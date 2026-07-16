@@ -13,7 +13,7 @@ It contains only pins used by the V3 board.
 ## 2. Board
 
 ```text
-MCU/module: ESP32-WROVER, 8M memory
+MCU/module: ESP32-WROVER, 16M memory
 Board revision: PCB v1.0
 Physical pin numbers: recorded in this file
 ```

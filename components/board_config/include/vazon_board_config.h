@@ -13,7 +13,7 @@
 #define VAZON_BOARD_NAME              "vazon_v3"
 #define VAZON_BOARD_REVISION          "PCB v1.0"
 #define VAZON_MCU_MODULE              "ESP32-WROVER"
-#define VAZON_MODULE_MEMORY           "8M"
+#define VAZON_MODULE_MEMORY           "16M"
 
 /* Boot / service */
 #define VAZON_GPIO_PROVISIONING_BTN   GPIO_NUM_0
