@@ -79,7 +79,7 @@ docs/mqtt_topic_registry.md
     minimal MQTT namespace, retain policy, and command envelope boundary
 
 docs/firmware_skeleton.md
-    current firmware skeleton layout and next smoke-test scope
+    current firmware skeleton layout, PCB smoke-test scope, and software port order
 
 docs/migration_rules.md
     old-repository reference boundary and migration rules
