@@ -397,6 +397,12 @@ body.has-panel .detail-panel {
   min-width: 92px;
 }
 
+.control-row.power-level-row .ghost-control {
+  flex: 0 0 54px;
+  min-width: 54px;
+  padding-inline: 8px;
+}
+
 .instruction-list {
   margin: 0;
   padding-left: 18px;

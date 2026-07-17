@@ -1,16 +1,16 @@
 # Vazon V3 Firmware Skeleton
 
 Document status: active draft
-Code status: board bring-up skeleton
-Scope: current firmware directory layout, PCB v1.0 smoke-test scope, and software port order
+Code status: board support layer in progress
+Scope: current firmware directory layout, PCB v1.0 smoke-test result, and software port order
 
 ## Current Goal
 
 ```text
-Keep a minimal ESP-IDF project skeleton ready for PCB v1.0 board bring-up.
+Turn the confirmed PCB v1.0 bring-up code into reusable board support APIs.
 
-Tomorrow's embedded focus is hardware smoke testing, not production module
-implementation.
+Production module behavior remains deferred until board support and sensor
+drivers are stable.
 ```
 
 ## Current Build Entry
@@ -40,7 +40,7 @@ app_main()
     -> vazon_app_core_init()
 ```
 
-No module behavior is implemented yet.
+No production module behavior is implemented yet.
 
 ## Board Config Boundary
 
@@ -53,15 +53,22 @@ components/board_config/include/vazon_gpio_levels.h
 
 `vazon_gpio_levels.h` owns normalized logical GPIO levels used by firmware code.
 
-## Next Firmware Step
+## Current Firmware Step
 
 ```text
-hardware smoke test
+board support layer
+```
+
+## PCB v1.0 Smoke-Test Result
+
+```text
+confirmed passed on physical PCB v1.0
+confirmed by project owner: 2026-07-17
 ```
 
 ## PCB v1.0 Smoke-Test Checklist
 
-Run this scope before porting production module behavior:
+The confirmed smoke-test scope was:
 
 ```text
 UART boot log

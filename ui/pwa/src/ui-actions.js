@@ -284,6 +284,26 @@ const actionRegistry = {
     label: 'За таймером',
     command: { target: 'fan', cmd: 'set_auto_strategy', args: { auto_strategy: 'timer' } },
   },
+  'fan.power.20': {
+    label: '20%',
+    command: { target: 'fan', cmd: 'set_power_level', args: { power_level_pct: 20 } },
+  },
+  'fan.power.40': {
+    label: '40%',
+    command: { target: 'fan', cmd: 'set_power_level', args: { power_level_pct: 40 } },
+  },
+  'fan.power.60': {
+    label: '60%',
+    command: { target: 'fan', cmd: 'set_power_level', args: { power_level_pct: 60 } },
+  },
+  'fan.power.80': {
+    label: '80%',
+    command: { target: 'fan', cmd: 'set_power_level', args: { power_level_pct: 80 } },
+  },
+  'fan.power.100': {
+    label: '100%',
+    command: { target: 'fan', cmd: 'set_power_level', args: { power_level_pct: 100 } },
+  },
   'fan.manual_run': {
     label: 'Пуск',
     command: { target: 'fan', cmd: 'manual_run', args: {} },

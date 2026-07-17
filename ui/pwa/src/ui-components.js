@@ -131,9 +131,9 @@ export function renderActionButton(action) {
   return button;
 }
 
-function renderControlRow(controls) {
+function renderControlRow(controls, className = '') {
   const row = document.createElement('div');
-  row.className = 'control-row';
+  row.className = `control-row${className ? ` ${className}` : ''}`;
   controls.forEach((control) => row.append(renderActionButton(control)));
   return row;
 }
@@ -346,7 +346,7 @@ function renderSection(section) {
   }
 
   if (section.controls) {
-    wrap.append(renderControlRow(section.controls));
+    wrap.append(renderControlRow(section.controls, section.controlClass));
   }
 
   return wrap;
@@ -360,7 +360,7 @@ function renderCardValue(card) {
 
 export function renderCard(card) {
   if (card.bare) {
-    const row = renderControlRow(card.controls || []);
+    const row = renderControlRow(card.controls || [], card.controlClass);
     row.style.gridColumn = '1 / -1';
     return row;
   }
@@ -380,7 +380,7 @@ export function renderCard(card) {
     card.fields.forEach((field) => fieldWrap.append(renderField(field)));
     article.append(fieldWrap);
     if (card.controls) {
-      article.append(renderControlRow(card.controls));
+      article.append(renderControlRow(card.controls, card.controlClass));
     }
   } else if (card.switches) {
     const switchWrap = document.createElement('div');
@@ -397,7 +397,7 @@ export function renderCard(card) {
     article.append(pairWrap);
   } else if (card.controls) {
     if (card.controlsFirst) {
-      article.append(renderControlRow(card.controls));
+      article.append(renderControlRow(card.controls, card.controlClass));
       if (card.value) {
         article.append(renderCardValue(card));
       }
@@ -405,7 +405,7 @@ export function renderCard(card) {
       if (card.value) {
         article.append(renderCardValue(card));
       }
-      article.append(renderControlRow(card.controls));
+      article.append(renderControlRow(card.controls, card.controlClass));
     }
   } else if (card.instructions) {
     article.append(renderInstructionList(card.instructions));

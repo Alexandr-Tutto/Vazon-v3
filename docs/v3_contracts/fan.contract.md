@@ -62,6 +62,8 @@ auto_delta_off_pct
 
 auto_timer_on_sec
 auto_timer_off_sec
+
+power_level_pct = 20 / 40 / 60 / 80 / 100
 ```
 
 Mode combinations used by UI:
@@ -73,14 +75,16 @@ auto_strategy = delta
 auto_strategy = timer
 ```
 
-UI status panel shows these settings as current values only. Editing is in extended settings.
+UI status panel may provide quick commands for `mode`, `runtime`, and
+`auto_strategy`. Numeric parameter editing is in extended settings.
 
 ## 7. State
 
 ```text
 fan.output = on / off / unknown
+fan.applied_power_pct = 0..100 / unknown
 fan.auto_state = off / running / pause / blocked / alert / unknown
-fan.status = ok / warning / error / inactive / unknown
+fan.status = ok / warning / error / unknown
 fan.status_reason
 last_command_result
 last_output_confirmed
@@ -95,7 +99,7 @@ connection: ignored
 global_interlocks: used
 
 door.state: used
-climate humidity values: used by delta strategy
+climate.rh_delta_pct: used by delta strategy
 ```
 
 ## 9. Logic
@@ -111,22 +115,50 @@ if door.state = open:
     fan.status_reason = door_open
 
 if mode = manual:
-    accepted manual command runs fan for manual_duration_sec
+    automatic delta and timer strategies do not run
+    accepted fan.manual_run command runs fan for manual_duration_sec
+    after manual_duration_sec expires, fan off
+    accepted fan.stop command stops the fan immediately
+    after fan.stop, fan stays off without a time limit
+    fan stays off until fan.manual_run is accepted or mode returns to auto
 
 if mode = auto:
     if runtime = day and day_window.active = false:
         fan off
 
     if auto_strategy = delta:
-        if abs(zone0_rh - zone1_rh) >= auto_delta_on_pct:
+        if climate.rh_delta_pct >= auto_delta_on_pct:
             fan on
-        if abs(zone0_rh - zone1_rh) <= auto_delta_off_pct:
+        if climate.rh_delta_pct <= auto_delta_off_pct:
             fan off
 
     if auto_strategy = timer:
         run fan for auto_timer_on_sec
         pause fan for auto_timer_off_sec
         repeat while auto mode remains allowed
+```
+
+PWM power behavior:
+
+```text
+power_level_pct applies in both manual and auto mode
+
+on every fan transition from off to on:
+    apply 100% PWM for 1 second
+    linearly ramp from 100% to power_level_pct over 1 second
+    hold power_level_pct while fan remains on
+
+if power_level_pct = 100:
+    remain at 100% after the one-second start interval
+
+if power_level_pct changes while fan is already on:
+    do not repeat the full-power start interval
+    linearly ramp from applied_power_pct to the new power_level_pct over 1 second
+
+if fan.stop or a safety rule requests off:
+    interrupt boost or ramp immediately
+    apply 0% PWM
+    fan.output = off
 ```
 
 ## 10. Rules
@@ -145,6 +177,9 @@ auto_timer_on_sec default = 60
 auto_timer_off_sec default = 300
 auto_timer_on_sec range = 1..86400
 auto_timer_off_sec range = 1..86400
+
+power_level_pct default = 80
+power_level_pct allowed values = 20 / 40 / 60 / 80 / 100
 ```
 
 ## 11. Status
@@ -153,9 +188,12 @@ auto_timer_off_sec range = 1..86400
 ok       - normal operation
 warning  - temporary condition or confirmation unavailable
 error    - command failed after retries
-inactive - module disabled
 unknown  - state is not determined after startup
 ```
+
+`fan.output = off` does not mean that Fan Module is inactive. Normal user
+control keeps the module active so it continues to report status and accept
+commands. Fan Module has no manual enable/disable setting.
 
 ## 12. MQTT Surface
 
@@ -174,6 +212,7 @@ Accepted commands:
 fan.set_mode
 fan.set_runtime
 fan.set_auto_strategy
+fan.set_power_level
 fan.manual_run
 fan.stop
 fan.set_settings
@@ -197,6 +236,7 @@ retry_delay_sec = 1
 Fan Module does not modify GlobalContext.
 Fan Module does not calculate system.status.
 Fan Module does not use temperature delta auto logic.
+Fan Module does not accept arbitrary PWM percentages outside the five allowed levels.
 Fan Module does not create hidden manual-check mode.
 Fan Module does not raise error after the first transient confirmation miss.
 Fan Module does not define MQTT topic strings.

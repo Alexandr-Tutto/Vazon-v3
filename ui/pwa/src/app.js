@@ -188,14 +188,48 @@ function readFieldArgs(actionButton) {
   }, {});
 }
 
+function normalizeFanSettingsArgs(args) {
+  const normalized = { ...args };
+  const minuteFields = {
+    auto_timer_on_min: 'auto_timer_on_sec',
+    auto_timer_off_min: 'auto_timer_off_sec',
+    manual_duration_min: 'manual_duration_sec',
+  };
+
+  Object.entries(minuteFields).forEach(([source, target]) => {
+    if (!(source in normalized)) return;
+
+    const minutes = Number(String(normalized[source]).replace(',', '.'));
+    normalized[target] = Number.isFinite(minutes) ? Math.round(minutes * 60) : normalized[source];
+    delete normalized[source];
+  });
+
+  ['auto_delta_on_pct', 'auto_delta_off_pct'].forEach((field) => {
+    if (!(field in normalized)) return;
+
+    const value = Number(String(normalized[field]).replace(',', '.'));
+    if (Number.isFinite(value)) normalized[field] = value;
+  });
+
+  return normalized;
+}
+
 function buildCommandPayload(actionButton) {
+  const target = actionButton.dataset.commandTarget;
+  const cmd = actionButton.dataset.commandName;
+  let args = {
+    ...readStaticCommandArgs(actionButton),
+    ...readFieldArgs(actionButton),
+  };
+
+  if (target === 'fan' && cmd === 'set_settings') {
+    args = normalizeFanSettingsArgs(args);
+  }
+
   return {
-    target: actionButton.dataset.commandTarget,
-    cmd: actionButton.dataset.commandName,
-    args: {
-      ...readStaticCommandArgs(actionButton),
-      ...readFieldArgs(actionButton),
-    },
+    target,
+    cmd,
+    args,
   };
 }
 

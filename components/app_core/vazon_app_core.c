@@ -48,9 +48,11 @@ void vazon_app_core_init(void)
 {
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_safe_off());
     ESP_ERROR_CHECK(vazon_gpio_outputs_run_status_led_test());
+    ESP_ERROR_CHECK(vazon_gpio_inputs_init());
     ESP_ERROR_CHECK(vazon_gpio_inputs_run_smoke_test());
     ESP_ERROR_CHECK(vazon_i2c_service_scan_climate_bus());
     ESP_ERROR_CHECK(vazon_onewire_service_scan_pot_temperature_bus());
+    ESP_ERROR_CHECK(vazon_adc_service_init());
     ESP_ERROR_CHECK(vazon_adc_service_read_raw_soil_moisture());
     ESP_ERROR_CHECK(xTaskCreate(bringup_uart_task, "bringup_uart", 3072, NULL, 5, NULL) == pdPASS
                         ? ESP_OK

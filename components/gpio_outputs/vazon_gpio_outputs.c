@@ -8,24 +8,23 @@
 #include "vazon_gpio_levels.h"
 
 static const char *TAG = "gpio_outputs";
+static const gpio_num_t ACTUATOR_GPIOS[VAZON_GPIO_OUTPUT_COUNT] = {
+    [VAZON_GPIO_OUTPUT_LIGHT] = VAZON_GPIO_LIGHT,
+    [VAZON_GPIO_OUTPUT_MAIN_FAN] = VAZON_GPIO_MAIN_FAN,
+    [VAZON_GPIO_OUTPUT_HUMIDIFIER_FAN] = VAZON_GPIO_HUMIDIFIER_FAN,
+    [VAZON_GPIO_OUTPUT_HUMIDIFIER_MIST] = VAZON_GPIO_HUMIDIFIER_MIST,
+};
 
 esp_err_t vazon_gpio_outputs_init_safe_off(void)
 {
-    const gpio_num_t actuator_gpios[] = {
-        VAZON_GPIO_LIGHT,
-        VAZON_GPIO_MAIN_FAN,
-        VAZON_GPIO_HUMIDIFIER_FAN,
-        VAZON_GPIO_HUMIDIFIER_MIST,
-    };
-
     uint64_t actuator_pin_mask = 0;
-    for (size_t i = 0; i < sizeof(actuator_gpios) / sizeof(actuator_gpios[0]); ++i) {
-        actuator_pin_mask |= (1ULL << actuator_gpios[i]);
+    for (size_t i = 0; i < VAZON_GPIO_OUTPUT_COUNT; ++i) {
+        actuator_pin_mask |= (1ULL << ACTUATOR_GPIOS[i]);
         ESP_RETURN_ON_ERROR(
-            gpio_set_level(actuator_gpios[i], VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL),
+            gpio_set_level(ACTUATOR_GPIOS[i], VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL),
             TAG,
             "Failed to preset GPIO%d to OFF",
-            actuator_gpios[i]);
+            ACTUATOR_GPIOS[i]);
     }
 
     const gpio_config_t config = {
@@ -75,6 +74,17 @@ esp_err_t vazon_gpio_outputs_run_status_led_test(void)
     return ESP_OK;
 }
 
+esp_err_t vazon_gpio_outputs_set(vazon_gpio_output_t output, bool on)
+{
+    if ((unsigned int)output >= VAZON_GPIO_OUTPUT_COUNT) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return gpio_set_level(ACTUATOR_GPIOS[output],
+                          on ? VAZON_OUTPUT_ACTIVE_HIGH_ON_LEVEL
+                             : VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL);
+}
+
 bool vazon_gpio_outputs_is_actuator_gpio(int gpio)
 {
     return gpio == VAZON_GPIO_LIGHT || gpio == VAZON_GPIO_MAIN_FAN ||
@@ -91,13 +101,11 @@ esp_err_t vazon_gpio_outputs_set_raw(gpio_num_t gpio, int level)
 
 esp_err_t vazon_gpio_outputs_set_all_off(void)
 {
-    ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_LIGHT, VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL), TAG,
-                        "Failed to set light OFF");
-    ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_MAIN_FAN, VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL), TAG,
-                        "Failed to set main fan OFF");
-    ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_HUMIDIFIER_FAN, VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL), TAG,
-                        "Failed to set humidifier fan OFF");
-    ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_HUMIDIFIER_MIST, VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL), TAG,
-                        "Failed to set humidifier mist OFF");
+    for (vazon_gpio_output_t output = VAZON_GPIO_OUTPUT_LIGHT;
+         output < VAZON_GPIO_OUTPUT_COUNT;
+         ++output) {
+        ESP_RETURN_ON_ERROR(vazon_gpio_outputs_set(output, false), TAG,
+                            "Failed to set output %d OFF", output);
+    }
     return ESP_OK;
 }

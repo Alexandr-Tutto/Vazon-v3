@@ -316,6 +316,21 @@ function fanAutoModeCard(fan) {
   };
 }
 
+function fanPowerCard(fan) {
+  const levels = [20, 40, 60, 80, 100];
+
+  return {
+    label: 'Інтенсивність',
+    controls: levels.map((level) => activeAction(
+      `fan.power.${level}`,
+      fan.settings.power_level_pct === level,
+      `${level}%`,
+    )),
+    controlClass: 'power-level-row',
+    wide: true,
+  };
+}
+
 function potSettingsCard(index, label, pot) {
   return {
     label,
@@ -405,6 +420,7 @@ function getFunctionStatusCards(entity, uiState) {
 
   if (entity === 'fan') {
     return [
+      fanPowerCard(raw.fan),
       fanManualModeCard(raw.fan),
       fanAutoModeCard(raw.fan),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },

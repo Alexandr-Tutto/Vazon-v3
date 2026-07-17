@@ -107,6 +107,7 @@ export const mockState = {
 
   fan: {
     output: 'off',
+    applied_power_pct: 0,
     auto_state: 'blocked',
     status: 'warning',
     status_reason: 'door_open',
@@ -121,6 +122,7 @@ export const mockState = {
       auto_delta_off_pct: 5,
       auto_timer_on_sec: 60,
       auto_timer_off_sec: 300,
+      power_level_pct: 80,
     },
   },
 

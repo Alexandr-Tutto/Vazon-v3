@@ -94,7 +94,7 @@ function manualStateText(value) {
 
 function fanOutputText(value) {
   if (value === 'on') return 'працює';
-  if (value === 'off') return 'заблоковано через відкриті двері';
+  if (value === 'off') return 'вимкнено';
   return value || '—';
 }
 
@@ -186,7 +186,7 @@ export function createUiState(raw) {
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.status === 'ok' ? 'Норма' : potAggregate.summary),
     tile('humidifier', 'Зволоження', raw.humidifier.status, raw.humidifier.status_reason ? 'Увага' : 'Норма', raw.humidifier.mist_output === 'on'),
     tile('light', 'Світло', raw.light.status, lightOutputText(raw.light.output), raw.light.output === 'on'),
-    tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Заблоковано через відкриті двері', raw.fan.output === 'on'),
+    tile('fan', 'Вентиляція', raw.fan.status, raw.fan.output === 'on' ? 'Працює' : 'Вимкнено', raw.fan.output === 'on'),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
 
@@ -224,6 +224,8 @@ export function createUiState(raw) {
       { label: 'Автостан', value: fanAutoStateText(raw.fan.auto_state) },
       { label: 'Режим', value: modeText(raw.fan.settings.mode) },
       { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },
+      { label: 'Інтенсивність', value: valueOrUnknown(raw.fan.settings.power_level_pct, '%') },
+      { label: 'Поточна потужність', value: valueOrUnknown(raw.fan.applied_power_pct, '%') },
     ]),
 
     connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, serverStateText(raw.system.global_context.connection.mqtt_state), '', [
