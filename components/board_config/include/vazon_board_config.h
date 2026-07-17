@@ -8,6 +8,7 @@
  */
 
 #include "driver/gpio.h"
+#include "esp_adc/adc_oneshot.h"
 
 /* Board identity */
 #define VAZON_BOARD_NAME              "vazon_v3"
@@ -39,6 +40,10 @@
 #define VAZON_GPIO_POT0_SOIL_MOISTURE GPIO_NUM_36
 #define VAZON_GPIO_POT1_SOIL_MOISTURE GPIO_NUM_39
 
+#define VAZON_ADC_SOIL_MOISTURE_UNIT   ADC_UNIT_1
+#define VAZON_ADC_POT0_CHANNEL         ADC_CHANNEL_0
+#define VAZON_ADC_POT1_CHANNEL         ADC_CHANNEL_3
+
 /* Climate I2C */
 #define VAZON_GPIO_CLIMATE_I2C_SDA    GPIO_NUM_21
 #define VAZON_GPIO_CLIMATE_I2C_SCL    GPIO_NUM_22
@@ -48,10 +53,10 @@
 /* Polarity / electrical confirmation placeholders */
 #define VAZON_STATUS_LED_GREEN_ACTIVE_LOW   1
 #define VAZON_STATUS_LED_RED_ACTIVE_LOW     1
-#define VAZON_LIGHT_ACTIVE_LOW              1
-#define VAZON_MAIN_FAN_ACTIVE_LOW           1
-#define VAZON_HUMIDIFIER_FAN_ACTIVE_LOW     1
-#define VAZON_HUMIDIFIER_MIST_ACTIVE_LOW    1
+#define VAZON_LIGHT_ACTIVE_HIGH             1
+#define VAZON_MAIN_FAN_ACTIVE_HIGH          1
+#define VAZON_HUMIDIFIER_FAN_ACTIVE_HIGH    1
+#define VAZON_HUMIDIFIER_MIST_ACTIVE_HIGH   1
 #define VAZON_HUMIDIFIER_WATER_PRESENT_LEVEL 1
 
 /* Open hardware confirmations before firmware migration: none. */

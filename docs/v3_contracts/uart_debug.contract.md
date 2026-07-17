@@ -62,6 +62,7 @@ module reevaluate traces
 ```text
 UART input is ignored in normal runtime.
 UART commands are not available in normal runtime.
+Temporary raw GPIO commands are allowed only in board bring-up firmware.
 ```
 
 ## 7. Forbidden
@@ -69,7 +70,7 @@ UART commands are not available in normal runtime.
 ```text
 UART Debug does not change device state.
 UART Debug does not change settings.
-UART Debug does not control outputs.
+UART Debug does not control outputs outside board bring-up firmware.
 UART Debug does not bypass Command Router.
 UART Debug does not print passwords, tokens, private keys, certificates, or full config dumps.
 UART Debug does not stream unbounded sensor spam in normal runtime.

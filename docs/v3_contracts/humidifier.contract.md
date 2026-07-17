@@ -66,15 +66,15 @@ unstable input means humidifier.water_status = unknown
 ```text
 mist firmware output: HUMIDIFIER_MIST_GPIO
 V3 board pinout: GPIO26
-active-low switched output
-0 = mist ON
-1 = mist OFF
+active-high switched output
+0 = mist OFF
+1 = mist ON
 
 local fan firmware output: HUMIDIFIER_FAN_GPIO
 V3 board pinout: GPIO19
-active-low switched output
-0 = fan ON
-1 = fan OFF
+active-high switched output
+0 = fan OFF
+1 = fan ON
 ```
 
 ## 6. Outputs

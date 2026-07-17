@@ -26,6 +26,11 @@ main/app_main.c
 ```text
 components/board_config
 components/app_core
+components/gpio_outputs
+components/gpio_inputs
+components/i2c_service
+components/onewire_service
+components/adc_service
 ```
 
 ## Current Runtime Flow
@@ -60,7 +65,7 @@ Run this scope before porting production module behavior:
 
 ```text
 UART boot log
-safe OFF initialization for active-low outputs
+safe LOW/OFF initialization for active-high outputs
 status LED manual pattern test
 raw door GPIO read
 raw humidifier water GPIO read
@@ -73,10 +78,10 @@ manual output toggle test through temporary serial commands
 Expected initial safe states:
 
 ```text
-LIGHT_GPIO            OFF = 1
-MAIN_FAN_GPIO         OFF = 1
-HUMIDIFIER_FAN_GPIO   OFF = 1
-HUMIDIFIER_MIST_GPIO  OFF = 1
+LIGHT_GPIO            OFF = 0
+MAIN_FAN_GPIO         OFF = 0
+HUMIDIFIER_FAN_GPIO   OFF = 0
+HUMIDIFIER_MIST_GPIO  OFF = 0
 ```
 
 Expected input checks:
