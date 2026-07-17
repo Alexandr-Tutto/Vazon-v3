@@ -266,28 +266,22 @@ function timeField(label, name, value) {
   };
 }
 
-function fanManualModeCard(fan) {
-  return {
-    label: 'Режим',
-    controls: [
-      activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
-      activeAction('fan.manual_run', fan.output === 'on', `Включити - ${showMinutes(fan.settings.manual_duration_sec)}`),
-      activeAction('fan.stop', fan.output === 'off', 'Виключити'),
-    ],
-    wide: true,
-  };
-}
-
-function fanAutoModeCard(fan) {
+function fanModeCard(fan) {
   return {
     label: 'Режим',
     sections: [
       {
-        controls: [activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто')],
+        label: 'Ручний',
+        controls: [
+          activeAction('fan.mode.manual', fan.settings.mode === 'manual', 'Ручний'),
+          activeAction('fan.manual_run', fan.output === 'on', `Включити - ${showMinutes(fan.settings.manual_duration_sec)}`),
+          activeAction('fan.stop', fan.output === 'off', 'Виключити'),
+        ],
       },
       {
-        label: 'Час роботи',
+        label: 'Авто',
         controls: [
+          activeAction('fan.mode.auto', fan.settings.mode === 'auto', 'Авто'),
           activeAction('fan.runtime.always', fan.settings.runtime === 'always', 'Цілодобово'),
           activeAction('fan.runtime.day', fan.settings.runtime === 'day', 'Денний'),
         ],
@@ -421,8 +415,7 @@ function getFunctionStatusCards(entity, uiState) {
   if (entity === 'fan') {
     return [
       fanPowerCard(raw.fan),
-      fanManualModeCard(raw.fan),
-      fanAutoModeCard(raw.fan),
+      fanModeCard(raw.fan),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
     ];
   }
