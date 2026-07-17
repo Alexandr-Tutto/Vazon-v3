@@ -104,38 +104,96 @@ climate.rh_delta_pct: used by delta strategy
 
 ## 9. Logic
 
+Evaluation order:
+
 ```text
 if maintenance.active:
-    fan off
+    fan off immediately
+    fan.auto_state = blocked
+    fan.status = ok
+    fan.status_reason = null
+    skip manual and auto run logic
 
 if door.state = open:
-    fan off
+    fan off immediately
     fan.auto_state = blocked
     fan.status = warning
     fan.status_reason = door_open
+    skip manual and auto run logic
+
+if door.state = unknown:
+    fan off immediately
+    fan.auto_state = blocked
+    fan.status = warning
+    fan.status_reason = door_unknown
+    skip manual and auto run logic
 
 if mode = manual:
     automatic delta and timer strategies do not run
     accepted fan.manual_run command runs fan for manual_duration_sec
+    while manual run is active, fan.auto_state = running
     after manual_duration_sec expires, fan off
     accepted fan.stop command stops the fan immediately
     after fan.stop, fan stays off without a time limit
+    while manual output is off, fan.auto_state = off
     fan stays off until fan.manual_run is accepted or mode returns to auto
 
 if mode = auto:
     if runtime = day and day_window.active = false:
         fan off
+        fan.auto_state = off
+        fan.status = ok
+        fan.status_reason = null
+        skip selected auto strategy
 
     if auto_strategy = delta:
-        if climate.rh_delta_pct >= auto_delta_on_pct:
-            fan on
-        if climate.rh_delta_pct <= auto_delta_off_pct:
+        if climate.rh_delta_pct is unknown, stale, or cannot be calculated:
             fan off
+            fan.auto_state = alert
+            fan.status = warning
+            fan.status_reason = climate_invalid
+            skip remaining delta logic
+        if climate.rh_delta_pct >= auto_delta_on_pct:
+            automatic demand = on
+        if climate.rh_delta_pct <= auto_delta_off_pct:
+            automatic demand = off
+        if auto_delta_off_pct < climate.rh_delta_pct < auto_delta_on_pct:
+            retain previous automatic demand
+        apply automatic demand to fan output
+        if automatic demand = on, fan.auto_state = running
+        if automatic demand = off, fan.auto_state = off
 
     if auto_strategy = timer:
         run fan for auto_timer_on_sec
+        while running, fan.auto_state = running
         pause fan for auto_timer_off_sec
+        while paused, fan.auto_state = pause
         repeat while auto mode remains allowed
+```
+
+Runtime transition rules:
+
+```text
+initial delta automatic demand after boot = off
+
+if door opens, door becomes unknown, or maintenance becomes active:
+    fan off immediately
+    reset timer auto cycle
+
+when the door/maintenance block clears in timer auto mode:
+    start a new timer cycle with the running phase
+
+manual mode by itself:
+    fan.status = ok
+    fan.status_reason = null
+
+when a temporary blocking/warning condition clears:
+    clear its fan.status_reason
+    reevaluate fan output from current mode and inputs
+
+output command/confirmation failure:
+    follow Output Confirmation Policy
+    may override normal or warning status with error after retries
 ```
 
 PWM power behavior:
@@ -189,6 +247,17 @@ ok       - normal operation
 warning  - temporary condition or confirmation unavailable
 error    - command failed after retries
 unknown  - state is not determined after startup
+```
+
+Fan Module status reasons added by runtime evaluation:
+
+```text
+door_open
+door_unknown
+climate_invalid
+output_failed
+confirmation_failed
+confirmation_unavailable
 ```
 
 `fan.output = off` does not mean that Fan Module is inactive. Normal user
