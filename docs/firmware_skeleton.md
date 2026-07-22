@@ -396,6 +396,7 @@ Add after the basic normal runtime is stable:
 ```text
 provisioning mode selected at boot only (implemented)
 Wi-Fi and MQTT credentials flow (implemented)
+two 1700 KiB OTA application slots (configured)
 OTA update path
 version/manifest handling
 rollback/failure behavior
