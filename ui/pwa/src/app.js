@@ -156,10 +156,15 @@ function handleEscape(event) {
   openParentView();
 }
 
-function toggleMaintenanceMode() {
+function toggleMaintenanceMode(actionButton) {
+  const args = readStaticCommandArgs(actionButton);
+  emitCommand(actionButton);
   const maintenance = uiState.raw.system.global_context.maintenance;
-  maintenance.active = !maintenance.active;
-  maintenance.reason = maintenance.active ? 'manual' : null;
+  maintenance.manual_active = args.active === true;
+  maintenance.active = maintenance.manual_active || maintenance.door_active === true;
+  maintenance.reason = maintenance.manual_active
+    ? 'manual'
+    : (maintenance.door_active ? 'door' : null);
   openAdvancedService();
 }
 
@@ -275,7 +280,7 @@ function handlePanelClick(event) {
   }
 
   if (action === 'service.maintenance.toggle') {
-    toggleMaintenanceMode();
+    toggleMaintenanceMode(actionButton);
     return;
   }
 

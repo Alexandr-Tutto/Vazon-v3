@@ -39,7 +39,7 @@ esp_err_t vazon_gpio_outputs_init_safe_off(void)
     return ESP_OK;
 }
 
-esp_err_t vazon_gpio_outputs_run_status_led_test(void)
+esp_err_t vazon_gpio_outputs_init_status_led_off(void)
 {
     const gpio_config_t config = {
         .pin_bit_mask = (1ULL << VAZON_GPIO_STATUS_LED_GREEN) |
@@ -56,6 +56,15 @@ esp_err_t vazon_gpio_outputs_run_status_led_test(void)
                         "Failed to preset red status LED OFF");
     ESP_RETURN_ON_ERROR(gpio_config(&config), TAG, "Failed to configure status LEDs");
 
+    ESP_LOGI(TAG, "Status LEDs initialized OFF");
+    return ESP_OK;
+}
+
+esp_err_t vazon_gpio_outputs_run_status_led_test(void)
+{
+    ESP_RETURN_ON_ERROR(vazon_gpio_outputs_init_status_led_off(), TAG,
+                        "Failed to initialize status LEDs");
+
     ESP_LOGI(TAG, "Status LED test: green");
     ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_STATUS_LED_GREEN, VAZON_GPIO_LEVEL_LOW), TAG,
                         "Failed to turn green status LED ON");
@@ -71,6 +80,19 @@ esp_err_t vazon_gpio_outputs_run_status_led_test(void)
                         "Failed to turn red status LED OFF");
 
     ESP_LOGI(TAG, "Status LED pattern test complete");
+    return ESP_OK;
+}
+
+esp_err_t vazon_gpio_outputs_set_status_led(bool green_on, bool red_on)
+{
+    ESP_RETURN_ON_ERROR(
+        gpio_set_level(VAZON_GPIO_STATUS_LED_GREEN,
+                       green_on ? VAZON_GPIO_LEVEL_LOW : VAZON_GPIO_LEVEL_HIGH),
+        TAG, "Failed to set green status LED");
+    ESP_RETURN_ON_ERROR(
+        gpio_set_level(VAZON_GPIO_STATUS_LED_RED,
+                       red_on ? VAZON_GPIO_LEVEL_LOW : VAZON_GPIO_LEVEL_HIGH),
+        TAG, "Failed to set red status LED");
     return ESP_OK;
 }
 

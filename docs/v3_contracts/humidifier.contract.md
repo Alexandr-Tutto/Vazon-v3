@@ -92,11 +92,11 @@ humidifier.status_reason
 mode = auto / manual
 runtime = day / always
 
-rh_start
-rh_stop
-rh_delta
+rh_start = 55%
+rh_stop = 75%
+rh_delta = 10%
 
-mist_power_level = low / medium / high
+mist_power_level = low / medium / high; default = medium
 
 manual_mist_duration_sec = 180
 post_fan_sec = 20
@@ -159,8 +159,16 @@ if mode = manual:
     fan post-run for post_fan_sec
 
 if mode = auto:
+    if required climate humidity values are invalid or stale:
+        mist off
+        status = error
+        status_reason = climate_invalid
     if runtime = day and day_window.active = false:
         mist off
+    if runtime = day and day_window.active = unknown:
+        mist off
+        status = warning
+        status_reason = day_window_unknown
     if min(zone0_rh, zone1_rh) <= rh_start:
         mist may start
     if max(zone0_rh, zone1_rh) >= rh_stop:
@@ -178,6 +186,8 @@ After mist turns off:
 ```text
 Water status changes only after debounce accepts a stable input.
 Raw GPIO transitions are not published as humidifier.water_status.
+Water input debounce = 100 ms.
+Continuous unstable-input timeout = 1000 ms.
 
 rh_stop - rh_start >= rh_delta
 rh_delta default = 10%
@@ -188,6 +198,10 @@ mist_power_level has three levels:
 low
 medium
 high
+
+The selected level is retained by Humidifier Module. The current GPIO26
+hardware boundary is binary, so OFF is applied as 0% and every active level is
+reported honestly as 100% until a power-control output driver exists.
 
 post_fan_sec default = 20
 post_fan_sec range = 0..600
@@ -229,6 +243,8 @@ Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
 
+Command Router target: `humidifier`.
+
 ## 14. Output Confirmation
 
 ```text
@@ -237,6 +253,9 @@ mist output
 local humidifier fan output
 
 Water sensor state is not output confirmation.
+The current board has no physical output-feedback input. A successful GPIO
+write means the requested output state is applied, while confirmation remains
+unknown.
 ```
 
 ## 15. Forbidden

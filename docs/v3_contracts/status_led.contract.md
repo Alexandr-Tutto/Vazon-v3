@@ -1,7 +1,7 @@
 # Status LED Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active draft
+Code status: implemented for normal runtime and provisioning
 Scope: Vazon V3 Status LED
 
 ## 1. Purpose
@@ -85,6 +85,22 @@ red steady                    - system error not caused only by MQTT offline
 
 red/green alternate blink     - local warning / attention
 ```
+
+Exact runtime timing:
+
+```text
+short blink, long pause       - 200 ms ON, 1800 ms OFF
+50/50 blink                   - 500 ms ON, 500 ms OFF
+red/green alternate blink     - 500 ms green, 500 ms red
+```
+
+When `system.status` is still `unknown` and neither offline state is known,
+both LED channels stay OFF. This avoids displaying a false normal state during
+startup.
+
+The normal-runtime entry passes `provisioning active = false`. The boot-only
+provisioning path passes `provisioning active = true` and owns no other status
+selection inputs.
 
 ## 9. Forbidden
 

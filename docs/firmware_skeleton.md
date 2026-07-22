@@ -1,16 +1,14 @@
 # Vazon V3 Firmware Skeleton
 
 Document status: active draft
-Code status: board support layer in progress
+Code status: runtime core skeleton in progress
 Scope: current firmware directory layout, PCB v1.0 smoke-test result, and software port order
 
 ## Current Goal
 
 ```text
-Turn the confirmed PCB v1.0 bring-up code into reusable board support APIs.
-
-Production module behavior remains deferred until board support and sensor
-drivers are stable.
+Build Runtime Core and the hardware-independent logic layer on top of the
+confirmed board support and sensor services.
 ```
 
 ## Current Build Entry
@@ -31,6 +29,21 @@ components/gpio_inputs
 components/i2c_service
 components/onewire_service
 components/adc_service
+components/runtime_core
+components/command_router
+components/climate_module
+components/door_module
+components/light_module
+components/fan_module
+components/humidifier_module
+components/pot_module
+components/system_status
+components/status_led
+components/mqtt_service
+components/mqtt_command_codec
+components/mqtt_command_queue
+components/connection_config
+components/wifi_service
 ```
 
 ## Current Runtime Flow
@@ -38,9 +51,100 @@ components/adc_service
 ```text
 app_main()
     -> vazon_app_core_init()
+        -> initialize Runtime Core and Command Router
+        -> read and aggregate SHT31 sensors through Climate Module
+        -> start Door Module polling task
+        -> initialize and evaluate Light Module
+        -> evaluate Fan Module and apply GPIO13 binary fallback
+        -> evaluate Humidifier Module from GPIO35 and apply GPIO19/GPIO26
+        -> read Pot Modules in an independent ADC/OneWire task
+        -> aggregate local module signals into System Status
+        -> render System Status and connection state on the two-color Status LED
 ```
 
-No production module behavior is implemented yet.
+Door Module reads the normalized door input through `gpio_inputs`, evaluates
+debounce/state, updates the door-driven maintenance source, and logs state
+transitions. MQTT publication is not connected.
+
+Light Module evaluates its default auto mode through `day_window.active`,
+applies the request through `gpio_outputs`, and registers its command target.
+MQTT transport is not connected.
+
+The temporary bring-up UART command task has been removed. GPIO4, GPIO13,
+GPIO19, and GPIO26 are owned by their runtime modules.
+
+Fan Module state-machine code calculates manual/auto demand and PWM
+boost/ramp requests. Until the LEDC/PWM driver exists, GPIO13 is connected as a
+binary fallback: OFF is applied as 0% and ON is reported honestly as 100%.
+
+Humidifier Module debounces the GPIO35 water input and owns the GPIO26 mist and
+GPIO19 local-fan outputs. It implements humidity hysteresis, manual duration,
+day-window safety, water/climate interlocks, and 20-second fan post-run. The
+selected mist intensity is stored, but the current GPIO26 output is binary:
+OFF is 0% and every active level is applied as 100%.
+
+Climate Module reads SHT31 sensors at 0x44 and 0x45 every 5 seconds, validates
+CRC and value ranges, tracks the 300-second stale timeout, and supplies both
+zone humidity values plus `rh_delta_pct` to Humidifier and Fan Modules. Its
+settings command is registered under the `climate` Command Router target.
+
+Two Pot Module instances read averaged ADC moisture values and DS18B20
+temperatures every 10 seconds. The OneWire conversion runs in its own task and
+does not block Door Module polling. Moisture stays explicitly uncalibrated
+until the dry/normal/wet sequence is captured. Both instances register
+`pot/0` and `pot/1` Command Router targets for sensor enable settings,
+threshold/timeouts, and calibration.
+
+Fan and Humidifier register their complete contract command surfaces under
+`fan` and `humidifier`. Light, System, Climate, Pot, Fan, and Humidifier routes
+are now present; no transport invokes them yet.
+
+System Status aggregates all active local module signals, door/maintenance,
+and connection state. It updates Runtime Core `sensor_missing` and
+`actuator_failed` interlocks and logs only top-level status transitions.
+
+Status LED consumes the already aggregated System Status and connection state.
+It selects the contract LED pattern and drives the active-low green/red GPIOs;
+it does not calculate faults or change module state. The boot-only provisioning
+path supplies its dedicated green 500/500 indication.
+
+MQTT Service now contains the isolated secure ESP-MQTT transport based on the
+proven V2 connection sequence: certificate bundle verification, QoS 1 command
+subscription, reconnect events, and retained availability/LWT. It exposes raw
+length-delimited command messages to the boundary callback and does not parse
+module commands or control runtime state. Runtime startup waits for Wi-Fi,
+configuration/device identity, and the V3 command codec.
+
+MQTT Command Codec validates V3 command topics/envelopes, converts serialized
+arguments for System, Climate, Pot, Light, Fan, and Humidifier into their typed
+Command Router forms, and creates `ack/reject/fail` responses. It is kept out
+of the asynchronous MQTT callback until the runtime command queue serializes
+module access.
+
+MQTT Command Queue is the bounded handoff from the asynchronous ESP-MQTT event
+task. It never runs owner handlers in the callback. Its consumer executes one
+codec/Router call under the supplied runtime lock, releases that lock, and
+then publishes the command result without retain.
+
+App Core now creates the shared runtime mutex and the command consumer task.
+Door/Climate/Light/Fan/Humidifier evaluation, Pot state updates, and routed
+commands use the same mutex. Sensor bus acquisition and MQTT result publishing
+remain outside it. The codec/queue are initialized with the stable
+`Vazon_{MAC suffix}` device ID; MQTT transport startup still waits for stored
+connection configuration and Wi-Fi.
+
+Connection Config loads the proven V2 NVS namespace/keys with version and CRC
+validation, while clear operations are restricted to connection keys. Wi-Fi
+Service uses the proven delayed connect and bounded exponential retry sequence
+on EU channels 1-13. App Core updates `GlobalContext.connection` from service
+events and starts secure MQTT only after the station receives an IP address.
+Missing/invalid configuration leaves local normal runtime active with Wi-Fi
+and MQTT marked disconnected; it does not enter provisioning automatically.
+
+The bring-up entry now checks GPIO0 before any normal-runtime module or sensor
+task starts. A confirmed hold clears only Connection Config, keeps actuators in
+safe state, and starts the provisioning AP/HTTP service. Missing or invalid
+configuration alone still leaves local normal runtime active offline.
 
 ## Board Config Boundary
 
@@ -56,7 +160,7 @@ components/board_config/include/vazon_gpio_levels.h
 ## Current Firmware Step
 
 ```text
-board support layer
+outbound MQTT state publishing
 ```
 
 ## PCB v1.0 Smoke-Test Result
@@ -290,8 +394,8 @@ branch.
 Add after the basic normal runtime is stable:
 
 ```text
-provisioning mode selected at boot only
-Wi-Fi credentials flow
+provisioning mode selected at boot only (implemented)
+Wi-Fi and MQTT credentials flow (implemented)
 OTA update path
 version/manifest handling
 rollback/failure behavior

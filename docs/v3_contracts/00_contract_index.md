@@ -9,6 +9,7 @@ Scope: Vazon V3 contracts and ownership map
 ```text
 global_core.contract.md
 runtime_core.md
+command_router.contract.md
 system_status.contract.md
 status_led.contract.md
 provisioning_button.contract.md
@@ -28,6 +29,7 @@ v3_language_and_terms.md
 
 ```text
 boot mode / normal vs provisioning -> global_core.contract.md
+normal-runtime command routing -> command_router.contract.md
 provisioning button behavior -> provisioning_button.contract.md
 status LED patterns -> status_led.contract.md
 UART0 debug policy -> uart_debug.contract.md
@@ -64,6 +66,9 @@ System service modules:
     status_led
     provisioning_button
     uart_debug
+
+Runtime boundaries:
+    command_router
 ```
 
 ## Rules
@@ -73,7 +78,13 @@ One fact must have one owner file.
 Other files may reference that fact but must not restate or reinterpret it.
 Data model and MQTT registry are boundary documents, not module logic owners.
 Settings persistence implementation is postponed.
-Firmware board bring-up skeleton is active.
+Board support and sensor bring-up are confirmed.
+Runtime Core implementation is active.
+System Status aggregation is active.
 V3.0 starting UI design baseline is active.
-Production module implementation is postponed.
+Door, Climate, Pot, Light, Fan, and Humidifier Modules are active local module
+implementations. Fan uses a temporary 0/100% GPIO fallback; partial PWM
+application remains disconnected until its output driver exists. Humidifier
+uses binary GPIO outputs; its mist intensity setting is stored but all active
+levels currently apply 100%.
 ```

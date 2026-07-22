@@ -230,7 +230,11 @@ function maintenanceAction(active) {
   return {
     id: 'service.maintenance.toggle',
     label: active ? 'Обслуговування активовано' : 'Перейти до обслуговування',
-    command: null,
+    command: {
+      target: 'system',
+      cmd: 'set_maintenance',
+      args: { active: !active },
+    },
     active,
   };
 }
@@ -557,13 +561,15 @@ function getFunctionSettingsCards(entity, uiState) {
 
 function getAdvancedServiceCards(uiState) {
   const raw = uiState.raw;
-  const maintenanceActive = raw.system.global_context.maintenance.active;
+  const maintenance = raw.system.global_context.maintenance;
+  const maintenanceActive = maintenance.active;
+  const manualMaintenanceActive = maintenance.manual_active === true;
 
   return [
     {
       label: 'Обслуговування',
       value: maintenanceActive ? 'Автоматичне зволоження та вентиляція відключені' : 'Буде відключено автоматичне зволоження та вентиляція',
-      controls: [maintenanceAction(maintenanceActive)],
+      controls: [maintenanceAction(manualMaintenanceActive)],
       controlsFirst: true,
       wide: true,
     },

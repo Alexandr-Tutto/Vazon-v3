@@ -1,7 +1,7 @@
 # Climate Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active draft
+Code status: active local module implementation
 Scope: Vazon V3 Climate Module
 
 ## 1. Purpose
@@ -144,6 +144,11 @@ if temperature_delta_c > temperature_delta_error:
     status_reason = temperature_delta_critical
 ```
 
+No climate-level `rh_delta_high` threshold is currently defined. Firmware
+calculates `rh_delta_pct`, but does not raise that warning until a threshold is
+added to this contract. Fan Module applies its own delta hysteresis settings to
+the same value.
+
 ## 11. Rules
 
 ```text
@@ -190,6 +195,8 @@ climate.set_settings
 Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
+
+Command Router target: `climate`.
 
 ## 14. Forbidden
 

@@ -1,7 +1,7 @@
 # Pot Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active draft
+Code status: active local module implementation
 Scope: Vazon V3 Pot Module
 
 ## 1. Purpose
@@ -95,17 +95,17 @@ pot[pot_id].status_reason
 ## 8. Settings
 
 ```text
-pot[pot_id].soil_moisture_enabled = true / false
-pot[pot_id].soil_temperature_enabled = true / false
+pot[pot_id].soil_moisture_enabled = true / false; default = true
+pot[pot_id].soil_temperature_enabled = true / false; default = true
 
 dry_calibration_mv
 normal_calibration_mv
 wet_calibration_mv
 
-moisture_stale_timeout_sec
-temperature_stale_timeout_sec
-temperature_low_warn_c
-temperature_high_warn_c
+moisture_stale_timeout_sec = 300
+temperature_stale_timeout_sec = 300
+temperature_low_warn_c = 5
+temperature_high_warn_c = 40
 ```
 
 ## 9. State
@@ -160,11 +160,21 @@ pot.status is derived from enabled child sensor statuses:
 ```text
 soil_moisture.value is calculated from dry_calibration_mv..wet_calibration_mv.
 
+Calibration mapping is piecewise linear:
+dry_calibration_mv = 0%
+normal_calibration_mv = 50%
+wet_calibration_mv = 100%
+
+Both ascending and descending monotonic sensor characteristics are valid.
+Until all three calibration points form a strictly monotonic sequence, raw ADC
+and mV values remain available, normalized value/class are unknown, and status
+reason is calibration_invalid.
+
 class thresholds:
-0..30 %    = dry
-30..70 %   = normal
-70..90 %   = wet
-90..100 %  = overwet
+0 <= value < 30 %    = dry
+30 <= value < 70 %   = normal
+70 <= value < 90 %   = wet
+90 <= value <= 100 % = overwet
 ```
 
 ## 12. Soil Moisture Calibration Command
@@ -244,6 +254,9 @@ pot[pot_id].calibrate_soil_moisture
 Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
+
+Command Router targets are `pot/0` and `pot/1`. UI/MQTT boundaries translate
+serialized argument values into the typed owner arguments before routing.
 
 ## 16. Forbidden
 

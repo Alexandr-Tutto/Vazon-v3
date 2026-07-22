@@ -14,6 +14,10 @@ esp_err_t vazon_adc_service_read_raw(uint8_t pot_id, int *raw_value);
 esp_err_t vazon_adc_service_read_raw_average(uint8_t pot_id,
                                              size_t sample_count,
                                              int *raw_value);
+esp_err_t vazon_adc_service_read_millivolts_average(uint8_t pot_id,
+                                                   size_t sample_count,
+                                                   int *raw_value,
+                                                   int *millivolts);
 esp_err_t vazon_adc_service_read_raw_soil_moisture(void);
 
 #ifdef __cplusplus

@@ -1,12 +1,15 @@
 #include "vazon_adc_service.h"
 
 #include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "vazon_board_config.h"
 
 static const char *TAG = "adc_service";
 static adc_oneshot_unit_handle_t s_adc;
+static adc_cali_handle_t s_adc_calibration;
 
 static esp_err_t channel_for_pot(uint8_t pot_id, adc_channel_t *channel)
 {
@@ -46,7 +49,34 @@ esp_err_t vazon_adc_service_init(void)
         adc_oneshot_del_unit(s_adc);
         s_adc = NULL;
     }
-    return result;
+    if (result != ESP_OK) return result;
+
+    const adc_cali_line_fitting_config_t calibration_config = {
+        .unit_id = VAZON_ADC_SOIL_MOISTURE_UNIT,
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+    };
+    result = adc_cali_create_scheme_line_fitting(&calibration_config,
+                                                  &s_adc_calibration);
+    if (result != ESP_OK) {
+        ESP_LOGW(TAG, "ADC millivolt calibration unavailable: %s",
+                 esp_err_to_name(result));
+    }
+    return ESP_OK;
+}
+
+esp_err_t vazon_adc_service_read_millivolts_average(uint8_t pot_id,
+                                                   size_t sample_count,
+                                                   int *raw_value,
+                                                   int *millivolts)
+{
+    if (raw_value == NULL || millivolts == NULL) return ESP_ERR_INVALID_ARG;
+    ESP_RETURN_ON_ERROR(vazon_adc_service_read_raw_average(
+                            pot_id, sample_count, raw_value),
+                        TAG, "Failed to average pot[%u] ADC",
+                        (unsigned int)pot_id);
+    if (s_adc_calibration == NULL) return ESP_ERR_NOT_SUPPORTED;
+    return adc_cali_raw_to_voltage(s_adc_calibration, *raw_value, millivolts);
 }
 
 esp_err_t vazon_adc_service_read_raw(uint8_t pot_id, int *raw_value)
@@ -90,10 +120,26 @@ esp_err_t vazon_adc_service_read_raw_soil_moisture(void)
 
     for (uint8_t pot_id = 0; pot_id < 2; ++pot_id) {
         int raw_value = 0;
-        ESP_RETURN_ON_ERROR(vazon_adc_service_read_raw_average(pot_id, 32, &raw_value), TAG,
-                            "Failed to average pot[%u] ADC", (unsigned int)pot_id);
-        ESP_LOGI(TAG, "Raw pot[%u] soil ADC GPIO%d ADC1_CH%d=%d",
-                 (unsigned int)pot_id, gpios[pot_id], channels[pot_id], raw_value);
+        int millivolts = 0;
+        const esp_err_t calibrated_result =
+            vazon_adc_service_read_millivolts_average(
+                pot_id, 32U, &raw_value, &millivolts);
+        if (calibrated_result == ESP_OK) {
+            ESP_LOGI(TAG, "Raw pot[%u] soil GPIO%d ADC1_CH%d=%d, %d mV",
+                     (unsigned int)pot_id, gpios[pot_id], channels[pot_id],
+                     raw_value, millivolts);
+        } else if (calibrated_result == ESP_ERR_NOT_SUPPORTED) {
+            ESP_RETURN_ON_ERROR(vazon_adc_service_read_raw_average(
+                                    pot_id, 32U, &raw_value),
+                                TAG, "Failed to average pot[%u] ADC",
+                                (unsigned int)pot_id);
+            ESP_LOGW(TAG,
+                     "Raw pot[%u] soil GPIO%d ADC1_CH%d=%d, mV unavailable",
+                     (unsigned int)pot_id, gpios[pot_id], channels[pot_id],
+                     raw_value);
+        } else {
+            return calibrated_result;
+        }
     }
     return ESP_OK;
 }

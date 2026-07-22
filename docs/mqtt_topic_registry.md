@@ -1,7 +1,7 @@
 # Vazon V3 MQTT Topic Registry
 
 Document status: active minimal
-Code status: architecture reference
+Code status: secure transport, typed codec, and bounded command queue implemented; runtime wiring pending
 Scope: MQTT namespace, topic classes, retain policy, and command envelope only
 
 ## 1. Purpose
@@ -27,7 +27,13 @@ vazon/v3/{device_id}/...
 
 `device_id` is the stable logical device identifier used by firmware, MQTT broker, and UI.
 
-Exact device_id derivation is not defined in this file.
+Firmware derives it from the station MAC using the proven project format:
+
+```text
+Vazon_{last three STA MAC bytes in lowercase hexadecimal}
+```
+
+Example: `Vazon_a1b2c3`.
 
 ## 4. Topic Classes
 
@@ -165,6 +171,36 @@ availability retained
 Broker LWT should publish `offline`.
 
 Device should publish `online` after successful MQTT connection.
+
+The transport subscribes once to:
+
+```text
+vazon/v3/{device_id}/cmd/#
+```
+
+The topic is subscribed with QoS 1. Availability is published retained with
+QoS 1, and the broker LWT publishes retained `offline`.
+
+The MQTT connection uses `mqtts` with the ESP certificate bundle. Host, port,
+username, and password are supplied by configuration. The transport uses the
+firmware-derived `device_id` as its MQTT client ID.
+
+The current transport accepts a complete command payload up to 1024 bytes and
+reassembles fragmented ESP-MQTT data events before calling the command
+boundary. Oversized or inconsistent fragments are rejected locally.
+
+The command codec validates the canonical topic and envelope, translates
+owner-defined serialized arguments into the existing typed module arguments,
+routes exactly once through Command Router, and creates the corresponding
+non-retained `ack`, `reject`, or `fail` response. Unknown fields and invalid
+field types are rejected rather than ignored.
+
+The asynchronous MQTT event callback does not invoke Command Router directly.
+It copies each complete command into a bounded runtime queue. The queue
+consumer acquires the runtime lock, decodes and routes exactly one command,
+releases the lock, and only then publishes the non-retained result. Queue
+overflow rejects the incoming work locally and is counted/logged; it never
+blocks the MQTT event task.
 
 ## 10. Service Topics
 

@@ -59,6 +59,13 @@ mode = auto / manual
 manual_state = on / off
 ```
 
+Current startup defaults:
+
+```text
+mode = auto
+manual_state = off
+```
+
 ## 7. State
 
 ```text
@@ -103,6 +110,9 @@ if maintenance.active = false and mode = auto:
     output_request = day_window.active
 ```
 
+If `day_window.active = unknown`, the safe request is `off` and the module
+reports `warning / day_window_unknown`.
+
 ## 12. Output
 
 ```text
@@ -117,11 +127,16 @@ off
 
 ```text
 ok       - output command accepted and no error is active
-warning  - confirmation unavailable or maintenance_service_light is active
+warning  - maintenance_service_light is active or day_window is unknown
 error    - output command failed or confirmation failed
 inactive - module disabled
 unknown  - output state is not determined after startup
 ```
+
+The current PCB has no physical light-output feedback. A successfully accepted
+GPIO command therefore keeps `status = ok` and
+`last_output_confirmed = unknown`. Confirmation unavailability alone is not a
+warning. A GPIO driver failure produces `error / output_failed`.
 
 ## 14. MQTT Surface
 

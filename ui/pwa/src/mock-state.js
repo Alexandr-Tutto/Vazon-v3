@@ -6,14 +6,17 @@ export const mockState = {
     affected_system: 'door',
     global_context: {
       maintenance: {
-        active: false,
-        reason: null,
+        active: true,
+        manual_active: false,
+        external_active: false,
+        door_active: true,
+        reason: 'door',
       },
       day_window: {
         active: true,
         schedule_enabled: true,
         time_on: '08:00',
-        time_off: '22:00',
+        time_off: '21:00',
       },
       connection: {
         wifi_state: 'connected',
@@ -95,8 +98,8 @@ export const mockState = {
 
   light: {
     output: 'on',
-    status: 'ok',
-    status_reason: null,
+    status: 'warning',
+    status_reason: 'maintenance_service_light',
     last_command_result: 'accepted',
     last_output_confirmed: 'unknown',
     settings: {

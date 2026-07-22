@@ -139,6 +139,13 @@ if mode = manual:
     fan stays off until fan.manual_run is accepted or mode returns to auto
 
 if mode = auto:
+    if runtime = day and day_window.active = unknown:
+        fan off
+        fan.auto_state = alert
+        fan.status = warning
+        fan.status_reason = day_window_unknown
+        skip selected auto strategy
+
     if runtime = day and day_window.active = false:
         fan off
         fan.auto_state = off
@@ -223,6 +230,8 @@ if fan.stop or a safety rule requests off:
 
 ```text
 auto_strategy default = delta
+mode default = auto
+runtime default = day
 
 manual_duration_sec default = 600
 manual_duration_sec range = 10..86400
@@ -244,7 +253,7 @@ power_level_pct allowed values = 20 / 40 / 60 / 80 / 100
 
 ```text
 ok       - normal operation
-warning  - temporary condition or confirmation unavailable
+warning  - temporary blocking or invalid-input condition
 error    - command failed after retries
 unknown  - state is not determined after startup
 ```
@@ -255,10 +264,16 @@ Fan Module status reasons added by runtime evaluation:
 door_open
 door_unknown
 climate_invalid
+day_window_unknown
 output_failed
 confirmation_failed
 confirmation_unavailable
 ```
+
+The current PCB has no physical fan-output feedback. A PWM duty accepted by the
+future output driver may keep `fan.status = ok` while
+`last_output_confirmed = unknown`. Confirmation unavailability alone is not a
+warning or proof that the fan physically rotates.
 
 `fan.output = off` does not mean that Fan Module is inactive. Normal user
 control keeps the module active so it continues to report status and accept
@@ -290,6 +305,8 @@ Ack/reject/fail semantics are handled by MQTT Boundary and Command Router.
 Topic strings are not owned here.
 ```
 
+Command Router target: `fan`.
+
 ## 13. Output Confirmation
 
 ```text
@@ -309,4 +326,22 @@ Fan Module does not accept arbitrary PWM percentages outside the five allowed le
 Fan Module does not create hidden manual-check mode.
 Fan Module does not raise error after the first transient confirmation miss.
 Fan Module does not define MQTT topic strings.
+```
+
+## 15. Current Implementation Boundary
+
+```text
+Fan Module calculates output_request and requested_power_pct, including boost
+and ramp timing.
+
+Until the LEDC/PWM output driver is connected:
+    output_request = off -> GPIO13 LOW, applied_power_pct = 0
+    output_request = on  -> GPIO13 HIGH, applied_power_pct = 100
+    requested_power_pct continues to expose the calculated boost/ramp request
+
+The module must not represent a plain GPIO HIGH as an applied 20..100% PWM
+level other than 100%.
+
+Command routing, final output retry handling, and physical application remain
+part of the later driver-integration step.
 ```

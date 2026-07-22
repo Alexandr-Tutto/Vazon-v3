@@ -1,7 +1,7 @@
 # System Status Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active draft
+Code status: active aggregation implementation
 Scope: Vazon V3 System Status
 
 ## 1. Purpose
@@ -57,7 +57,7 @@ system.affected_system
 ## 6. Settings
 
 ```text
-mqtt_warning_grace_sec <= 60
+mqtt_warning_grace_sec = 60
 ```
 
 ## 7. State
@@ -111,6 +111,11 @@ MQTT disconnected > mqtt_warning_grace_sec:
 manual mode:
     does not create global warning by itself
 ```
+
+Until the Wi-Fi service provides an RSSI/quality signal, the `weak Wi-Fi` rule
+has no firmware input and is not evaluated. Disconnected/connecting Wi-Fi is
+reported as a connection warning. An unknown connection state keeps the system
+unknown only when no local warning or error has higher priority.
 
 ## 10. UI Boundary
 
