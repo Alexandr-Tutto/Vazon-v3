@@ -254,6 +254,9 @@ static void read_climate_and_log(uint64_t now_ms)
         if (result != ESP_OK && present) {
             ESP_LOGW(TAG, "SHT31 0x%02X read failed: %s",
                      addresses[index], esp_err_to_name(result));
+        } else if (result == ESP_OK) {
+            ESP_LOGI(TAG, "SHT31 0x%02X=%.1fC/%.1f%%",
+                     addresses[index], temperature_c, humidity_pct);
         }
     }
 
@@ -1147,6 +1150,7 @@ void vazon_app_core_init(void)
 {
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_safe_off());
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_status_led_off());
+    ESP_ERROR_CHECK(vazon_i2c_service_scan_climate_bus());
 
     esp_err_t nvs_result = nvs_flash_init();
     if (nvs_result == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -1185,7 +1189,6 @@ void vazon_app_core_init(void)
     ESP_LOGI(TAG, "Boot mode=normal");
     ESP_ERROR_CHECK(vazon_gpio_outputs_run_status_led_test());
     ESP_ERROR_CHECK(vazon_gpio_inputs_run_smoke_test());
-    ESP_ERROR_CHECK(vazon_i2c_service_scan_climate_bus());
     ESP_ERROR_CHECK(vazon_onewire_service_scan_pot_temperature_bus());
     ESP_ERROR_CHECK(vazon_adc_service_init());
     ESP_ERROR_CHECK(vazon_adc_service_read_raw_soil_moisture());
