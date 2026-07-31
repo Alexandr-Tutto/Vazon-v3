@@ -67,9 +67,11 @@ esp_err_t vazon_gpio_inputs_run_smoke_test(void)
     ESP_RETURN_ON_ERROR(vazon_gpio_inputs_read_humidifier_water_raw(&water_level), TAG,
                         "Failed to read water input");
 
-    ESP_LOGI(TAG, "Raw door GPIO%d=%d (%s)", VAZON_GPIO_DOOR_REED, door_level,
+    ESP_LOGI(TAG, "SENSOR_OK door GPIO%d raw=%d state=%s result=ok",
+             VAZON_GPIO_DOOR_REED, door_level,
              door_level == VAZON_DOOR_CLOSED_LEVEL ? "closed" : "open");
-    ESP_LOGI(TAG, "Raw water GPIO%d=%d (%s)", VAZON_GPIO_HUMIDIFIER_WATER, water_level,
+    ESP_LOGI(TAG, "SENSOR_OK humidifier.water GPIO%d raw=%d state=%s result=ok",
+             VAZON_GPIO_HUMIDIFIER_WATER, water_level,
              water_level == VAZON_WATER_EMPTY_LEVEL ? "empty" : "present");
     return ESP_OK;
 }

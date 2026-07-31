@@ -5,12 +5,14 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
+#include "esp_sntp.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
 #include "vazon_adc_service.h"
+#include "vazon_board_config.h"
 #include "vazon_climate_module.h"
 #include "vazon_command_router.h"
 #include "vazon_connection_config.h"
@@ -24,6 +26,7 @@
 #include "vazon_mqtt_command_codec.h"
 #include "vazon_mqtt_command_queue.h"
 #include "vazon_mqtt_service.h"
+#include "vazon_mqtt_state_publisher.h"
 #include "vazon_onewire_service.h"
 #include "vazon_pot_module.h"
 #include "vazon_provisioning_button.h"
@@ -35,7 +38,9 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static const char *TAG = "app_core";
 
@@ -46,6 +51,11 @@ static const char *TAG = "app_core";
 #define POT_READ_INTERVAL_MS       10000U
 #define MQTT_COMMAND_QUEUE_DEPTH   8U
 #define MQTT_COMMAND_TASK_STACK    6144U
+#define MQTT_STATE_TASK_STACK      8192U
+#define MQTT_STATE_POLL_MS         1000U
+#define DAY_WINDOW_TASK_STACK      3072U
+#define DAY_WINDOW_POLL_MS         1000U
+#define CLOCK_VALID_YEAR           2020
 #define PROVISIONING_CHECK_MS       5000U
 #define PROVISIONING_HOLD_MS        5000U
 #define PROVISIONING_POLL_MS        50U
@@ -65,8 +75,81 @@ static vazon_mqtt_service_t mqtt_service;
 static vazon_wifi_service_t wifi_service;
 static vazon_mqtt_command_codec_t mqtt_command_codec;
 static vazon_mqtt_command_queue_t mqtt_command_queue;
+static vazon_mqtt_state_publisher_t mqtt_state_publisher;
 static SemaphoreHandle_t runtime_mutex;
 static uint64_t next_climate_read_ms;
+static bool sntp_started;
+
+static esp_err_t lock_runtime(void *context);
+static void unlock_runtime(void *context);
+
+static const char *day_window_active_text(vazon_tristate_t active)
+{
+    return active == VAZON_TRISTATE_TRUE ? "true" :
+           active == VAZON_TRISTATE_FALSE ? "false" : "unknown";
+}
+
+static void start_sntp_if_needed(void)
+{
+    if (sntp_started) return;
+
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    esp_sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+    esp_sntp_set_sync_interval(3600UL * 1000UL);
+    esp_sntp_init();
+    sntp_started = true;
+    ESP_LOGI(TAG, "SNTP started server=pool.ntp.org timezone=Europe/Kyiv");
+}
+
+static void day_window_runtime_task(void *context)
+{
+    (void)context;
+    bool first_report = true;
+    bool previous_clock_valid = false;
+    vazon_tristate_t previous_active = VAZON_TRISTATE_UNKNOWN;
+
+    while (true) {
+        const time_t now = time(NULL);
+        struct tm local_time = {0};
+        const bool clock_valid =
+            localtime_r(&now, &local_time) != NULL &&
+            local_time.tm_year + 1900 >= CLOCK_VALID_YEAR;
+
+        ESP_ERROR_CHECK(lock_runtime(runtime_mutex));
+        const esp_err_t result = vazon_runtime_core_evaluate_day_window(
+            &runtime_core, clock_valid,
+            clock_valid ? (uint8_t)local_time.tm_hour : 0U,
+            clock_valid ? (uint8_t)local_time.tm_min : 0U);
+        const vazon_day_window_t day_window =
+            vazon_runtime_core_get_context(&runtime_core)->day_window;
+        unlock_runtime(runtime_mutex);
+
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Day window evaluation failed: %s",
+                     esp_err_to_name(result));
+        } else if (first_report || clock_valid != previous_clock_valid ||
+                   day_window.active != previous_active) {
+            if (clock_valid) {
+                ESP_LOGI(TAG,
+                         "Clock local=%04d-%02d-%02d %02d:%02d:%02d day_window=%s schedule=%s-%s",
+                         local_time.tm_year + 1900, local_time.tm_mon + 1,
+                         local_time.tm_mday, local_time.tm_hour,
+                         local_time.tm_min, local_time.tm_sec,
+                         day_window_active_text(day_window.active),
+                         day_window.time_on, day_window.time_off);
+            } else {
+                ESP_LOGW(TAG, "Clock invalid day_window=%s",
+                         day_window_active_text(day_window.active));
+            }
+        }
+
+        first_report = false;
+        previous_clock_valid = clock_valid;
+        previous_active = day_window.active;
+        vTaskDelay(pdMS_TO_TICKS(DAY_WINDOW_POLL_MS));
+    }
+}
 
 static vazon_connection_state_t mqtt_runtime_state(
     vazon_mqtt_connection_state_t state)
@@ -110,7 +193,7 @@ static void unlock_runtime(void *context)
     if (mutex != NULL) xSemaphoreGive(mutex);
 }
 
-static esp_err_t publish_mqtt_command_result(
+static esp_err_t publish_mqtt_message(
     const char *topic, const char *payload, int qos, bool retain,
     void *context)
 {
@@ -165,6 +248,7 @@ static void wifi_connection_changed(vazon_wifi_connection_state_t state,
                                                         "disconnected");
     if (state == VAZON_WIFI_CONNECTION_CONNECTED &&
         mqtt_service.initialized && !mqtt_service.started) {
+        start_sntp_if_needed();
         const esp_err_t result = vazon_mqtt_service_start(&mqtt_service);
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "MQTT start failed: %s", esp_err_to_name(result));
@@ -251,11 +335,13 @@ static void read_climate_and_log(uint64_t now_ms)
         ESP_ERROR_CHECK(vazon_climate_module_record_sensor(
             &climate_module, addresses[index], present, result,
             temperature_c, humidity_pct, now_ms));
-        if (result != ESP_OK && present) {
-            ESP_LOGW(TAG, "SHT31 0x%02X read failed: %s",
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG,
+                     "SENSOR_FAIL climate address=0x%02X temperature=unknown humidity=unknown result=%s",
                      addresses[index], esp_err_to_name(result));
         } else if (result == ESP_OK) {
-            ESP_LOGI(TAG, "SHT31 0x%02X=%.1fC/%.1f%%",
+            ESP_LOGI(TAG,
+                     "SENSOR_OK climate address=0x%02X temperature=%.1fC humidity=%.1f%% result=ok",
                      addresses[index], temperature_c, humidity_pct);
         }
     }
@@ -281,18 +367,18 @@ static void read_climate_and_log(uint64_t now_ms)
     }
 }
 
-static const char *pot_status_text(vazon_pot_status_t status)
+static const char *pot_sensor_status_text(vazon_pot_sensor_status_t status)
 {
     switch (status) {
-    case VAZON_POT_STATUS_OK:
+    case VAZON_POT_SENSOR_OK:
         return "ok";
-    case VAZON_POT_STATUS_WARNING:
+    case VAZON_POT_SENSOR_WARNING:
         return "warning";
-    case VAZON_POT_STATUS_ERROR:
+    case VAZON_POT_SENSOR_ERROR:
         return "error";
-    case VAZON_POT_STATUS_INACTIVE:
+    case VAZON_POT_SENSOR_INACTIVE:
         return "inactive";
-    case VAZON_POT_STATUS_UNKNOWN:
+    case VAZON_POT_SENSOR_UNKNOWN:
     default:
         return "unknown";
     }
@@ -399,31 +485,52 @@ static void pot_runtime_task(void *context)
             if (moisture_result == ESP_OK &&
                 snapshot->soil_moisture.value_pct == VAZON_POT_VALUE_UNKNOWN) {
                 ESP_LOGI(TAG,
-                         "Pot[%u] soil raw=%d/%dmV value=unknown temp=%.2fC status=%s reason=%s",
+                         "SENSOR_OK pot[%u].soil_moisture GPIO%d raw=%d mv=%d value=unknown status=%s reason=%s result=ok",
                          (unsigned int)pot_id,
+                         pot_id == 0U ? VAZON_GPIO_POT0_SOIL_MOISTURE
+                                      : VAZON_GPIO_POT1_SOIL_MOISTURE,
                          snapshot->soil_moisture.raw_adc_value,
                          snapshot->soil_moisture.raw_mv,
-                         snapshot->soil_temperature.temperature_c,
-                         pot_status_text(snapshot->status),
-                         pot_reason_text(snapshot->status_reason));
+                         pot_sensor_status_text(snapshot->soil_moisture.status),
+                         "calibration_invalid");
             } else if (moisture_result == ESP_OK) {
                 ESP_LOGI(TAG,
-                         "Pot[%u] soil raw=%d/%dmV value=%d%% temp=%.2fC status=%s reason=%s",
+                         "SENSOR_OK pot[%u].soil_moisture GPIO%d raw=%d mv=%d value=%d%% status=%s reason=%s result=ok",
                          (unsigned int)pot_id,
+                         pot_id == 0U ? VAZON_GPIO_POT0_SOIL_MOISTURE
+                                      : VAZON_GPIO_POT1_SOIL_MOISTURE,
                          snapshot->soil_moisture.raw_adc_value,
                          snapshot->soil_moisture.raw_mv,
                          snapshot->soil_moisture.value_pct,
-                         snapshot->soil_temperature.temperature_c,
-                         pot_status_text(snapshot->status),
-                         pot_reason_text(snapshot->status_reason));
+                         pot_sensor_status_text(snapshot->soil_moisture.status),
+                         "none");
             } else {
                 ESP_LOGW(TAG,
-                         "Pot[%u] soil raw=%d mV=unavailable temp=%.2fC status=%s reason=%s",
+                         "SENSOR_FAIL pot[%u].soil_moisture GPIO%d raw=%d mv=unavailable status=%s reason=%s result=%s",
                          (unsigned int)pot_id,
+                         pot_id == 0U ? VAZON_GPIO_POT0_SOIL_MOISTURE
+                                      : VAZON_GPIO_POT1_SOIL_MOISTURE,
                          snapshot->soil_moisture.raw_adc_value,
+                         pot_sensor_status_text(snapshot->soil_moisture.status),
+                         "moisture_read_failed",
+                         esp_err_to_name(moisture_result));
+            }
+            if (temperature_result == ESP_OK && temperature_present) {
+                ESP_LOGI(TAG,
+                         "SENSOR_OK pot[%u].soil_temperature GPIO%d OneWire[%u] temperature=%.2fC status=%s result=ok",
+                         (unsigned int)pot_id, VAZON_GPIO_POT_TEMP_ONEWIRE,
+                         (unsigned int)pot_id,
                          snapshot->soil_temperature.temperature_c,
-                         pot_status_text(snapshot->status),
-                         pot_reason_text(snapshot->status_reason));
+                         pot_sensor_status_text(snapshot->soil_temperature.status));
+            } else {
+                ESP_LOGW(TAG,
+                         "SENSOR_FAIL pot[%u].soil_temperature GPIO%d OneWire[%u] temperature=unknown status=%s reason=%s result=%s",
+                         (unsigned int)pot_id, VAZON_GPIO_POT_TEMP_ONEWIRE,
+                         (unsigned int)pot_id,
+                         pot_sensor_status_text(snapshot->soil_temperature.status),
+                         temperature_present ? "temperature_read_failed"
+                                             : "temperature_missing",
+                         esp_err_to_name(temperature_result));
             }
             unlock_runtime(runtime_mutex);
         }
@@ -751,14 +858,21 @@ static void evaluate_humidifier_binary_and_log(vazon_door_state_t door_state,
     }
 
     current = vazon_humidifier_module_get_snapshot(&humidifier_module);
+    if (current->water_status != previous.water_status) {
+        ESP_LOGI(TAG,
+                 "%s humidifier.water GPIO%d raw=%d state=%s result=%s",
+                 water_result == ESP_OK ? "SENSOR_OK" : "SENSOR_FAIL",
+                 VAZON_GPIO_HUMIDIFIER_WATER, water_raw,
+                 humidifier_water_text(current->water_status),
+                 water_result == ESP_OK ? "ok" : esp_err_to_name(water_result));
+    }
     if (current->water_status != previous.water_status ||
         current->mist_output != previous.mist_output ||
         current->fan_output != previous.fan_output ||
         current->status != previous.status ||
         current->status_reason != previous.status_reason) {
         ESP_LOGI(TAG,
-                 "Humidifier water=%s mist=%s fan=%s status=%s reason=%s",
-                 humidifier_water_text(current->water_status),
+                 "Humidifier mist=%s local_fan=%s status=%s reason=%s",
                  current->mist_output == VAZON_HUMIDIFIER_OUTPUT_ON ? "on" : "off",
                  humidifier_fan_text(current->fan_output),
                  humidifier_status_text(current->status),
@@ -779,16 +893,19 @@ static const char *door_state_text(vazon_door_state_t state)
     }
 }
 
-static void log_door_snapshot(const vazon_door_snapshot_t *snapshot)
+static void log_door_snapshot(const vazon_door_snapshot_t *snapshot,
+                              int raw_level)
 {
     if (snapshot->status == VAZON_DOOR_STATUS_WARNING) {
-        ESP_LOGW(TAG, "Door state=%s status=warning reason=door_unstable",
+        ESP_LOGW(TAG,
+                 "SENSOR_WARN door GPIO%d raw=%d state=%s status=warning reason=door_unstable result=unstable",
+                 VAZON_GPIO_DOOR_REED, raw_level,
                  door_state_text(snapshot->state));
         return;
     }
 
-    ESP_LOGI(TAG, "Door state=%s status=%s",
-             door_state_text(snapshot->state),
+    ESP_LOGI(TAG, "SENSOR_OK door GPIO%d raw=%d state=%s status=%s result=ok",
+             VAZON_GPIO_DOOR_REED, raw_level, door_state_text(snapshot->state),
              snapshot->status == VAZON_DOOR_STATUS_OK ? "ok" : "unknown");
 }
 
@@ -1083,7 +1200,7 @@ static void door_runtime_task(void *context)
         const vazon_door_snapshot_t *current = vazon_door_module_get_snapshot(module);
         if (current->state != previous.state || current->status != previous.status ||
             current->status_reason != previous.status_reason) {
-            log_door_snapshot(current);
+            log_door_snapshot(current, raw_level);
         }
 
         const bool door_service_required =
@@ -1112,6 +1229,51 @@ static void mqtt_command_runtime_task(void *context)
             ESP_LOGW(TAG, "MQTT command processing failed: %s",
                      esp_err_to_name(result));
         }
+    }
+}
+
+static void mqtt_state_runtime_task(void *context)
+{
+    vazon_mqtt_state_publisher_t *publisher =
+        (vazon_mqtt_state_publisher_t *)context;
+    bool was_connected = false;
+
+    while (true) {
+        vazon_mqtt_state_bundle_t bundle = {0};
+        bool connected = false;
+        if (lock_runtime(runtime_mutex) == ESP_OK) {
+            const vazon_global_context_t *global_context =
+                vazon_runtime_core_get_context(&runtime_core);
+            connected = global_context->connection.mqtt_state ==
+                        VAZON_CONNECTION_CONNECTED;
+            if (connected) {
+                bundle.global_context = *global_context;
+                ESP_ERROR_CHECK_WITHOUT_ABORT(vazon_system_status_get_snapshot(
+                    &system_status, &bundle.system_status));
+                bundle.climate = *vazon_climate_module_get_snapshot(&climate_module);
+                bundle.door = *vazon_door_module_get_snapshot(&door_module);
+                bundle.light = *vazon_light_module_get_snapshot(&light_module);
+                bundle.fan = *vazon_fan_module_get_snapshot(&fan_module);
+                bundle.humidifier =
+                    *vazon_humidifier_module_get_snapshot(&humidifier_module);
+                bundle.pots[0] = *vazon_pot_module_get_snapshot(&pot_modules[0]);
+                bundle.pots[1] = *vazon_pot_module_get_snapshot(&pot_modules[1]);
+            }
+            unlock_runtime(runtime_mutex);
+        }
+
+        if (connected) {
+            const esp_err_t result = vazon_mqtt_state_publisher_publish(
+                publisher, &bundle, !was_connected);
+            if (result != ESP_OK) {
+                ESP_LOGW(TAG, "MQTT state publish failed: %s",
+                         esp_err_to_name(result));
+            } else if (!was_connected) {
+                ESP_LOGI(TAG, "MQTT retained runtime snapshot published");
+            }
+        }
+        was_connected = connected;
+        vTaskDelay(pdMS_TO_TICKS(MQTT_STATE_POLL_MS));
     }
 }
 
@@ -1187,6 +1349,10 @@ void vazon_app_core_init(void)
     }
 
     ESP_LOGI(TAG, "Boot mode=normal");
+    if (setenv("TZ", "EET-2EEST,M3.5.0/3,M10.5.0/4", 1) != 0) {
+        ESP_LOGE(TAG, "Failed to configure Europe/Kyiv timezone");
+    }
+    tzset();
     ESP_ERROR_CHECK(vazon_gpio_outputs_run_status_led_test());
     ESP_ERROR_CHECK(vazon_gpio_inputs_run_smoke_test());
     ESP_ERROR_CHECK(vazon_onewire_service_scan_pot_temperature_bus());
@@ -1280,12 +1446,15 @@ void vazon_app_core_init(void)
     ESP_ERROR_CHECK(build_device_id(device_id, sizeof(device_id)));
     ESP_ERROR_CHECK(vazon_mqtt_command_codec_init(
         &mqtt_command_codec, device_id, &command_router));
+    ESP_ERROR_CHECK(vazon_mqtt_state_publisher_init(
+        &mqtt_state_publisher, device_id, publish_mqtt_message,
+        &mqtt_service));
     const vazon_mqtt_command_queue_config_t mqtt_queue_config = {
         .depth = MQTT_COMMAND_QUEUE_DEPTH,
         .lock_runtime = lock_runtime,
         .unlock_runtime = unlock_runtime,
         .runtime_lock_context = runtime_mutex,
-        .publish = publish_mqtt_command_result,
+        .publish = publish_mqtt_message,
         .publish_context = &mqtt_service,
     };
     ESP_ERROR_CHECK(vazon_mqtt_command_queue_init(
@@ -1351,6 +1520,18 @@ void vazon_app_core_init(void)
                                 "mqtt_cmd_runtime",
                                 MQTT_COMMAND_TASK_STACK,
                                 &mqtt_command_queue, 4, NULL) == pdPASS
+                                ? ESP_OK
+                                : ESP_ERR_NO_MEM);
+    ESP_ERROR_CHECK(xTaskCreate(mqtt_state_runtime_task,
+                                "mqtt_state_runtime",
+                                MQTT_STATE_TASK_STACK,
+                                &mqtt_state_publisher, 4, NULL) == pdPASS
+                        ? ESP_OK
+                        : ESP_ERR_NO_MEM);
+    ESP_ERROR_CHECK(xTaskCreate(day_window_runtime_task,
+                                "day_window_runtime",
+                                DAY_WINDOW_TASK_STACK,
+                                NULL, 4, NULL) == pdPASS
                         ? ESP_OK
                         : ESP_ERR_NO_MEM);
     if (network_configured) {

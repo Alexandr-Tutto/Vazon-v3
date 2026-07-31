@@ -17,3 +17,12 @@ components/board_config/include/vazon_board_config.h
 ```
 
 Old Vazon repository is a reference source only. Do not copy old implementation code without adapting it to V3 contracts.
+
+## Current status
+
+- Target: Vazon V3 PCB v1.0, device instance #2, ESP32-WROVER with 16 MB flash.
+- Verified on hardware: safe-OFF boot, status LEDs, GPIO inputs/outputs, both SHT31 sensors, both soil-moisture ADC channels, and both DS18B20 probes.
+- Implemented: normal/provisioning boot paths, Global Core, local climate/door/pot/light/fan/humidifier modules, system status, MQTT command routing, and retained MQTT state/status/settings publishing.
+- Implemented, pending build and device verification: SNTP time synchronization and Global Core `day_window` evaluation using the proven Ukraine timezone settings.
+- Deferred: main-fan PWM hardware tuning. The humidifier local fan remains a separate binary output.
+- External integration pending: provision device #2 for the current network, verify live MQTT topics, and connect the new UI.

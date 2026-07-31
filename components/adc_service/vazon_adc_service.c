@@ -125,7 +125,8 @@ esp_err_t vazon_adc_service_read_raw_soil_moisture(void)
             vazon_adc_service_read_millivolts_average(
                 pot_id, 32U, &raw_value, &millivolts);
         if (calibrated_result == ESP_OK) {
-            ESP_LOGI(TAG, "Raw pot[%u] soil GPIO%d ADC1_CH%d=%d, %d mV",
+            ESP_LOGI(TAG,
+                     "SENSOR_OK pot[%u].soil_moisture GPIO%d ADC1_CH%d raw=%d mv=%d result=ok",
                      (unsigned int)pot_id, gpios[pot_id], channels[pot_id],
                      raw_value, millivolts);
         } else if (calibrated_result == ESP_ERR_NOT_SUPPORTED) {
@@ -134,7 +135,7 @@ esp_err_t vazon_adc_service_read_raw_soil_moisture(void)
                                 TAG, "Failed to average pot[%u] ADC",
                                 (unsigned int)pot_id);
             ESP_LOGW(TAG,
-                     "Raw pot[%u] soil GPIO%d ADC1_CH%d=%d, mV unavailable",
+                      "SENSOR_FAIL pot[%u].soil_moisture GPIO%d ADC1_CH%d raw=%d mv=unavailable result=ESP_ERR_NOT_SUPPORTED",
                      (unsigned int)pot_id, gpios[pot_id], channels[pot_id],
                      raw_value);
         } else {

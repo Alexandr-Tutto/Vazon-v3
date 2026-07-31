@@ -46,7 +46,9 @@ esp_err_t vazon_onewire_service_scan_pot_temperature_bus(void)
             (void)ds18b20_get_device_address(sensor, &address);
             if (count < 2U) {
                 pot_temperature_sensors[count] = sensor;
-                ESP_LOGI(TAG, "DS18B20[%u] address=%016" PRIx64, count, address);
+                ESP_LOGI(TAG,
+                         "SENSOR_OK pot[%u].soil_temperature GPIO%d OneWire address=%016" PRIx64 " detected=true result=ok",
+                         count, VAZON_GPIO_POT_TEMP_ONEWIRE, address);
                 ++count;
             } else {
                 ESP_LOGW(TAG, "Extra DS18B20 ignored address=%016" PRIx64, address);
@@ -58,6 +60,11 @@ esp_err_t vazon_onewire_service_scan_pot_temperature_bus(void)
     }
     onewire_del_device_iter(iterator);
     pot_temperature_sensor_count = count;
+    for (unsigned int index = count; index < 2U; ++index) {
+        ESP_LOGW(TAG,
+                 "SENSOR_FAIL pot[%u].soil_temperature GPIO%d OneWire detected=false result=ESP_ERR_NOT_FOUND",
+                 index, VAZON_GPIO_POT_TEMP_ONEWIRE);
+    }
     ESP_LOGI(TAG, "OneWire scan complete: %u DS18B20 device(s) found", count);
     return ESP_OK;
 }
