@@ -15,6 +15,7 @@
         <div>
           <h1 class="brand">Тропіки</h1>
           <p id="mainStatus" class="main-status">Немає актуальних даних</p>
+          <p id="serverStatus" class="server-status is-connecting">Сервер: підключення…</p>
         </div>
 
         <button id="serviceButton" class="gear" type="button" aria-label="Налаштування" title="Налаштування">
@@ -44,6 +45,7 @@
     </section>
   </main>
 
+  <script src="https://unpkg.com/mqtt@5.15.2/dist/mqtt.min.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>

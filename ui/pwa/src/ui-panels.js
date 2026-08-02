@@ -97,6 +97,9 @@ function commandResultText(value) {
     accepted: 'прийнято',
     rejected: 'відхилено',
     failed: 'помилка',
+    ack: 'прийнято',
+    reject: 'відхилено',
+    fail: 'помилка',
   });
 }
 
@@ -237,6 +240,15 @@ function maintenanceAction(active) {
     },
     active,
   };
+}
+
+function lastCommandText(result) {
+  if (!result) return 'Команд ще не було';
+
+  const outcome = commandResultText(result.result || result.topic_class);
+  const command = result.cmd || 'невідома команда';
+  const reason = result.reason ? `: ${result.reason}` : '';
+  return `${command} — ${outcome}${reason}`;
 }
 
 function sensorSwitch(label, name, enabled, enableActionId, disableActionId, passiveLabel = `${label}-відкл.`) {
@@ -575,6 +587,6 @@ function getAdvancedServiceCards(uiState) {
     },
     { label: 'Звʼязок', pairs: [['Wi-Fi', connectionTileSummary(uiState)], ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)]] },
     { label: 'OTA / оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
-    { label: 'Остання команда', value: 'Команд ще не було', wide: true },
+    { label: 'Остання команда', value: lastCommandText(uiState.lastCommandResult), wide: true },
   ];
 }

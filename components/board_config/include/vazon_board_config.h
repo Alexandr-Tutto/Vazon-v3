@@ -15,6 +15,11 @@
 #define VAZON_BOARD_REVISION          "PCB v1.0"
 #define VAZON_MCU_MODULE              "ESP32-WROVER"
 #define VAZON_MODULE_MEMORY           "16M"
+#define VAZON_DEVICE_INSTANCE_NUMBER  2U
+
+#if VAZON_DEVICE_INSTANCE_NUMBER > 99U
+#error "VAZON_DEVICE_INSTANCE_NUMBER must fit the two-digit device ID field"
+#endif
 
 /* Boot / service */
 #define VAZON_GPIO_PROVISIONING_BTN   GPIO_NUM_0

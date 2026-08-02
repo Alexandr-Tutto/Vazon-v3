@@ -130,8 +130,8 @@ App Core now creates the shared runtime mutex and the command consumer task.
 Door/Climate/Light/Fan/Humidifier evaluation, Pot state updates, and routed
 commands use the same mutex. Sensor bus acquisition and MQTT result publishing
 remain outside it. The codec/queue are initialized with the stable
-`Vazon_{MAC suffix}` device ID; MQTT transport startup still waits for stored
-connection configuration and Wi-Fi.
+`Vazon_v3_{physical controller number}_{MAC suffix}` device ID; MQTT transport
+startup still waits for stored connection configuration and Wi-Fi.
 
 Connection Config loads the proven V2 NVS namespace/keys with version and CRC
 validation, while clear operations are restricted to connection keys. Wi-Fi

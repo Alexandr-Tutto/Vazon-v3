@@ -1,13 +1,13 @@
 # Vazon V3 PWA
 
 Document status: draft
-Code status: mock-driven PWA UI
-Scope: PWA UI layout, menu navigation, actions, and mock state rendering
+Code status: direct-MQTT prototype PWA UI
+Scope: PWA UI layout, menu navigation, actions, MQTT state rendering, and commands
 
 ## Purpose
 
 ```text
-Provide a mock-driven PWA UI before MQTT integration and before final firmware state is available.
+Provide a PWA UI connected directly to the prototype HiveMQ Cloud cluster.
 ```
 
 ## Current Scope
@@ -19,7 +19,9 @@ Climate numbers
 Subsystem detail screen
 Subsystem settings screen
 Service/debug screen
-Mock V3 state
+MQTT-backed V3 state store
+Secure MQTT WebSocket connection
+MQTT command publishing
 UI action registry
 Menu rendering helpers
 PWA manifest
@@ -29,8 +31,6 @@ Service worker stub
 ## Current Non-Scope
 
 ```text
-Real MQTT connection
-Real command sending
 Authentication
 Persistent settings editing
 OTA UI implementation
@@ -77,7 +77,19 @@ src/styles.css
 
 ```text
 src/mock-state.js
-    temporary mock state matching docs/v3_data_model.md
+    retained reference fixture matching docs/v3_data_model.md
+
+src/mqtt-config.js
+    prototype HiveMQ WebSocket endpoint and dedicated PWA credentials
+
+src/mqtt/mqtt-client.js
+    MQTT.js connection, subscription, reconnect, and command publishing
+
+src/mqtt/topic-registry.js
+    V3 topic parsing, device matching, and command topic construction
+
+src/state/device-store.js
+    retained MQTT state merged into the UI's raw device state
 
 src/ui-state.js
     UI-only mapping from device data to screen labels and cards
@@ -101,16 +113,20 @@ src/styles.css
     visual layout only
 ```
 
+## MQTT Prototype
+
+```text
+The browser connects directly to HiveMQ Cloud over WSS and discovers physical
+controller 02 from topics matching Vazon_v3_02_yyyyyy.
+```
+
+The browser dependency is pinned to MQTT.js 5.15.2 from unpkg. The prototype
+credential is intentionally visible in browser assets under accepted Decision
+0005 and must be replaced before public or customer deployment.
+
 ## Next UI Step
 
 ```text
-Add MQTT adapter boundary without changing screen rendering.
-```
-
-Expected future files:
-
-```text
-src/mqtt/mqtt-client.js
-src/mqtt/topic-registry.js
-src/state/device-store.js
+Verify retained messages from physical controller 02 and compare every payload
+with the owning V3 contract before replacing the prototype credential model.
 ```

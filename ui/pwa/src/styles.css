@@ -397,6 +397,20 @@ body.has-panel .detail-panel {
   min-width: 92px;
 }
 
+.server-status {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.server-status.is-connected { color: var(--ok); }
+.server-status.is-reconnecting,
+.server-status.is-connecting { color: #8a6b00; }
+.server-status.is-offline,
+.server-status.is-error { color: var(--err); }
+
 .control-row.power-level-row .ghost-control {
   flex: 0 0 54px;
   min-width: 54px;

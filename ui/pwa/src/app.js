@@ -1,10 +1,21 @@
-import { mockState } from './mock-state.js';
+import { mqttConfig } from './mqtt-config.js';
+import { createMqttConnection } from './mqtt/mqtt-client.js';
+import { createDeviceStore } from './state/device-store.js';
 import { createUiState } from './ui-state.js';
 import { renderCards, renderMetricCard, renderTile } from './ui-components.js';
 import { MENU_LEVELS } from './ui-menu-levels.js';
 import { getAdvancedServiceView, getFunctionSettingsView, getFunctionStatusView } from './ui-panels.js';
 
-const uiState = createUiState(mockState);
+const deviceStore = createDeviceStore(mqttConfig);
+
+function currentUiState() {
+  return {
+    ...createUiState(deviceStore.getState()),
+    lastCommandResult: deviceStore.getLastCommandResult(),
+  };
+}
+
+let uiState = currentUiState();
 let currentView = null;
 
 function applyFanPresentation(state) {
@@ -23,6 +34,7 @@ applyFanPresentation(uiState);
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
+  serverStatus: document.getElementById('serverStatus'),
   statusGrid: document.getElementById('statusGrid'),
   metricGrid: document.getElementById('metricGrid'),
   detailKicker: document.getElementById('detailKicker'),
@@ -31,6 +43,21 @@ const elements = {
   closeButton: document.getElementById('closeButton'),
   serviceButton: document.getElementById('serviceButton'),
 };
+
+function setServerStatus(status) {
+  const labels = {
+    connecting: 'Сервер: підключення…',
+    connected: deviceStore.getDeviceId()
+      ? `Сервер: підключено, контролер №${mqttConfig.deviceNumber}`
+      : `Сервер: підключено, контролер №${mqttConfig.deviceNumber} не знайдено`,
+    reconnecting: 'Сервер: відновлення звʼязку…',
+    offline: 'Сервер: немає звʼязку',
+    error: 'Сервер: помилка підключення',
+  };
+
+  elements.serverStatus.textContent = labels[status] || labels.offline;
+  elements.serverStatus.className = `server-status is-${status}`;
+}
 
 function renderMainStatus(state) {
   const status = state.system.status;
@@ -98,6 +125,19 @@ function openFunctionSettings(entity) {
 
 function openAdvancedService() {
   openView(getAdvancedServiceView(uiState));
+}
+
+function refreshOpenView() {
+  if (!currentView) return;
+
+  const entity = currentView.context?.entity;
+  if (currentView.level === MENU_LEVELS.FUNCTION_STATUS && entity) {
+    openFunctionStatus(entity);
+  } else if (currentView.level === MENU_LEVELS.FUNCTION_SETTINGS && entity) {
+    openFunctionSettings(entity);
+  } else if (currentView.level === MENU_LEVELS.ADVANCED_SERVICE) {
+    openAdvancedService();
+  }
 }
 
 function closePanel() {
@@ -297,6 +337,34 @@ function registerServiceWorker() {
   });
 }
 
+function refreshFromDeviceStore() {
+  uiState = currentUiState();
+  applyFanPresentation(uiState);
+  render();
+  refreshOpenView();
+}
+
+const mqttConnection = createMqttConnection(mqttConfig, {
+  onStatus: (status) => setServerStatus(status),
+  onMessage: ({ topic, payload }) => {
+    if (!deviceStore.applyMessage(topic, payload)) return;
+    refreshFromDeviceStore();
+    setServerStatus('connected');
+  },
+});
+
+function sendMqttCommand(event) {
+  const deviceId = deviceStore.getDeviceId();
+  if (!deviceId) {
+    setServerStatus('connected');
+    return;
+  }
+
+  mqttConnection.publishCommand(deviceId, event.detail).catch(() => {
+    setServerStatus('error');
+  });
+}
+
 function render() {
   renderMainStatus(uiState);
   renderTiles(uiState);
@@ -306,8 +374,10 @@ function render() {
 elements.closeButton.addEventListener('click', closePanel);
 elements.serviceButton.addEventListener('click', openAdvancedService);
 elements.detailBody.addEventListener('click', handlePanelClick);
+elements.detailBody.addEventListener('vazon-command', sendMqttCommand);
 elements.detailBody.addEventListener('focusin', rememberInputStartValue);
 document.addEventListener('keydown', handleEscape);
 
 render();
 registerServiceWorker();
+mqttConnection.connect();
