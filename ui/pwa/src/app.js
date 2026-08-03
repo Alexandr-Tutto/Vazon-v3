@@ -18,20 +18,6 @@ function currentUiState() {
 let uiState = currentUiState();
 let currentView = null;
 
-function applyFanPresentation(state) {
-  const fanTile = state.tiles.find((tile) => tile.entity === 'fan');
-
-  if (fanTile && state.raw.fan.status_reason) {
-    fanTile.summary = 'Увага';
-  }
-
-  if (state.details.fan && state.raw.fan.status_reason === 'door_open') {
-    state.details.fan.summary = '- заблоковано через відкриті двері';
-  }
-}
-
-applyFanPresentation(uiState);
-
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
   serverStatus: document.getElementById('serverStatus'),
@@ -60,6 +46,19 @@ function setServerStatus(status) {
 }
 
 function renderMainStatus(state) {
+  const maintenance = state.raw.system.global_context.maintenance;
+
+  if (maintenance?.active === true) {
+    if (maintenance.door_active === true) {
+      elements.mainStatus.textContent = state.raw.door.state === 'open'
+        ? 'Відкриті двері — обслуговування'
+        : 'Стан дверей невідомий — обслуговування';
+    } else {
+      elements.mainStatus.textContent = 'Режим обслуговування';
+    }
+    return;
+  }
+
   const status = state.system.status;
   const affected = state.system.affected_system_label;
 
@@ -197,15 +196,7 @@ function handleEscape(event) {
 }
 
 function toggleMaintenanceMode(actionButton) {
-  const args = readStaticCommandArgs(actionButton);
   emitCommand(actionButton);
-  const maintenance = uiState.raw.system.global_context.maintenance;
-  maintenance.manual_active = args.active === true;
-  maintenance.active = maintenance.manual_active || maintenance.door_active === true;
-  maintenance.reason = maintenance.manual_active
-    ? 'manual'
-    : (maintenance.door_active ? 'door' : null);
-  openAdvancedService();
 }
 
 function readStaticCommandArgs(actionButton) {
@@ -339,7 +330,6 @@ function registerServiceWorker() {
 
 function refreshFromDeviceStore() {
   uiState = currentUiState();
-  applyFanPresentation(uiState);
   render();
   refreshOpenView();
 }

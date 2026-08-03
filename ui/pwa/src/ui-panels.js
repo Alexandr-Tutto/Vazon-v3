@@ -179,6 +179,33 @@ function potStatusCard(index, pot) {
   };
 }
 
+function potIssueText(pot) {
+  if (pot.status_reason === 'calibration_invalid') {
+    return 'Калібрування некоректне. Повторіть калібрування.';
+  }
+  if (pot.status === 'error') return 'Потрібна перевірка: ґрунт.';
+  if (pot.status === 'warning') return 'Потрібна увага: ґрунт.';
+  if (pot.status === 'unknown') return 'Немає актуальних даних.';
+  return null;
+}
+
+function potIssueCard(pots) {
+  const pairs = pots
+    .map((pot, index) => [`Вазон ${index + 1}`, potIssueText(pot)])
+    .filter((pair) => pair[1] !== null);
+
+  if (pairs.length === 0) return null;
+
+  return {
+    label: pots.some((pot) => pot.status === 'error')
+      ? 'Потрібна дія'
+      : 'Стан ґрунту',
+    pairs,
+    stacked: true,
+    wide: true,
+  };
+}
+
 export function getFunctionStatusView(entity, uiState) {
   const detail = uiState.details[entity];
 
@@ -393,7 +420,9 @@ function getFunctionStatusCards(entity, uiState) {
   }
 
   if (entity === 'pot') {
+    const issueCard = potIssueCard(raw.pot);
     return [
+      ...(issueCard ? [issueCard] : []),
       potStatusCard(0, raw.pot[0]),
       potStatusCard(1, raw.pot[1]),
       { label: 'Розширені параметри', controls: [settingsOpenAction(entity)], wide: true },
