@@ -1131,6 +1131,7 @@ static void update_system_status_and_log(vazon_door_state_t door_state,
         vazon_runtime_core_get_context(&runtime_core);
     const vazon_status_led_inputs_t led_inputs = {
         .provisioning_active = false,
+        .maintenance_door_active = global_context->maintenance.door_active,
         .system_status = &current,
         .wifi_state = global_context->connection.wifi_state,
         .mqtt_state = global_context->connection.mqtt_state,
@@ -1291,6 +1292,7 @@ static void provisioning_led_task(void *context)
     };
     const vazon_status_led_inputs_t inputs = {
         .provisioning_active = true,
+        .maintenance_door_active = false,
         .system_status = &inactive_system,
         .wifi_state = VAZON_CONNECTION_DISCONNECTED,
         .mqtt_state = VAZON_CONNECTION_DISCONNECTED,
@@ -1327,6 +1329,13 @@ void vazon_app_core_init(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     ESP_ERROR_CHECK(vazon_gpio_inputs_init());
+    ESP_ERROR_CHECK(vazon_status_led_init(&status_led, apply_status_led, NULL));
+    TaskHandle_t provisioning_led_task_handle = NULL;
+    ESP_ERROR_CHECK(xTaskCreate(provisioning_led_task,
+                                "provisioning_led", 2048, &status_led, 4,
+                                &provisioning_led_task_handle) == pdPASS
+                        ? ESP_OK
+                        : ESP_ERR_NO_MEM);
     const vazon_provisioning_button_config_t provisioning_button_config = {
         .check_window_ms = PROVISIONING_CHECK_MS,
         .hold_ms = PROVISIONING_HOLD_MS,
@@ -1338,17 +1347,12 @@ void vazon_app_core_init(void)
     if (provisioning_requested) {
         ESP_LOGW(TAG, "Boot mode=provisioning; normal runtime disabled");
         ESP_ERROR_CHECK(vazon_connection_config_clear());
-        ESP_ERROR_CHECK(vazon_status_led_init(&status_led, apply_status_led,
-                                               NULL));
         ESP_ERROR_CHECK(vazon_provisioning_service_start());
-        ESP_ERROR_CHECK(xTaskCreate(provisioning_led_task,
-                                    "provisioning_led", 2048, &status_led, 4,
-                                    NULL) == pdPASS
-                            ? ESP_OK
-                            : ESP_ERR_NO_MEM);
         return;
     }
 
+    vTaskDelete(provisioning_led_task_handle);
+    ESP_ERROR_CHECK(vazon_gpio_outputs_set_status_led(false, false));
     ESP_LOGI(TAG, "Boot mode=normal");
     if (setenv("TZ", "EET-2EEST,M3.5.0/3,M10.5.0/4", 1) != 0) {
         ESP_LOGE(TAG, "Failed to configure Europe/Kyiv timezone");

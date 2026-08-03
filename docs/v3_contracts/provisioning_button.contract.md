@@ -43,6 +43,11 @@ connection_config_clear request
 Після safe-off та ініціалізації системних сервісів пристрій протягом 5000 ms
 перевіряє Provisioning Button з інтервалом 50 ms.
 
+Від початку цього вікна Status LED блимає зеленим 500 ms ON / 500 ms OFF.
+Та сама індикація триває під час утримання кнопки та після запуску
+provisioning AP. Якщо provisioning не запущено, індикація припиняється перед
+стартом normal runtime.
+
 Якщо кнопку натиснуто у цьому вікні та безперервно утримано 5000 ms:
   boot_mode = provisioning
   stored Wi-Fi and MQTT connection settings are cleared

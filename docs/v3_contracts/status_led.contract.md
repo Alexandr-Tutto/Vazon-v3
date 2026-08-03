@@ -35,6 +35,7 @@ green GPIO
 ```text
 boot mode
 provisioning state
+Global Core maintenance.door_active
 local connection state
 system.status
 ```
@@ -60,13 +61,21 @@ It does not own UI text or MQTT-published status formatting.
 ```text
 LED indication priority:
 
-1. provisioning active
-2. system.error not caused only by MQTT offline
-3. local warning / attention
-4. mqtt offline
-5. wi-fi offline
-6. normal ok
+1. provisioning button check window or provisioning active
+2. Global Core maintenance.door_active
+3. system.error not caused only by MQTT offline
+4. local warning / attention
+5. mqtt offline
+6. wi-fi offline
+7. normal ok
 ```
+
+Door-origin maintenance is an operationally dominant local state because the
+controller cannot maintain the enclosure microclimate while the door is open or
+its safety-relevant state is undetermined. It does not replace or recalculate
+`system.status`; when door-origin maintenance clears, the LED immediately
+returns to the pattern selected from the still-current system and connection
+states.
 
 MQTT offline has its own LED pattern because the LED is a local physical indication path, while UI delivery may be unavailable because of the same MQTT loss.
 
@@ -75,7 +84,7 @@ MQTT offline has its own LED pattern because the LED is a local physical indicat
 ```text
 green short blink, long pause - normal ok
 
-green 50/50 blink             - provisioning AP active
+green 50/50 blink             - provisioning button check window or provisioning AP active
 
 red short blink, long pause   - wi-fi offline
 
@@ -83,7 +92,7 @@ red 50/50 blink               - mqtt offline
 
 red steady                    - system error not caused only by MQTT offline
 
-red/green alternate blink     - local warning / attention
+red/green alternate blink     - door-origin maintenance or local warning / attention
 ```
 
 Exact runtime timing:
@@ -98,9 +107,11 @@ When `system.status` is still `unknown` and neither offline state is known,
 both LED channels stay OFF. This avoids displaying a false normal state during
 startup.
 
-The normal-runtime entry passes `provisioning active = false`. The boot-only
-provisioning path passes `provisioning active = true` and owns no other status
-selection inputs.
+The provisioning indication starts when the boot-only provisioning button check
+window opens. It remains active while a detected button press is held and, after
+successful entry, for the entire time the provisioning AP is active. If the
+check finishes without a valid hold, the indication stops before normal runtime
+starts.
 
 ## 9. Forbidden
 

@@ -31,6 +31,9 @@ static vazon_status_led_pattern_t select_pattern(
     if (inputs->provisioning_active) {
         return VAZON_STATUS_LED_PATTERN_PROVISIONING;
     }
+    if (inputs->maintenance_door_active) {
+        return VAZON_STATUS_LED_PATTERN_LOCAL_WARNING;
+    }
     if (status->status == VAZON_SYSTEM_STATUS_ERROR && !mqtt_only_error) {
         return VAZON_STATUS_LED_PATTERN_SYSTEM_ERROR;
     }

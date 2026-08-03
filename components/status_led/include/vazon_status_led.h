@@ -23,6 +23,7 @@ typedef enum {
 
 typedef struct {
     bool provisioning_active;
+    bool maintenance_door_active;
     const vazon_system_status_snapshot_t *system_status;
     vazon_connection_state_t wifi_state;
     vazon_connection_state_t mqtt_state;
