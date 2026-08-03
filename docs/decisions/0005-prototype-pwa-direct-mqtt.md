@@ -13,8 +13,8 @@ configuration file. It does not reuse controller credentials. This is an
 explicit temporary tradeoff while production authentication remains
 undefined.
 
-The PWA subscribes to the Vazon V3 namespace, discovers the configured physical
-controller number from its canonical device ID, maps retained state into its
+The PWA subscribes to the Vazon V3 namespace, discovers the configured serial
+number from its canonical device ID, maps retained state into its
 device store, and publishes commands using the active MQTT command envelope.
 
 ## Consequences

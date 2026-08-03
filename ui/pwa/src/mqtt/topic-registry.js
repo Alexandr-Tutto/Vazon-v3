@@ -1,4 +1,4 @@
-const DEVICE_ID_PATTERN = /^Vazon_v3_(\d{2})_([0-9a-f]{6})$/;
+const DEVICE_ID_PATTERN = /^Vazon_(\d{2})_([0-9a-f]{6})$/;
 const TARGET_PATTERN = /^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/;
 
 export function subscriptionTopic(topicRoot) {
@@ -21,9 +21,9 @@ export function parseVazonTopic(topic, topicRoot) {
   return { deviceId, topicClass, entity };
 }
 
-export function deviceMatchesNumber(deviceId, deviceNumber) {
+export function deviceMatchesSerial(deviceId, serialNumber) {
   const match = DEVICE_ID_PATTERN.exec(deviceId);
-  return match !== null && Number(match[1]) === deviceNumber;
+  return match !== null && Number(match[1]) === serialNumber;
 }
 
 export function commandTopic(topicRoot, deviceId, target) {

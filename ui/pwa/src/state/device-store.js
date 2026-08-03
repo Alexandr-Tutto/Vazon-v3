@@ -1,4 +1,4 @@
-import { deviceMatchesNumber, parseVazonTopic } from '../mqtt/topic-registry.js';
+import { deviceMatchesSerial, parseVazonTopic } from '../mqtt/topic-registry.js';
 
 function unknownOutputState() {
   return {
@@ -88,13 +88,13 @@ function mergeEntity(target, payload) {
   return false;
 }
 
-export function createDeviceStore({ topicRoot, deviceNumber }) {
+export function createDeviceStore({ topicRoot, serialNumber }) {
   const state = createEmptyState();
   let deviceId = null;
   let lastCommandResult = null;
 
   function acceptDevice(candidate) {
-    if (!deviceMatchesNumber(candidate, deviceNumber)) return false;
+    if (!deviceMatchesSerial(candidate, serialNumber)) return false;
     if (deviceId === null) deviceId = candidate;
     return deviceId === candidate;
   }

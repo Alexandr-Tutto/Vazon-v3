@@ -116,8 +116,8 @@ src/styles.css
 ## MQTT Prototype
 
 ```text
-The browser connects directly to HiveMQ Cloud over WSS and discovers physical
-controller 02 from topics matching Vazon_v3_02_yyyyyy.
+The browser connects directly to HiveMQ Cloud over WSS and discovers serial
+number 02 from topics matching `Vazon_02_yyyyyy`.
 ```
 
 The browser dependency is pinned to MQTT.js 5.15.2 from unpkg. The prototype

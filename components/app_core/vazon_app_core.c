@@ -263,10 +263,10 @@ static esp_err_t build_device_id(char *device_id, size_t device_id_size)
     uint8_t mac[6];
     ESP_RETURN_ON_ERROR(esp_read_mac(mac, ESP_MAC_WIFI_STA), TAG,
                         "Failed to read STA MAC");
-    const int written = snprintf(
-        device_id, device_id_size, "Vazon_v3_%02u_%02x%02x%02x",
-        (unsigned int)VAZON_DEVICE_INSTANCE_NUMBER,
-        mac[3], mac[4], mac[5]);
+    const int written = snprintf(device_id, device_id_size,
+                                 "Vazon_%02u_%02x%02x%02x",
+                                 (unsigned int)VAZON_DEVICE_SERIAL_NUMBER,
+                                 mac[3], mac[4], mac[5]);
     return written < 0 || (size_t)written >= device_id_size
                ? ESP_ERR_INVALID_SIZE
                : ESP_OK;

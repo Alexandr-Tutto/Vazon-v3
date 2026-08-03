@@ -48,8 +48,8 @@ function setServerStatus(status) {
   const labels = {
     connecting: 'Сервер: підключення…',
     connected: deviceStore.getDeviceId()
-      ? `Сервер: підключено, контролер №${mqttConfig.deviceNumber}`
-      : `Сервер: підключено, контролер №${mqttConfig.deviceNumber} не знайдено`,
+      ? `Сервер: підключено, контролер №${mqttConfig.serialNumber}`
+      : `Сервер: підключено, контролер №${mqttConfig.serialNumber} не знайдено`,
     reconnecting: 'Сервер: відновлення звʼязку…',
     offline: 'Сервер: немає звʼязку',
     error: 'Сервер: помилка підключення',

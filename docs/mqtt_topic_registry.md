@@ -26,17 +26,16 @@ vazon/v3/{device_id}/...
 ```
 
 `device_id` is the stable logical device identifier used by firmware, MQTT broker, and UI.
-Its deployment and identity rules are owned by
-`docs/decisions/0004-client-cluster-and-device-identity.md`.
-
-Firmware combines the physical controller number from board configuration with
-the last three bytes of the station MAC:
+Firmware forms it from the configured two-digit product serial number followed
+by the last three station-MAC bytes in lowercase hexadecimal:
 
 ```text
-Vazon_v3_{two-digit physical controller number}_{last three STA MAC bytes in lowercase hexadecimal}
+Vazon_{serial_number:02}_{last three STA MAC bytes in lowercase hexadecimal}
 ```
 
-Example for physical controller 02: `Vazon_v3_02_a1b2c3`.
+The serial-number range is `00..99`. The current V3 device #2 uses
+`VAZON_DEVICE_SERIAL_NUMBER = 2` and therefore has device ID
+`Vazon_02_86da54`.
 
 Each client uses a separate MQTT cluster. One client cluster may contain one or
 more controllers, distinguished by `device_id`.

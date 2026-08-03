@@ -3,7 +3,7 @@ export const mqttConfig = Object.freeze({
   username: 'vazon-ui-dev',
   password: 'vazon-ui-dev',
   topicRoot: 'vazon/v3',
-  deviceNumber: 2,
+  serialNumber: 2,
   qos: 1,
   keepaliveSeconds: 30,
   connectTimeoutMs: 10000,
