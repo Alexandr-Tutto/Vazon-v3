@@ -91,12 +91,16 @@ maintenance.manual_active OR maintenance.external_active OR maintenance.door_act
 Each local module owns its own reaction to `maintenance.active`:
 
 ```text
-fan: maintenance.active -> fan off
+fan: maintenance.active -> automatic operation off; Fan Module may accept a
+     bounded manual service run while door.state = open
 humidifier: maintenance.active -> mist off and local fan off
 light: maintenance.active -> light on as service lighting
 ```
 
-Service lighting is intentionally different from fan and humidifier maintenance behavior.
+Global Core does not grant or calculate the fan service run. Fan Module owns
+that reaction and keeps manual/external maintenance and an unknown door fully
+blocked. Service lighting is intentionally different from fan and humidifier
+maintenance behavior.
 
 ## 8. Day Window
 

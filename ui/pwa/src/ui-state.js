@@ -171,6 +171,17 @@ function waterStatusText(value) {
   return labels[value] || value || '—';
 }
 
+function humidifierFanText(value) {
+  const labels = {
+    on: 'працює',
+    post_run: 'післяпродувка',
+    off: 'вимкнено',
+    unknown: 'стан невідомий',
+  };
+
+  return labels[value] || value || '—';
+}
+
 function maintenanceDetailSummary(maintenance, doorState, blocked) {
   if (maintenance.door_active === true && doorState === 'open') {
     return blocked
@@ -215,6 +226,13 @@ function humidifierSummary(humidifier) {
 export function createUiState(raw) {
   const maintenance = raw.system.global_context.maintenance || {};
   const maintenanceActive = maintenance.active === true;
+  const humidifierFanActive = raw.humidifier.fan_output === 'on'
+    || raw.humidifier.fan_output === 'post_run';
+  const fanDoorServiceRun = maintenanceActive
+    && raw.door.state === 'open'
+    && raw.fan.settings.mode === 'manual'
+    && raw.fan.auto_state === 'running'
+    && raw.fan.output === 'on';
   const system = {
     ...raw.system,
     affected_system_label: getAffectedLabel(raw.system.affected_system),
@@ -248,12 +266,18 @@ export function createUiState(raw) {
     : raw.fan.status;
   const humidifierTileSummary = maintenanceActive
     ? 'Заблоковано'
-    : (raw.humidifier.status_reason ? 'Увага' : 'Норма');
+    : (raw.humidifier.status_reason
+      ? 'Увага'
+      : (raw.humidifier.mist_output === 'on'
+        ? 'Працює'
+        : (raw.humidifier.fan_output === 'post_run'
+          ? 'Післяпродувка'
+          : (humidifierFanActive ? 'Вентилятор працює' : 'Норма'))));
   const lightTileSummary = maintenanceActive
     ? 'Примусово активовано'
     : lightOutputText(raw.light.output);
   const fanTileSummary = maintenanceActive
-    ? 'Заблоковано'
+    ? (fanDoorServiceRun ? 'Працює вручну' : 'Заблоковано')
     : (raw.fan.status_reason
       ? 'Увага'
       : (raw.fan.output === 'on' ? 'Працює' : 'Вимкнено'));
@@ -261,9 +285,9 @@ export function createUiState(raw) {
   const tiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.summary),
-    tile('humidifier', 'Зволоження', humidifierStatus, humidifierTileSummary, !maintenanceActive && raw.humidifier.mist_output === 'on'),
+    tile('humidifier', 'Зволоження', humidifierStatus, humidifierTileSummary, !maintenanceActive && (raw.humidifier.mist_output === 'on' || humidifierFanActive)),
     tile('light', 'Світло', lightStatus, lightTileSummary, raw.light.output === 'on'),
-    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, !maintenanceActive && raw.fan.output === 'on'),
+    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, raw.fan.output === 'on'),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
 
@@ -288,6 +312,7 @@ export function createUiState(raw) {
     humidifier: makeDetail('Зволоження', humidifierStatus, maintenanceActive ? maintenanceDetailSummary(maintenance, raw.door.state, true) : humidifierSummary(raw.humidifier), '', [
       { label: 'Вода', value: waterStatusText(raw.humidifier.water_status) },
       { label: 'Пар', value: outputText(raw.humidifier.mist_output) },
+      { label: 'Локальний вентилятор', value: humidifierFanText(raw.humidifier.fan_output) },
       { label: 'Режим', value: modeText(raw.humidifier.settings.mode) },
     ]),
 
@@ -297,7 +322,7 @@ export function createUiState(raw) {
       { label: 'Ручний стан', value: manualStateText(raw.light.settings.manual_state) },
     ]),
 
-    fan: makeDetail('Вентиляція', fanStatus, maintenanceActive ? maintenanceDetailSummary(maintenance, raw.door.state, true) : fanOutputText(raw.fan.output), 'Показано основний вентилятор шафи.', [
+    fan: makeDetail('Вентиляція', fanStatus, fanDoorServiceRun ? '- працює вручну — двері відкриті' : (maintenanceActive ? maintenanceDetailSummary(maintenance, raw.door.state, true) : fanOutputText(raw.fan.output)), 'Показано основний вентилятор шафи.', [
       { label: 'Автостан', value: fanAutoStateText(raw.fan.auto_state) },
       { label: 'Режим', value: modeText(raw.fan.settings.mode) },
       { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },

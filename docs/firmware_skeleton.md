@@ -74,14 +74,15 @@ The temporary bring-up UART command task has been removed. GPIO4, GPIO13,
 GPIO19, and GPIO26 are owned by their runtime modules.
 
 Fan Module state-machine code calculates manual/auto demand and PWM
-boost/ramp requests. Until the LEDC/PWM driver exists, GPIO13 is connected as a
-binary fallback: OFF is applied as 0% and ON is reported honestly as 100%.
+boost/ramp requests. Until the future four-wire PWM GPIO and driver are
+assigned, GPIO13 remains a binary fallback: OFF is applied as 0% and ON is
+reported honestly as 100%.
 
 Humidifier Module debounces the GPIO35 water input and owns the GPIO26 mist and
 GPIO19 local-fan outputs. It implements humidity hysteresis, manual duration,
 day-window safety, water/climate interlocks, and 20-second fan post-run. The
-selected mist intensity is stored, but the current GPIO26 output is binary:
-OFF is 0% and every active level is applied as 100%.
+GPIO26 driver applies 800 Hz PWM through the external RC differentiator:
+low/medium/high intensity is 40/50/60% duty and OFF is 0%.
 
 Climate Module reads SHT31 sensors at 0x44 and 0x45 every 5 seconds, validates
 CRC and value ranges, tracks the 300-second stale timeout, and supplies both
@@ -203,8 +204,8 @@ DOOR_REED_GPIO:
     open = 1
 
 HUMIDIFIER_WATER_PRESENT_GPIO:
-    water empty = 0
-    water present = 1
+    water present = 0
+    water empty = 1
 ```
 
 Expected bus checks:

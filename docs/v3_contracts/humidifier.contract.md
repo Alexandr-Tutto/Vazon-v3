@@ -57,18 +57,20 @@ no internal pull-up
 
 semantic mapping:
 GPIO35 = 0 means reed closed
-reed closed means humidifier.water_status = empty
+reed closed means humidifier.water_status = present
 GPIO35 = 1 means reed open
-reed open means humidifier.water_status = present
+reed open means humidifier.water_status = empty
 unstable input means humidifier.water_status = unknown
 ```
 
 ```text
 mist firmware output: HUMIDIFIER_MIST_GPIO
 V3 board pinout: GPIO26
-active-high switched output
-0 = mist OFF
-1 = mist ON
+active-high 800 Hz PWM output for the external RC differentiator
+0% duty = mist OFF
+40% duty = low intensity
+50% duty = medium intensity
+60% duty = high intensity
 
 local fan firmware output: HUMIDIFIER_FAN_GPIO
 V3 board pinout: GPIO19
@@ -128,9 +130,9 @@ climate humidity values: used
 ## 10. Logic
 
 ```text
-if debounced GPIO35 = 1:
+if debounced GPIO35 = 0:
     water_status = present
-else if debounced GPIO35 = 0:
+else if debounced GPIO35 = 1:
     water_status = empty
 else:
     water_status = unknown
@@ -199,9 +201,9 @@ low
 medium
 high
 
-The selected level is retained by Humidifier Module. The current GPIO26
-hardware boundary is binary, so OFF is applied as 0% and every active level is
-reported honestly as 100% until a power-control output driver exists.
+The selected level is retained by Humidifier Module. The GPIO26 output driver
+applies 800 Hz PWM at 40%, 50%, or 60% duty for low, medium, or high intensity.
+Any OFF or blocked state applies 0% duty.
 
 post_fan_sec default = 20
 post_fan_sec range = 0..600
@@ -272,4 +274,15 @@ Humidifier Module does not use timer auto mode.
 Humidifier Module does not use cyclic on_sec/off_sec pump model.
 Humidifier Module does not give normal user control for the local humidifier fan.
 Humidifier Module does not define MQTT topic strings.
+```
+
+## 16. Current Hardware Output Boundary
+
+```text
+GPIO26 drives the mist-generator interface with 800 Hz PWM through the external
+RC differentiator. The three accepted intensity levels map to 40%, 50%, and 60%
+duty. Startup, OFF, and every Core or module interlock apply 0% duty.
+
+GPIO19 remains the separate binary local-fan output and follows the normal mist
+demand and post-run logic.
 ```

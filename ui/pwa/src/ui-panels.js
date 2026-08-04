@@ -530,13 +530,27 @@ function getFunctionSettingsCards(entity, uiState) {
   }
 
   if (entity === 'humidifier') {
+    const humidifier = raw.humidifier;
+    const manualRunActive = humidifier.settings.mode === 'manual'
+      && humidifier.fan_output === 'on';
+    const postRunActive = humidifier.fan_output === 'post_run';
     return [
       {
         label: 'Режим',
         sections: [
-          { label: 'Режим', controls: [getUiAction('humidifier.mode.auto'), getUiAction('humidifier.mode.manual')] },
-          { label: 'Час роботи', controls: [getUiAction('humidifier.runtime.day'), getUiAction('humidifier.runtime.always')] },
-          { label: 'Інтенсивність пару', controls: [getUiAction('humidifier.power.low'), getUiAction('humidifier.power.medium'), getUiAction('humidifier.power.high')] },
+          { label: 'Режим', controls: [
+            activeAction('humidifier.mode.auto', humidifier.settings.mode === 'auto'),
+            activeAction('humidifier.mode.manual', humidifier.settings.mode === 'manual'),
+          ] },
+          { label: 'Час роботи', controls: [
+            activeAction('humidifier.runtime.day', humidifier.settings.runtime === 'day'),
+            activeAction('humidifier.runtime.always', humidifier.settings.runtime === 'always'),
+          ] },
+          { label: 'Інтенсивність пару', controls: [
+            activeAction('humidifier.power.low', humidifier.settings.mist_power_level === 'low'),
+            activeAction('humidifier.power.medium', humidifier.settings.mist_power_level === 'medium'),
+            activeAction('humidifier.power.high', humidifier.settings.mist_power_level === 'high'),
+          ] },
         ],
       },
       {
@@ -545,7 +559,15 @@ function getFunctionSettingsCards(entity, uiState) {
           { label: 'Безперервний пар', name: 'manual_mist_duration_sec', value: raw.humidifier.settings.manual_mist_duration_sec, unit: 'сек', step: 1 },
           { label: 'Затримка', name: 'post_fan_sec', value: raw.humidifier.settings.post_fan_sec, unit: 'сек', step: 1 },
         ],
-        controls: [getUiAction('humidifier.manual_mist'), getUiAction('humidifier.stop'), getUiAction('humidifier.settings.edit')],
+        controls: [
+          activeAction('humidifier.manual_mist', manualRunActive),
+          activeAction(
+            'humidifier.stop',
+            humidifier.fan_output === 'off' || postRunActive,
+            postRunActive ? 'Стоп — післяпродувка' : 'Стоп',
+          ),
+          getUiAction('humidifier.settings.edit'),
+        ],
       },
       {
         label: 'Вологість, %',

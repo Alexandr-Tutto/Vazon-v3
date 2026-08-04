@@ -79,6 +79,7 @@ static vazon_mqtt_state_publisher_t mqtt_state_publisher;
 static SemaphoreHandle_t runtime_mutex;
 static uint64_t next_climate_read_ms;
 static bool sntp_started;
+static uint8_t humidifier_mist_applied_duty_pct;
 
 static esp_err_t lock_runtime(void *context);
 static void unlock_runtime(void *context);
@@ -769,8 +770,8 @@ static const char *humidifier_fan_text(vazon_humidifier_fan_output_t output)
     }
 }
 
-static void evaluate_humidifier_binary_and_log(vazon_door_state_t door_state,
-                                                uint64_t now_ms)
+static void evaluate_humidifier_and_log(vazon_door_state_t door_state,
+                                        uint64_t now_ms)
 {
     const vazon_climate_snapshot_t *climate =
         vazon_climate_module_get_snapshot(&climate_module);
@@ -829,10 +830,34 @@ static void evaluate_humidifier_binary_and_log(vazon_door_state_t door_state,
     const bool mist_request_on =
         current->mist_output_request == VAZON_HUMIDIFIER_OUTPUT_ON;
     const bool mist_is_on = current->mist_output == VAZON_HUMIDIFIER_OUTPUT_ON;
-    if (mist_request_on != mist_is_on) {
+    const bool mist_state_known =
+        current->mist_output != VAZON_HUMIDIFIER_OUTPUT_UNKNOWN;
+    uint8_t mist_duty_pct = 0U;
+    if (mist_request_on) {
+        switch (current->settings.mist_power_level) {
+        case VAZON_HUMIDIFIER_MIST_POWER_LOW:
+            mist_duty_pct = VAZON_HUMIDIFIER_MIST_PWM_LOW_DUTY_PCT;
+            break;
+        case VAZON_HUMIDIFIER_MIST_POWER_HIGH:
+            mist_duty_pct = VAZON_HUMIDIFIER_MIST_PWM_HIGH_DUTY_PCT;
+            break;
+        case VAZON_HUMIDIFIER_MIST_POWER_MEDIUM:
+        default:
+            mist_duty_pct = VAZON_HUMIDIFIER_MIST_PWM_MEDIUM_DUTY_PCT;
+            break;
+        }
+    }
+    if (!mist_state_known || mist_request_on != mist_is_on ||
+        mist_duty_pct != humidifier_mist_applied_duty_pct) {
         const esp_err_t result =
-            vazon_gpio_outputs_set(VAZON_GPIO_OUTPUT_HUMIDIFIER_MIST,
-                                   mist_request_on);
+            vazon_gpio_outputs_set_humidifier_mist_duty(mist_duty_pct);
+        if (result == ESP_OK) {
+            humidifier_mist_applied_duty_pct = mist_duty_pct;
+            ESP_LOGI(TAG, "Humidifier mist PWM GPIO%d frequency=%uHz duty=%u%%",
+                     VAZON_GPIO_HUMIDIFIER_MIST,
+                     VAZON_HUMIDIFIER_MIST_PWM_FREQUENCY_HZ,
+                     mist_duty_pct);
+        }
         const esp_err_t report_result = vazon_humidifier_module_report_mist_output(
             &humidifier_module, mist_request_on, result);
         if (report_result != ESP_OK) {
@@ -1177,7 +1202,7 @@ static void door_runtime_task(void *context)
             set_door_service_and_log(true);
             evaluate_light_and_log();
             evaluate_fan_binary_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
-            evaluate_humidifier_binary_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
+            evaluate_humidifier_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
             update_system_status_and_log(VAZON_DOOR_STATE_UNKNOWN, true, now_ms);
             unlock_runtime(runtime_mutex);
             vTaskDelay(pdMS_TO_TICKS(DOOR_POLL_INTERVAL_MS));
@@ -1192,7 +1217,7 @@ static void door_runtime_task(void *context)
             set_door_service_and_log(true);
             evaluate_light_and_log();
             evaluate_fan_binary_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
-            evaluate_humidifier_binary_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
+            evaluate_humidifier_and_log(VAZON_DOOR_STATE_UNKNOWN, now_ms);
             update_system_status_and_log(VAZON_DOOR_STATE_UNKNOWN, true, now_ms);
             unlock_runtime(runtime_mutex);
             vTaskDelay(pdMS_TO_TICKS(DOOR_POLL_INTERVAL_MS));
@@ -1212,7 +1237,7 @@ static void door_runtime_task(void *context)
         set_door_service_and_log(door_service_required);
         evaluate_light_and_log();
         evaluate_fan_binary_and_log(current->state, now_ms);
-        evaluate_humidifier_binary_and_log(current->state, now_ms);
+        evaluate_humidifier_and_log(current->state, now_ms);
         update_system_status_and_log(current->state, false, now_ms);
 
         unlock_runtime(runtime_mutex);
@@ -1314,6 +1339,7 @@ static void provisioning_led_task(void *context)
 void vazon_app_core_init(void)
 {
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_safe_off());
+    ESP_ERROR_CHECK(vazon_gpio_outputs_init_humidifier_mist_pwm());
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_status_led_off());
     ESP_ERROR_CHECK(vazon_i2c_service_scan_climate_bus());
 

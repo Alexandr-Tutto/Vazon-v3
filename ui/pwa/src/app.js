@@ -17,6 +17,7 @@ function currentUiState() {
 
 let uiState = currentUiState();
 let currentView = null;
+let settingsDraftDirty = false;
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
@@ -118,12 +119,65 @@ function openFunctionStatus(entity) {
   openView(getFunctionStatusView(entity, uiState));
 }
 
-function openFunctionSettings(entity) {
+function openFunctionSettings(entity, resetDraft = true) {
+  if (resetDraft) settingsDraftDirty = false;
   openView(getFunctionSettingsView(entity, uiState));
 }
 
 function openAdvancedService() {
   openView(getAdvancedServiceView(uiState));
+}
+
+function setActionActiveState(actionId, active) {
+  const button = Array.from(elements.detailBody.querySelectorAll('[data-action]'))
+    .find((candidate) => candidate.dataset.action === actionId);
+  if (!button) return;
+
+  button.classList.toggle('is-active', active);
+  if (active) {
+    button.setAttribute('aria-pressed', 'true');
+    button.style.borderColor = 'var(--ok)';
+    button.style.color = 'var(--ok)';
+    return;
+  }
+
+  button.removeAttribute('aria-pressed');
+  button.style.removeProperty('border-color');
+  button.style.removeProperty('color');
+}
+
+function setActionLabel(actionId, label) {
+  const button = Array.from(elements.detailBody.querySelectorAll('[data-action]'))
+    .find((candidate) => candidate.dataset.action === actionId);
+  if (button) button.textContent = label;
+}
+
+function refreshDirtySettingsControls(entity) {
+  if (entity !== 'humidifier') return;
+
+  const humidifier = uiState.raw.humidifier;
+  const manualRunActive = humidifier.settings.mode === 'manual'
+    && humidifier.fan_output === 'on';
+  const postRunActive = humidifier.fan_output === 'post_run';
+  const states = {
+    'humidifier.mode.auto': humidifier.settings.mode === 'auto',
+    'humidifier.mode.manual': humidifier.settings.mode === 'manual',
+    'humidifier.runtime.day': humidifier.settings.runtime === 'day',
+    'humidifier.runtime.always': humidifier.settings.runtime === 'always',
+    'humidifier.power.low': humidifier.settings.mist_power_level === 'low',
+    'humidifier.power.medium': humidifier.settings.mist_power_level === 'medium',
+    'humidifier.power.high': humidifier.settings.mist_power_level === 'high',
+    'humidifier.manual_mist': manualRunActive,
+    'humidifier.stop': humidifier.fan_output === 'off' || postRunActive,
+  };
+
+  Object.entries(states).forEach(([actionId, active]) => {
+    setActionActiveState(actionId, active);
+  });
+  setActionLabel(
+    'humidifier.stop',
+    postRunActive ? 'Стоп — післяпродувка' : 'Стоп',
+  );
 }
 
 function refreshOpenView() {
@@ -133,7 +187,11 @@ function refreshOpenView() {
   if (currentView.level === MENU_LEVELS.FUNCTION_STATUS && entity) {
     openFunctionStatus(entity);
   } else if (currentView.level === MENU_LEVELS.FUNCTION_SETTINGS && entity) {
-    openFunctionSettings(entity);
+    if (settingsDraftDirty) {
+      refreshDirtySettingsControls(entity);
+      return;
+    }
+    openFunctionSettings(entity, false);
   } else if (currentView.level === MENU_LEVELS.ADVANCED_SERVICE) {
     openAdvancedService();
   }
@@ -141,6 +199,7 @@ function refreshOpenView() {
 
 function closePanel() {
   currentView = null;
+  settingsDraftDirty = false;
   document.body.classList.remove('has-panel');
 }
 
@@ -199,6 +258,13 @@ function toggleMaintenanceMode(actionButton) {
   emitCommand(actionButton);
 }
 
+function markSettingsDraftDirty(event) {
+  if (currentView?.level === MENU_LEVELS.FUNCTION_SETTINGS &&
+      isTextInput(event.target)) {
+    settingsDraftDirty = true;
+  }
+}
+
 function readStaticCommandArgs(actionButton) {
   if (!actionButton.dataset.commandArgs) {
     return {};
@@ -250,16 +316,43 @@ function normalizeFanSettingsArgs(args) {
   return normalized;
 }
 
+function normalizeHumidifierSettingsArgs(args) {
+  const normalized = { ...args };
+
+  ['rh_start', 'rh_stop', 'rh_delta'].forEach((field) => {
+    if (!(field in normalized)) return;
+
+    const value = Number(String(normalized[field]).replace(',', '.'));
+    if (Number.isFinite(value)) normalized[field] = value;
+  });
+
+  ['manual_mist_duration_sec', 'post_fan_sec'].forEach((field) => {
+    if (!(field in normalized)) return;
+
+    const value = Number(String(normalized[field]).replace(',', '.'));
+    if (Number.isFinite(value)) normalized[field] = Math.round(value);
+  });
+
+  return normalized;
+}
+
 function buildCommandPayload(actionButton) {
   const target = actionButton.dataset.commandTarget;
   const cmd = actionButton.dataset.commandName;
-  let args = {
-    ...readStaticCommandArgs(actionButton),
-    ...readFieldArgs(actionButton),
-  };
+  let args = readStaticCommandArgs(actionButton);
+
+  if (cmd === 'set_settings') {
+    args = {
+      ...args,
+      ...readFieldArgs(actionButton),
+    };
+  }
 
   if (target === 'fan' && cmd === 'set_settings') {
     args = normalizeFanSettingsArgs(args);
+  }
+  if (target === 'humidifier' && cmd === 'set_settings') {
+    args = normalizeHumidifierSettingsArgs(args);
   }
 
   return {
@@ -315,7 +408,10 @@ function handlePanelClick(event) {
     return;
   }
 
-  emitCommand(actionButton);
+  const commandSent = emitCommand(actionButton);
+  if (commandSent && actionButton.dataset.commandName === 'set_settings') {
+    settingsDraftDirty = false;
+  }
 }
 
 function registerServiceWorker() {
@@ -366,6 +462,7 @@ elements.serviceButton.addEventListener('click', openAdvancedService);
 elements.detailBody.addEventListener('click', handlePanelClick);
 elements.detailBody.addEventListener('vazon-command', sendMqttCommand);
 elements.detailBody.addEventListener('focusin', rememberInputStartValue);
+elements.detailBody.addEventListener('input', markSettingsDraftDirty);
 document.addEventListener('keydown', handleEscape);
 
 render();

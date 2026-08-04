@@ -5,7 +5,8 @@ Date: 2026-07-17
 
 ## Decision
 
-The main cabinet fan uses PWM power control with these user-selectable levels:
+The future main cabinet fan uses a four-wire 12 V interface with these
+user-selectable PWM control levels:
 
 ```text
 20%
@@ -60,6 +61,11 @@ OFF immediately.
 
 Fan Module owns the selected power level and the start/ramp sequence. Output
 Driver applies the requested PWM duty and does not calculate Fan Module logic.
+
+The fan connector has four positions: GND, +12 V, tachometer, and PWM control.
+The tachometer is not used. The dedicated PWM GPIO and final electrical driver
+are deferred until the fan hardware is installed; they must not be inferred
+from the current GPIO13 switched-power output.
 
 UI only selects and displays power levels. UI does not implement PWM timing or
 the start/ramp sequence.

@@ -151,6 +151,8 @@ typedef struct {
     bool initialized;
     bool has_last_evaluation;
     uint64_t last_evaluation_ms;
+    bool door_state_initialized;
+    vazon_door_state_t previous_door_state;
     bool delta_demand;
     bool manual_run_active;
     uint64_t manual_deadline_ms;

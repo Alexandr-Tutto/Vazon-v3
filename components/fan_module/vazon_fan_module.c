@@ -171,6 +171,16 @@ esp_err_t vazon_fan_module_evaluate(vazon_fan_module_t *module,
     module->has_last_evaluation = true;
     module->last_evaluation_ms = inputs->now_ms;
 
+    const bool door_just_opened =
+        inputs->door_state == VAZON_DOOR_STATE_OPEN &&
+        (!module->door_state_initialized ||
+         module->previous_door_state != VAZON_DOOR_STATE_OPEN);
+    module->door_state_initialized = true;
+    module->previous_door_state = inputs->door_state;
+    if (door_just_opened) {
+        module->manual_run_active = false;
+    }
+
     bool demand_on = false;
     module->snapshot.status = VAZON_FAN_STATUS_OK;
     module->snapshot.status_reason = VAZON_FAN_STATUS_REASON_NONE;
@@ -180,10 +190,21 @@ esp_err_t vazon_fan_module_evaluate(vazon_fan_module_t *module,
         module->snapshot.auto_state = VAZON_FAN_AUTO_STATE_BLOCKED;
         reset_timer_cycle(module);
     } else if (inputs->door_state == VAZON_DOOR_STATE_OPEN) {
-        module->snapshot.auto_state = VAZON_FAN_AUTO_STATE_BLOCKED;
         module->snapshot.status = VAZON_FAN_STATUS_WARNING;
         module->snapshot.status_reason = VAZON_FAN_STATUS_REASON_DOOR_OPEN;
         reset_timer_cycle(module);
+        if (module->snapshot.settings.mode == VAZON_FAN_MODE_MANUAL) {
+            if (module->manual_run_active &&
+                inputs->now_ms >= module->manual_deadline_ms) {
+                module->manual_run_active = false;
+            }
+            demand_on = module->manual_run_active;
+            module->snapshot.auto_state =
+                demand_on ? VAZON_FAN_AUTO_STATE_RUNNING
+                          : VAZON_FAN_AUTO_STATE_BLOCKED;
+        } else {
+            module->snapshot.auto_state = VAZON_FAN_AUTO_STATE_BLOCKED;
+        }
     } else if (inputs->door_state == VAZON_DOOR_STATE_UNKNOWN) {
         module->snapshot.auto_state = VAZON_FAN_AUTO_STATE_BLOCKED;
         module->snapshot.status = VAZON_FAN_STATUS_WARNING;

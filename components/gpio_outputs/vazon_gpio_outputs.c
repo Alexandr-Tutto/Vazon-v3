@@ -1,5 +1,6 @@
 #include "vazon_gpio_outputs.h"
 
+#include "driver/ledc.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -8,6 +9,13 @@
 #include "vazon_gpio_levels.h"
 
 static const char *TAG = "gpio_outputs";
+#define HUMIDIFIER_MIST_PWM_MODE       LEDC_LOW_SPEED_MODE
+#define HUMIDIFIER_MIST_PWM_TIMER      LEDC_TIMER_0
+#define HUMIDIFIER_MIST_PWM_CHANNEL    LEDC_CHANNEL_0
+#define HUMIDIFIER_MIST_PWM_RESOLUTION LEDC_TIMER_10_BIT
+#define HUMIDIFIER_MIST_PWM_MAX_DUTY   ((1U << 10U) - 1U)
+
+static bool humidifier_mist_pwm_initialized;
 static const gpio_num_t ACTUATOR_GPIOS[VAZON_GPIO_OUTPUT_COUNT] = {
     [VAZON_GPIO_OUTPUT_LIGHT] = VAZON_GPIO_LIGHT,
     [VAZON_GPIO_OUTPUT_MAIN_FAN] = VAZON_GPIO_MAIN_FAN,
@@ -37,6 +45,55 @@ esp_err_t vazon_gpio_outputs_init_safe_off(void)
     ESP_RETURN_ON_ERROR(gpio_config(&config), TAG, "Failed to configure actuator outputs");
     ESP_LOGI(TAG, "Actuator outputs initialized safe OFF");
     return ESP_OK;
+}
+
+esp_err_t vazon_gpio_outputs_init_humidifier_mist_pwm(void)
+{
+    const ledc_timer_config_t timer = {
+        .speed_mode = HUMIDIFIER_MIST_PWM_MODE,
+        .duty_resolution = HUMIDIFIER_MIST_PWM_RESOLUTION,
+        .timer_num = HUMIDIFIER_MIST_PWM_TIMER,
+        .freq_hz = VAZON_HUMIDIFIER_MIST_PWM_FREQUENCY_HZ,
+        .clk_cfg = LEDC_AUTO_CLK,
+    };
+    ESP_RETURN_ON_ERROR(ledc_timer_config(&timer), TAG,
+                        "Failed to configure humidifier mist PWM timer");
+
+    const ledc_channel_config_t channel = {
+        .gpio_num = VAZON_GPIO_HUMIDIFIER_MIST,
+        .speed_mode = HUMIDIFIER_MIST_PWM_MODE,
+        .channel = HUMIDIFIER_MIST_PWM_CHANNEL,
+        .intr_type = LEDC_INTR_DISABLE,
+        .timer_sel = HUMIDIFIER_MIST_PWM_TIMER,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_RETURN_ON_ERROR(ledc_channel_config(&channel), TAG,
+                        "Failed to configure humidifier mist PWM channel");
+    humidifier_mist_pwm_initialized = true;
+    ESP_LOGI(TAG, "Humidifier mist PWM initialized GPIO%d frequency=%uHz duty=0%%",
+             VAZON_GPIO_HUMIDIFIER_MIST,
+             VAZON_HUMIDIFIER_MIST_PWM_FREQUENCY_HZ);
+    return ESP_OK;
+}
+
+esp_err_t vazon_gpio_outputs_set_humidifier_mist_duty(uint8_t duty_pct)
+{
+    if (duty_pct > 100U) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!humidifier_mist_pwm_initialized) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    const uint32_t duty =
+        (HUMIDIFIER_MIST_PWM_MAX_DUTY * (uint32_t)duty_pct + 50U) / 100U;
+    ESP_RETURN_ON_ERROR(
+        ledc_set_duty(HUMIDIFIER_MIST_PWM_MODE,
+                      HUMIDIFIER_MIST_PWM_CHANNEL, duty),
+        TAG, "Failed to set humidifier mist PWM duty");
+    return ledc_update_duty(HUMIDIFIER_MIST_PWM_MODE,
+                            HUMIDIFIER_MIST_PWM_CHANNEL);
 }
 
 esp_err_t vazon_gpio_outputs_init_status_led_off(void)
@@ -102,6 +159,11 @@ esp_err_t vazon_gpio_outputs_set(vazon_gpio_output_t output, bool on)
         return ESP_ERR_INVALID_ARG;
     }
 
+    if (output == VAZON_GPIO_OUTPUT_HUMIDIFIER_MIST &&
+        humidifier_mist_pwm_initialized) {
+        return vazon_gpio_outputs_set_humidifier_mist_duty(on ? 100U : 0U);
+    }
+
     return gpio_set_level(ACTUATOR_GPIOS[output],
                           on ? VAZON_OUTPUT_ACTIVE_HIGH_ON_LEVEL
                              : VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL);
@@ -117,6 +179,9 @@ esp_err_t vazon_gpio_outputs_set_raw(gpio_num_t gpio, int level)
 {
     if (!vazon_gpio_outputs_is_actuator_gpio(gpio) || (level != 0 && level != 1)) {
         return ESP_ERR_INVALID_ARG;
+    }
+    if (gpio == VAZON_GPIO_HUMIDIFIER_MIST && humidifier_mist_pwm_initialized) {
+        return vazon_gpio_outputs_set_humidifier_mist_duty(level != 0 ? 100U : 0U);
     }
     return gpio_set_level(gpio, level);
 }

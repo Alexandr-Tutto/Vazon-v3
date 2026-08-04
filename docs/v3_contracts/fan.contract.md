@@ -107,7 +107,7 @@ climate.rh_delta_pct: used by delta strategy
 Evaluation order:
 
 ```text
-if maintenance.active:
+if maintenance.manual_active or maintenance.external_active:
     fan off immediately
     fan.auto_state = blocked
     fan.status = ok
@@ -115,11 +115,19 @@ if maintenance.active:
     skip manual and auto run logic
 
 if door.state = open:
-    fan off immediately
-    fan.auto_state = blocked
     fan.status = warning
     fan.status_reason = door_open
-    skip manual and auto run logic
+    block automatic run logic
+    if mode = auto:
+        fan off
+        fan.auto_state = blocked
+    if mode = manual and no manual run was accepted after the door opened:
+        fan off
+        fan.auto_state = blocked
+    if mode = manual and fan.manual_run was accepted after the door opened:
+        run fan for manual_duration_sec
+        fan.auto_state = running
+        keep fan.status_reason = door_open
 
 if door.state = unknown:
     fan off immediately
@@ -183,7 +191,16 @@ Runtime transition rules:
 ```text
 initial delta automatic demand after boot = off
 
-if door opens, door becomes unknown, or maintenance becomes active:
+if door opens:
+    fan off immediately
+    cancel any manual run that was active before the door opened
+    reset timer auto cycle
+
+while door remains open:
+    a new fan.manual_run command may start a bounded manual service run
+    automatic operation remains blocked
+
+if door becomes unknown, or manual/external maintenance becomes active:
     fan off immediately
     reset timer auto cycle
 
@@ -334,14 +351,14 @@ Fan Module does not define MQTT topic strings.
 Fan Module calculates output_request and requested_power_pct, including boost
 and ramp timing.
 
-Until the LEDC/PWM output driver is connected:
-    output_request = off -> GPIO13 LOW, applied_power_pct = 0
-    output_request = on  -> GPIO13 HIGH, applied_power_pct = 100
+Until the dedicated four-wire PWM control GPIO and output driver are assigned:
+    output_request = off -> current GPIO13 switched-power output LOW, applied_power_pct = 0
+    output_request = on  -> current GPIO13 switched-power output HIGH, applied_power_pct = 100
     requested_power_pct continues to expose the calculated boost/ramp request
 
-The module must not represent a plain GPIO HIGH as an applied 20..100% PWM
-level other than 100%.
+The module must not represent the binary GPIO HIGH fallback as an applied
+20..100% PWM level other than 100%.
 
 Command routing, final output retry handling, and physical application remain
-part of the later driver-integration step.
+part of the later four-wire driver-integration step.
 ```
