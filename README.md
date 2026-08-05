@@ -24,5 +24,5 @@ Old Vazon repository is a reference source only. Do not copy old implementation 
 - Verified on hardware: safe-OFF boot, status LEDs, GPIO inputs/outputs, both SHT31 sensors, both soil-moisture ADC channels, and both DS18B20 probes.
 - Implemented: normal/provisioning boot paths, Global Core, local climate/door/pot/light/fan/humidifier modules, system status, MQTT command routing, and retained MQTT state/status/settings publishing.
 - Implemented, pending build and device verification: SNTP time synchronization and Global Core `day_window` evaluation using the proven Ukraine timezone settings.
-- Deferred: main fan is not installed; a future four-wire PWM interface needs a dedicated GPIO and driver. The humidifier local fan is a separate binary output; its mist output uses 800 Hz PWM at 40/50/60% duty.
+- Deferred: main fan is not installed; a future four-wire PWM interface needs a dedicated GPIO and driver. The humidifier local fan is a separate binary output; its mist output uses 800 Hz PWM at 50/60/70% duty.
 - External integration pending: provision device #2 for the current network, verify live MQTT topics, and connect the new UI.

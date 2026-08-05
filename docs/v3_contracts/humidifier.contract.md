@@ -68,9 +68,9 @@ mist firmware output: HUMIDIFIER_MIST_GPIO
 V3 board pinout: GPIO26
 active-high 800 Hz PWM output for the external RC differentiator
 0% duty = mist OFF
-40% duty = low intensity
-50% duty = medium intensity
-60% duty = high intensity
+50% duty = low intensity
+60% duty = medium intensity
+70% duty = high intensity
 
 local fan firmware output: HUMIDIFIER_FAN_GPIO
 V3 board pinout: GPIO19
@@ -202,7 +202,7 @@ medium
 high
 
 The selected level is retained by Humidifier Module. The GPIO26 output driver
-applies 800 Hz PWM at 40%, 50%, or 60% duty for low, medium, or high intensity.
+applies 800 Hz PWM at 50%, 60%, or 70% duty for low, medium, or high intensity.
 Any OFF or blocked state applies 0% duty.
 
 post_fan_sec default = 20
@@ -280,7 +280,7 @@ Humidifier Module does not define MQTT topic strings.
 
 ```text
 GPIO26 drives the mist-generator interface with 800 Hz PWM through the external
-RC differentiator. The three accepted intensity levels map to 40%, 50%, and 60%
+RC differentiator. The three accepted intensity levels map to 50%, 60%, and 70%
 duty. Startup, OFF, and every Core or module interlock apply 0% duty.
 
 GPIO19 remains the separate binary local-fan output and follows the normal mist

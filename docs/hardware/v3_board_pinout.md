@@ -33,7 +33,7 @@ Physical pin numbers: recorded in this file
 | 31 | GPIO19 | Humidifier local fan output | output | active-high switched output; `0` = OFF, `1` = ON; safe state = LOW | `HUMIDIFIER_FAN_GPIO` |
 | 33 | GPIO21 | Climate I2C SDA | bidirectional | I2C SDA | `CLIMATE_I2C_SDA_GPIO` |
 | 36 | GPIO22 | Climate I2C SCL | bidirectional | I2C SCL | `CLIMATE_I2C_SCL_GPIO` |
-| 11 | GPIO26 | Humidifier mist control | output | active-high 800 Hz PWM through external RC differentiator; `0%` = OFF; `40/50/60%` = low/medium/high; safe state = LOW | `HUMIDIFIER_MIST_GPIO` |
+| 11 | GPIO26 | Humidifier mist control | output | active-high 800 Hz PWM through external RC differentiator; `0%` = OFF; `50/60/70%` = low/medium/high; safe state = LOW | `HUMIDIFIER_MIST_GPIO` |
 | 8 | GPIO32 | Pot temperature OneWire | bidirectional | OneWire data; external 4.7 kOhm pull-up required | `POT_TEMP_ONEWIRE_GPIO` |
 | 9 | GPIO33 | Door reed input | input | pull-up input; active-low door signal | `DOOR_REED_GPIO` |
 | 7 | GPIO35 | Humidifier water present sensor | input-only | external pull-up; reed closed = low = water present; reed open = high = water empty; GPIO35 has no internal pull-up | `HUMIDIFIER_WATER_PRESENT_GPIO` |
@@ -78,6 +78,6 @@ Dedicated PWM GPIO and electrical driver: not assigned.
 Current GPIO13 remains the PCB v1.0 switched-power output until that revision.
 
 Humidifier local fan GPIO19 uses its binary MOSFET switch. Humidifier mist
-GPIO26 uses 800 Hz PWM through the external RC differentiator: 40%, 50%, and
-60% duty are low, medium, and high intensity; OFF and all interlocks apply 0%.
+GPIO26 uses 800 Hz PWM through the external RC differentiator: 50%, 60%, and
+70% duty are low, medium, and high intensity; OFF and all interlocks apply 0%.
 ```

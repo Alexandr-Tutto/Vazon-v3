@@ -86,5 +86,5 @@ Door, Climate, Pot, Light, Fan, and Humidifier Modules are active local module
 implementations. Fan uses a temporary 0/100% GPIO fallback; its future
 four-wire PWM control GPIO and output driver remain deferred. Humidifier
 uses a binary local-fan output and an 800 Hz mist PWM output; low, medium, and
-high mist intensity apply 40%, 50%, and 60% duty.
+high mist intensity apply 50%, 60%, and 70% duty.
 ```

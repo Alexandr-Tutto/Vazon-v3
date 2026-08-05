@@ -82,7 +82,7 @@ Humidifier Module debounces the GPIO35 water input and owns the GPIO26 mist and
 GPIO19 local-fan outputs. It implements humidity hysteresis, manual duration,
 day-window safety, water/climate interlocks, and 20-second fan post-run. The
 GPIO26 driver applies 800 Hz PWM through the external RC differentiator:
-low/medium/high intensity is 40/50/60% duty and OFF is 0%.
+low/medium/high intensity is 50/60/70% duty and OFF is 0%.
 
 Climate Module reads SHT31 sensors at 0x44 and 0x45 every 5 seconds, validates
 CRC and value ranges, tracks the 300-second stale timeout, and supplies both
