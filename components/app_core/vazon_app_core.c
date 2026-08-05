@@ -249,6 +249,10 @@ static void mqtt_connection_changed(vazon_mqtt_connection_state_t state,
              state == VAZON_MQTT_CONNECTION_CONNECTED ? "connected" :
              state == VAZON_MQTT_CONNECTION_CONNECTING ? "connecting" :
                                                         "disconnected");
+    if (state == VAZON_MQTT_CONNECTION_CONNECTED) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            vazon_ota_service_report_ready(&ota_service));
+    }
 }
 
 static void mqtt_message_received(const char *topic, size_t topic_length,

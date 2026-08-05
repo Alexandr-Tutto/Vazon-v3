@@ -278,6 +278,20 @@ function lastCommandText(result) {
   return `${command} — ${outcome}${reason}`;
 }
 
+function otaStatusText(ota) {
+  const version = ota.version ? ` ${ota.version}` : '';
+  if (ota.state === 'ready') return `Встановлена версія${version}`;
+  if (ota.state === 'checking') return 'Перевірка оновлення…';
+  if (ota.state === 'up_to_date') return `Встановлено актуальну версію${version}`;
+  if (ota.state === 'update_available') return `Доступне оновлення${version}`;
+  if (ota.state === 'downloading') return `Завантаження версії${version}…`;
+  if (ota.state === 'rebooting') return `Оновлення до${version} встановлено, контролер перезапускається…`;
+  if (ota.state === 'failed') {
+    return ota.error ? `Помилка оновлення: ${ota.error}` : 'Помилка оновлення';
+  }
+  return 'Оновлення ще не перевірялося';
+}
+
 function sensorSwitch(label, name, enabled, enableActionId, disableActionId, passiveLabel = `${label}-відкл.`) {
   return {
     label,
@@ -637,7 +651,7 @@ function getAdvancedServiceCards(uiState) {
       wide: true,
     },
     { label: 'Звʼязок', pairs: [['Wi-Fi', connectionTileSummary(uiState)], ['Сервер', serverStateText(raw.system.global_context.connection.mqtt_state)]] },
-    { label: 'OTA / оновлення', value: 'Vazon V3 draft', controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
+    { label: 'OTA / оновлення', value: otaStatusText(raw.ota), controls: [getUiAction('service.update.check'), getUiAction('service.update.install')] },
     { label: 'Остання команда', value: lastCommandText(uiState.lastCommandResult), wide: true },
   ];
 }

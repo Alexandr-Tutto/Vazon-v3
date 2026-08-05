@@ -22,6 +22,7 @@ Service/debug screen
 MQTT-backed V3 state store
 Secure MQTT WebSocket connection
 MQTT command publishing
+OTA check/install commands and controller status display
 UI action registry
 Menu rendering helpers
 PWA manifest
@@ -33,7 +34,6 @@ Service worker stub
 ```text
 Authentication
 Persistent settings editing
-OTA UI implementation
 Production icon set
 Build system
 ```

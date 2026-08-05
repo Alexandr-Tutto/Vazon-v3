@@ -75,6 +75,12 @@ function createEmptyState() {
       status_reason: null,
       settings: {},
     },
+    ota: {
+      state: 'unknown',
+      version: null,
+      error: null,
+      ts: null,
+    },
     status_led: { red_output: 'unknown', green_output: 'unknown', pattern: 'unknown' },
   };
 }
@@ -119,6 +125,10 @@ export function createDeviceStore({ topicRoot, serialNumber }) {
         topic_class: parsed.topicClass,
       };
       return true;
+    }
+
+    if (parsed.topicClass === 'service' && parsed.entity === 'ota/status') {
+      return mergeEntity(state.ota, payload);
     }
 
     const { topicClass, entity } = parsed;

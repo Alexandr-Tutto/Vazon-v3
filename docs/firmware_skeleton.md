@@ -398,7 +398,7 @@ Current OTA boundary:
 provisioning mode selected at boot only (implemented)
 Wi-Fi and MQTT credentials flow (implemented)
 two 1700 KiB OTA application slots (configured)
-OTA service HTTPS manifest check/install path (build and normal boot verified; OTA transfer pending)
+OTA service HTTPS manifest check/install path (verified on device from PWA through restart and ready status)
 rollback/boot confirmation behavior (not implemented)
 ```
 
@@ -417,8 +417,10 @@ part of this stage.
 OTA status is asynchronous because an accepted command only means that the
 worker started. OTA Service reports `checking`, `up_to_date`,
 `update_available`, `downloading`, `rebooting`, or `failed` through the
-service-owned status callback. App Core passes that status to the registered
-MQTT service topic without moving OTA behavior into MQTT.
+service-owned status callback. After every successful MQTT connection, OTA
+Service reports `ready` with the running application version. App Core passes
+that status to the registered MQTT service topic without moving OTA behavior
+into MQTT.
 
 ## Port Stop Conditions
 

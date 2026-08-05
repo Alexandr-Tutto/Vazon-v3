@@ -31,6 +31,7 @@ esp_err_t vazon_ota_service_init(
 esp_err_t vazon_ota_service_register_command_target(
     vazon_ota_service_t *service,
     vazon_command_router_t *router);
+esp_err_t vazon_ota_service_report_ready(vazon_ota_service_t *service);
 
 #ifdef __cplusplus
 }

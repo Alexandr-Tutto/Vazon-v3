@@ -319,11 +319,11 @@ const actionRegistry = {
 
   'service.update.check': {
     label: 'Перевірити',
-    command: null,
+    command: { target: 'ota', cmd: 'check', args: {} },
   },
   'service.update.install': {
     label: 'Встановити',
-    command: null,
+    command: { target: 'ota', cmd: 'install', args: {} },
   },
   'service.diagnostics.open': {
     label: 'Відкрити',

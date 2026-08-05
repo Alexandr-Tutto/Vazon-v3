@@ -272,3 +272,14 @@ esp_err_t vazon_ota_service_register_command_target(
     return vazon_command_router_register(router, VAZON_COMMAND_TARGET_OTA,
                                          ota_command_handler, service);
 }
+
+esp_err_t vazon_ota_service_report_ready(vazon_ota_service_t *service)
+{
+    if (service == NULL || !service->initialized) return ESP_ERR_INVALID_ARG;
+    const esp_app_desc_t *current = esp_app_get_description();
+    if (current == NULL || !version_valid(current->version)) {
+        return ESP_ERR_INVALID_VERSION;
+    }
+    report_status(service, "ready", current->version, ESP_OK);
+    return ESP_OK;
+}

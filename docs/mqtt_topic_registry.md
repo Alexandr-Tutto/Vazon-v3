@@ -235,9 +235,13 @@ Payload:
 {"state":"checking","version":null,"error":null,"ts":123456}
 ```
 
-`state` is `checking`, `up_to_date`, `update_available`, `downloading`,
+`state` is `ready`, `checking`, `up_to_date`, `update_available`, `downloading`,
 `rebooting`, or `failed`. `version` is the manifest version when known. `error`
 is null on success and the ESP-IDF error name on failure.
+
+After connecting to MQTT, the device publishes `ready` with the running
+application version. This replaces a previous transient `rebooting` state after
+a successful OTA restart without requiring the UI to infer update success.
 
 ## 11. Timestamp Rule
 
