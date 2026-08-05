@@ -392,16 +392,33 @@ branch.
 
 ## 9. OTA / Provisioning
 
-Add after the basic normal runtime is stable:
+Current OTA boundary:
 
 ```text
 provisioning mode selected at boot only (implemented)
 Wi-Fi and MQTT credentials flow (implemented)
 two 1700 KiB OTA application slots (configured)
-OTA update path
-version/manifest handling
-rollback/failure behavior
+OTA service HTTPS manifest check/install path (build and normal boot verified; OTA transfer pending)
+rollback/boot confirmation behavior (not implemented)
 ```
+
+OTA Service owns target `ota` with commands `check` and `install`. Both use an
+empty args object. The MQTT boundary decodes them and routes them through
+Command Router; it does not call ESP-IDF OTA directly.
+
+The build configuration supplies one full HTTPS manifest URL. An empty URL
+keeps OTA commands unavailable. The manifest contains exactly `version` and
+`url`; the firmware URL must also use HTTPS. `check` reports whether the
+manifest version differs from the running application. `install` performs the
+same check and, when different, calls the ESP-IDF HTTPS OTA path from one
+worker task before rebooting. Direct URL commands and automatic checks are not
+part of this stage.
+
+OTA status is asynchronous because an accepted command only means that the
+worker started. OTA Service reports `checking`, `up_to_date`,
+`update_available`, `downloading`, `rebooting`, or `failed` through the
+service-owned status callback. App Core passes that status to the registered
+MQTT service topic without moving OTA behavior into MQTT.
 
 ## Port Stop Conditions
 

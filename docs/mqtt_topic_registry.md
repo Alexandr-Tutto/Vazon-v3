@@ -219,6 +219,26 @@ vazon/v3/{device_id}/service/debug
 
 Service topics are not normal module state topics and must not bypass Command Router.
 
+The current OTA command surface uses the canonical command topic with target
+`ota`. Commands are `check` and `install`, both with `args: {}`. Their immediate
+acceptance or rejection uses the normal non-retained `ack/reject/fail` topics.
+
+Asynchronous OTA progress is published QoS 1 and non-retained on:
+
+```text
+vazon/v3/{device_id}/service/ota/status
+```
+
+Payload:
+
+```json
+{"state":"checking","version":null,"error":null,"ts":123456}
+```
+
+`state` is `checking`, `up_to_date`, `update_available`, `downloading`,
+`rebooting`, or `failed`. `version` is the manifest version when known. `error`
+is null on success and the ESP-IDF error name on failure.
+
 ## 11. Timestamp Rule
 
 ```text

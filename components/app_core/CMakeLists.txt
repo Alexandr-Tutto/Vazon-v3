@@ -7,6 +7,6 @@ idf_component_register(
              fan_module gpio_inputs gpio_outputs humidifier_module i2c_service
              light_module lwip mqtt_command_codec mqtt_command_queue mqtt_service
              mqtt_state_publisher nvs_flash onewire_service pot_module provisioning_button
-             provisioning_service runtime_core status_led system_status
+             provisioning_service ota_service runtime_core status_led system_status
              wifi_service
 )

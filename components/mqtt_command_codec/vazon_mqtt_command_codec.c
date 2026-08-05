@@ -6,6 +6,7 @@
 #include "vazon_fan_module.h"
 #include "vazon_humidifier_module.h"
 #include "vazon_light_module.h"
+#include "vazon_ota_service.h"
 #include "vazon_pot_module.h"
 #include "vazon_runtime_core.h"
 
@@ -465,6 +466,13 @@ static esp_err_t decode_args(const char *target, const char *cmd,
     if (strcmp(target, VAZON_COMMAND_TARGET_HUMIDIFIER) == 0) return decode_humidifier(cmd, args, storage, decoded);
     if (strcmp(target, VAZON_COMMAND_TARGET_CLIMATE) == 0) return decode_climate(cmd, args, storage, decoded);
     if (strcmp(target, VAZON_COMMAND_TARGET_POT_0) == 0 || strcmp(target, VAZON_COMMAND_TARGET_POT_1) == 0) return decode_pot(cmd, args, storage, decoded);
+    if (strcmp(target, VAZON_COMMAND_TARGET_OTA) == 0) {
+        if (strcmp(cmd, VAZON_COMMAND_OTA_CHECK) != 0 &&
+            strcmp(cmd, VAZON_COMMAND_OTA_INSTALL) != 0) {
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        return args_exact(args, 0) ? ESP_OK : ESP_ERR_INVALID_ARG;
+    }
     return ESP_ERR_NOT_FOUND;
 }
 

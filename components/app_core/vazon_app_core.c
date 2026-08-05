@@ -28,6 +28,7 @@
 #include "vazon_mqtt_service.h"
 #include "vazon_mqtt_state_publisher.h"
 #include "vazon_onewire_service.h"
+#include "vazon_ota_service.h"
 #include "vazon_pot_module.h"
 #include "vazon_provisioning_button.h"
 #include "vazon_provisioning_service.h"
@@ -76,10 +77,12 @@ static vazon_wifi_service_t wifi_service;
 static vazon_mqtt_command_codec_t mqtt_command_codec;
 static vazon_mqtt_command_queue_t mqtt_command_queue;
 static vazon_mqtt_state_publisher_t mqtt_state_publisher;
+static vazon_ota_service_t ota_service;
 static SemaphoreHandle_t runtime_mutex;
 static uint64_t next_climate_read_ms;
 static bool sntp_started;
 static uint8_t humidifier_mist_applied_duty_pct;
+static char ota_status_topic[VAZON_MQTT_TOPIC_SIZE];
 
 static esp_err_t lock_runtime(void *context);
 static void unlock_runtime(void *context);
@@ -200,6 +203,34 @@ static esp_err_t publish_mqtt_message(
 {
     return vazon_mqtt_service_publish((vazon_mqtt_service_t *)context,
                                       topic, payload, qos, retain);
+}
+
+static void ota_status_changed(const char *state, const char *version,
+                               esp_err_t error, void *context)
+{
+    (void)context;
+    char payload[256];
+    const int written = snprintf(
+        payload, sizeof(payload),
+        "{\"state\":\"%s\",\"version\":%s%s%s,\"error\":%s%s%s,\"ts\":%lld}",
+        state,
+        version == NULL ? "null" : "\"",
+        version == NULL ? "" : version,
+        version == NULL ? "" : "\"",
+        error == ESP_OK ? "null" : "\"",
+        error == ESP_OK ? "" : esp_err_to_name(error),
+        error == ESP_OK ? "" : "\"",
+        (long long)(esp_timer_get_time() / 1000));
+    if (written < 0 || (size_t)written >= sizeof(payload)) {
+        ESP_LOGE(TAG, "OTA status payload overflow");
+        return;
+    }
+    const esp_err_t result = vazon_mqtt_service_publish(
+        &mqtt_service, ota_status_topic, payload, 1, false);
+    if (result != ESP_OK) {
+        ESP_LOGW(TAG, "OTA status publish failed: %s",
+                 esp_err_to_name(result));
+    }
 }
 
 static void mqtt_connection_changed(vazon_mqtt_connection_state_t state,
@@ -1475,6 +1506,17 @@ void vazon_app_core_init(void)
 
     char device_id[VAZON_MQTT_CODEC_DEVICE_ID_SIZE];
     ESP_ERROR_CHECK(build_device_id(device_id, sizeof(device_id)));
+    const int ota_topic_written = snprintf(
+        ota_status_topic, sizeof(ota_status_topic),
+        "vazon/v3/%s/service/ota/status", device_id);
+    ESP_ERROR_CHECK(ota_topic_written > 0 &&
+                            (size_t)ota_topic_written < sizeof(ota_status_topic)
+                        ? ESP_OK
+                        : ESP_ERR_INVALID_SIZE);
+    ESP_ERROR_CHECK(vazon_ota_service_init(
+        &ota_service, ota_status_changed, NULL));
+    ESP_ERROR_CHECK(vazon_ota_service_register_command_target(
+        &ota_service, &command_router));
     ESP_ERROR_CHECK(vazon_mqtt_command_codec_init(
         &mqtt_command_codec, device_id, &command_router));
     ESP_ERROR_CHECK(vazon_mqtt_state_publisher_init(

@@ -1,0 +1,15 @@
+menu "Vazon OTA"
+
+    config VAZON_OTA_MANIFEST_URL
+        string "HTTPS OTA manifest URL"
+        default "https://vazon-v3.alexandr-tutto.workers.dev/updates/manifest.json"
+        help
+            Full HTTPS URL of the Vazon V3 OTA manifest. An empty value keeps
+            OTA commands disabled until hosting is configured.
+
+    config VAZON_OTA_TASK_STACK
+        int "OTA worker task stack size"
+        range 4096 16384
+        default 8192
+
+endmenu
