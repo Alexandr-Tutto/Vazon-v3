@@ -82,6 +82,7 @@ typedef struct {
 } vazon_light_settings_patch_t;
 
 esp_err_t vazon_light_module_init(vazon_light_module_t *module,
+                                  const vazon_light_settings_t *settings,
                                   const vazon_global_context_t *global_context,
                                   vazon_light_output_apply_fn output_apply,
                                   void *output_context);

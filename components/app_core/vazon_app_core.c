@@ -33,6 +33,7 @@
 #include "vazon_provisioning_button.h"
 #include "vazon_provisioning_service.h"
 #include "vazon_runtime_core.h"
+#include "vazon_settings_store.h"
 #include "vazon_status_led.h"
 #include "vazon_system_status.h"
 #include "vazon_wifi_service.h"
@@ -56,6 +57,8 @@ static const char *TAG = "app_core";
 #define MQTT_STATE_POLL_MS         1000U
 #define DAY_WINDOW_TASK_STACK      3072U
 #define DAY_WINDOW_POLL_MS         1000U
+#define SETTINGS_TASK_STACK        3072U
+#define SETTINGS_POLL_MS           1000U
 #define CLOCK_VALID_YEAR           2020
 #define PROVISIONING_CHECK_MS       5000U
 #define PROVISIONING_HOLD_MS        5000U
@@ -83,9 +86,59 @@ static uint64_t next_climate_read_ms;
 static bool sntp_started;
 static uint8_t humidifier_mist_applied_duty_pct;
 static char ota_status_topic[VAZON_MQTT_TOPIC_SIZE];
+static vazon_persisted_settings_t last_saved_settings;
+static bool last_saved_settings_valid;
 
 static esp_err_t lock_runtime(void *context);
 static void unlock_runtime(void *context);
+
+static void capture_persisted_settings(vazon_persisted_settings_t *settings)
+{
+    memset(settings, 0, sizeof(*settings));
+    const vazon_global_context_t *global =
+        vazon_runtime_core_get_context(&runtime_core);
+    settings->schedule_enabled = global->day_window.schedule_enabled;
+    memcpy(settings->time_on, global->day_window.time_on,
+           sizeof(settings->time_on));
+    memcpy(settings->time_off, global->day_window.time_off,
+           sizeof(settings->time_off));
+    settings->climate =
+        vazon_climate_module_get_snapshot(&climate_module)->settings;
+    settings->light = vazon_light_module_get_snapshot(&light_module)->settings;
+    settings->fan = vazon_fan_module_get_snapshot(&fan_module)->settings;
+    settings->humidifier =
+        vazon_humidifier_module_get_snapshot(&humidifier_module)->settings;
+    for (size_t index = 0; index < 2U; ++index) {
+        const vazon_pot_snapshot_t *pot =
+            vazon_pot_module_get_snapshot(&pot_modules[index]);
+        settings->pots[index] = pot->settings;
+        settings->pot_calibrations[index] = pot->calibration;
+    }
+}
+
+static void settings_runtime_task(void *context)
+{
+    (void)context;
+    while (true) {
+        vazon_persisted_settings_t current;
+        if (lock_runtime(runtime_mutex) == ESP_OK) {
+            capture_persisted_settings(&current);
+            unlock_runtime(runtime_mutex);
+            if (!last_saved_settings_valid ||
+                !vazon_settings_store_equal(&current, &last_saved_settings)) {
+                const esp_err_t result = vazon_settings_store_save(&current);
+                if (result == ESP_OK) {
+                    last_saved_settings = current;
+                    last_saved_settings_valid = true;
+                } else {
+                    ESP_LOGW(TAG, "Runtime settings save failed: %s",
+                             esp_err_to_name(result));
+                }
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(SETTINGS_POLL_MS));
+    }
+}
 
 static const char *day_window_active_text(vazon_tristate_t active)
 {
@@ -1428,8 +1481,38 @@ void vazon_app_core_init(void)
     runtime_mutex = xSemaphoreCreateMutex();
     ESP_ERROR_CHECK(runtime_mutex != NULL ? ESP_OK : ESP_ERR_NO_MEM);
 
+    vazon_persisted_settings_t stored_settings;
+    const esp_err_t settings_load_result =
+        vazon_settings_store_load(&stored_settings);
+    const bool settings_loaded = settings_load_result == ESP_OK;
+    if (settings_load_result == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGI(TAG, "No stored runtime settings; defaults will be saved");
+    } else if (!settings_loaded) {
+        ESP_LOGW(TAG, "Runtime settings unavailable: %s",
+                 esp_err_to_name(settings_load_result));
+    }
+
     vazon_command_router_init(&command_router);
     vazon_runtime_core_init(&runtime_core);
+    if (settings_loaded) {
+        char time_on[VAZON_RUNTIME_TIME_TEXT_SIZE];
+        char time_off[VAZON_RUNTIME_TIME_TEXT_SIZE];
+        memcpy(time_on, stored_settings.time_on, sizeof(time_on));
+        memcpy(time_off, stored_settings.time_off, sizeof(time_off));
+        time_on[sizeof(time_on) - 1U] = '\0';
+        time_off[sizeof(time_off) - 1U] = '\0';
+        const vazon_day_window_patch_t day_window_patch = {
+            .has_schedule_enabled = true,
+            .schedule_enabled = stored_settings.schedule_enabled,
+            .time_on = time_on,
+            .time_off = time_off,
+        };
+        const esp_err_t result = vazon_runtime_core_set_day_window(
+            &runtime_core, &day_window_patch);
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG, "Stored day-window invalid; defaults restored");
+        }
+    }
     ESP_ERROR_CHECK(vazon_runtime_core_register_command_target(&runtime_core,
                                                                 &command_router));
     const vazon_system_status_config_t system_status_config = {
@@ -1439,7 +1522,7 @@ void vazon_app_core_init(void)
                                               &system_status_config));
     ESP_ERROR_CHECK(vazon_status_led_init(&status_led, apply_status_led, NULL));
 
-    const vazon_climate_settings_t climate_settings = {
+    const vazon_climate_settings_t climate_defaults = {
         .temperature_low_warn = 18.0f,
         .temperature_high_warn = 35.0f,
         .humidity_low_warn = 20.0f,
@@ -1448,18 +1531,38 @@ void vazon_app_core_init(void)
         .temperature_delta_warn = 5.0f,
         .temperature_delta_error = 10.0f,
     };
-    ESP_ERROR_CHECK(vazon_climate_module_init(&climate_module,
-                                               &climate_settings));
+    esp_err_t module_init_result = vazon_climate_module_init(
+        &climate_module,
+        settings_loaded ? &stored_settings.climate : &climate_defaults);
+    if (module_init_result != ESP_OK && settings_loaded) {
+        ESP_LOGW(TAG, "Stored climate settings invalid; defaults restored");
+        module_init_result = vazon_climate_module_init(&climate_module,
+                                                        &climate_defaults);
+    }
+    ESP_ERROR_CHECK(module_init_result);
     ESP_ERROR_CHECK(vazon_climate_module_register_command_target(
         &climate_module, &command_router));
 
-    ESP_ERROR_CHECK(vazon_light_module_init(&light_module,
-                                             vazon_runtime_core_get_context(&runtime_core),
-                                             apply_light_output, NULL));
+    const vazon_light_settings_t light_defaults = {
+        .mode = VAZON_LIGHT_MODE_AUTO,
+        .manual_state = false,
+    };
+    module_init_result = vazon_light_module_init(
+        &light_module,
+        settings_loaded ? &stored_settings.light : &light_defaults,
+        vazon_runtime_core_get_context(&runtime_core), apply_light_output, NULL);
+    if (module_init_result != ESP_OK && settings_loaded) {
+        ESP_LOGW(TAG, "Stored light settings invalid; defaults restored");
+        module_init_result = vazon_light_module_init(
+            &light_module, &light_defaults,
+            vazon_runtime_core_get_context(&runtime_core), apply_light_output,
+            NULL);
+    }
+    ESP_ERROR_CHECK(module_init_result);
     ESP_ERROR_CHECK(vazon_light_module_register_command_target(&light_module,
                                                                 &command_router));
 
-    const vazon_fan_settings_t fan_settings = {
+    const vazon_fan_settings_t fan_defaults = {
         .mode = VAZON_FAN_MODE_AUTO,
         .runtime = VAZON_FAN_RUNTIME_DAY,
         .auto_strategy = VAZON_FAN_AUTO_STRATEGY_DELTA,
@@ -1470,7 +1573,13 @@ void vazon_app_core_init(void)
         .auto_timer_off_sec = 300U,
         .power_level_pct = 80U,
     };
-    ESP_ERROR_CHECK(vazon_fan_module_init(&fan_module, &fan_settings));
+    module_init_result = vazon_fan_module_init(
+        &fan_module, settings_loaded ? &stored_settings.fan : &fan_defaults);
+    if (module_init_result != ESP_OK && settings_loaded) {
+        ESP_LOGW(TAG, "Stored fan settings invalid; defaults restored");
+        module_init_result = vazon_fan_module_init(&fan_module, &fan_defaults);
+    }
+    ESP_ERROR_CHECK(module_init_result);
     ESP_ERROR_CHECK(vazon_fan_module_register_command_target(
         &fan_module, &command_router));
 
@@ -1478,7 +1587,7 @@ void vazon_app_core_init(void)
         .water_debounce_ms = 100U,
         .water_unstable_timeout_ms = 1000U,
     };
-    const vazon_humidifier_settings_t humidifier_settings = {
+    const vazon_humidifier_settings_t humidifier_defaults = {
         .mode = VAZON_HUMIDIFIER_MODE_AUTO,
         .runtime = VAZON_HUMIDIFIER_RUNTIME_DAY,
         .rh_start = 55.0f,
@@ -1488,12 +1597,19 @@ void vazon_app_core_init(void)
         .manual_mist_duration_sec = 180U,
         .post_fan_sec = 20U,
     };
-    ESP_ERROR_CHECK(vazon_humidifier_module_init(
-        &humidifier_module, &humidifier_config, &humidifier_settings));
+    module_init_result = vazon_humidifier_module_init(
+        &humidifier_module, &humidifier_config,
+        settings_loaded ? &stored_settings.humidifier : &humidifier_defaults);
+    if (module_init_result != ESP_OK && settings_loaded) {
+        ESP_LOGW(TAG, "Stored humidifier settings invalid; defaults restored");
+        module_init_result = vazon_humidifier_module_init(
+            &humidifier_module, &humidifier_config, &humidifier_defaults);
+    }
+    ESP_ERROR_CHECK(module_init_result);
     ESP_ERROR_CHECK(vazon_humidifier_module_register_command_target(
         &humidifier_module, &command_router));
 
-    const vazon_pot_settings_t pot_settings = {
+    const vazon_pot_settings_t pot_defaults = {
         .soil_moisture_enabled = true,
         .soil_temperature_enabled = true,
         .moisture_stale_timeout_sec = 300U,
@@ -1501,11 +1617,40 @@ void vazon_app_core_init(void)
         .temperature_low_warn_c = 5.0f,
         .temperature_high_warn_c = 40.0f,
     };
+    const vazon_pot_moisture_calibration_t calibration_defaults = {0};
     for (uint8_t pot_id = 0; pot_id < 2U; ++pot_id) {
-        ESP_ERROR_CHECK(vazon_pot_module_init(&pot_modules[pot_id], pot_id,
-                                               &pot_settings));
+        module_init_result = vazon_pot_module_init(
+            &pot_modules[pot_id], pot_id,
+            settings_loaded ? &stored_settings.pots[pot_id] : &pot_defaults,
+            settings_loaded ? &stored_settings.pot_calibrations[pot_id]
+                            : &calibration_defaults);
+        if (module_init_result != ESP_OK && settings_loaded) {
+            ESP_LOGW(TAG, "Stored pot[%u] settings invalid; defaults restored",
+                     (unsigned int)pot_id);
+            module_init_result = vazon_pot_module_init(
+                &pot_modules[pot_id], pot_id, &pot_defaults,
+                &calibration_defaults);
+        }
+        ESP_ERROR_CHECK(module_init_result);
         ESP_ERROR_CHECK(vazon_pot_module_register_command_target(
             &pot_modules[pot_id], &command_router));
+    }
+
+    vazon_persisted_settings_t active_settings;
+    capture_persisted_settings(&active_settings);
+    if (!settings_loaded ||
+        !vazon_settings_store_equal(&active_settings, &stored_settings)) {
+        const esp_err_t result = vazon_settings_store_save(&active_settings);
+        if (result == ESP_OK) {
+            last_saved_settings = active_settings;
+            last_saved_settings_valid = true;
+        } else {
+            ESP_LOGW(TAG, "Initial runtime settings save failed: %s",
+                     esp_err_to_name(result));
+        }
+    } else {
+        last_saved_settings = active_settings;
+        last_saved_settings_valid = true;
     }
 
     char device_id[VAZON_MQTT_CODEC_DEVICE_ID_SIZE];
@@ -1609,6 +1754,12 @@ void vazon_app_core_init(void)
                                 "day_window_runtime",
                                 DAY_WINDOW_TASK_STACK,
                                 NULL, 4, NULL) == pdPASS
+                        ? ESP_OK
+                        : ESP_ERR_NO_MEM);
+    ESP_ERROR_CHECK(xTaskCreate(settings_runtime_task,
+                                "settings_runtime",
+                                SETTINGS_TASK_STACK,
+                                NULL, 3, NULL) == pdPASS
                         ? ESP_OK
                         : ESP_ERR_NO_MEM);
     if (network_configured) {

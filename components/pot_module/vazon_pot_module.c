@@ -28,6 +28,22 @@ static bool calibration_order_valid(
             calibration->normal_calibration_mv > calibration->wet_calibration_mv);
 }
 
+static bool calibration_state_valid(
+    const vazon_pot_moisture_calibration_t *calibration)
+{
+    if (calibration == NULL ||
+        (calibration->normal_valid && !calibration->dry_valid) ||
+        (calibration->wet_valid && !calibration->normal_valid)) {
+        return false;
+    }
+    if (calibration->dry_valid && calibration->normal_valid &&
+        calibration->dry_calibration_mv == calibration->normal_calibration_mv) {
+        return false;
+    }
+    return !calibration_complete(calibration) ||
+           calibration_order_valid(calibration);
+}
+
 static int16_t clamp_pct(float value)
 {
     if (value < 0.0f) return 0;
@@ -65,9 +81,11 @@ static vazon_pot_moisture_class_t moisture_class(int16_t value_pct)
 
 esp_err_t vazon_pot_module_init(vazon_pot_module_t *module,
                                 uint8_t pot_id,
-                                const vazon_pot_settings_t *settings)
+                                const vazon_pot_settings_t *settings,
+                                const vazon_pot_moisture_calibration_t *calibration)
 {
-    if (module == NULL || pot_id > 1U || !settings_valid(settings)) {
+    if (module == NULL || pot_id > 1U || !settings_valid(settings) ||
+        !calibration_state_valid(calibration)) {
         return ESP_ERR_INVALID_ARG;
     }
     memset(module, 0, sizeof(*module));
@@ -80,6 +98,7 @@ esp_err_t vazon_pot_module_init(vazon_pot_module_t *module,
     module->snapshot.status = VAZON_POT_STATUS_UNKNOWN;
     module->snapshot.status_reason = VAZON_POT_REASON_NONE;
     module->snapshot.settings = *settings;
+    module->snapshot.calibration = *calibration;
     module->initialized = true;
     return ESP_OK;
 }

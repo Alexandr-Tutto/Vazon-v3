@@ -43,6 +43,7 @@ components/mqtt_service
 components/mqtt_command_codec
 components/mqtt_command_queue
 components/connection_config
+components/settings_store
 components/wifi_service
 ```
 
@@ -141,6 +142,16 @@ on EU channels 1-13. App Core updates `GlobalContext.connection` from service
 events and starts secure MQTT only after the station receives an IP address.
 Missing/invalid configuration leaves local normal runtime active with Wi-Fi
 and MQTT marked disconnected; it does not enter provisioning automatically.
+
+Settings Store keeps the controller-owned runtime configuration in a separate
+versioned NVS blob with CRC validation. It persists Global Core day-window
+settings, Climate/Light/Fan/Humidifier/Pot settings, and both Pot moisture
+calibrations, including an incomplete calibration sequence. App Core validates
+stored values through their owning modules and restores defaults only for an
+invalid block. A low-priority watcher writes only after an actual settings
+change. Maintenance requests, sensor/output state, active manual runs,
+automatic demand, and runtime timers are transient and restart safely. Device
+verification across reboot and OTA passed on PCB v1.0 unit 02.
 
 The bring-up entry now checks GPIO0 before any normal-runtime module or sensor
 task starts. A confirmed hold clears only Connection Config, keeps actuators in
@@ -409,10 +420,18 @@ Command Router; it does not call ESP-IDF OTA directly.
 The build configuration supplies one full HTTPS manifest URL. An empty URL
 keeps OTA commands unavailable. The manifest contains exactly `version` and
 `url`; the firmware URL must also use HTTPS. `check` reports whether the
-manifest version differs from the running application. `install` performs the
-same check and, when different, calls the ESP-IDF HTTPS OTA path from one
-worker task before rebooting. Direct URL commands and automatic checks are not
-part of this stage.
+manifest contains a strictly newer numeric `major.minor.patch` version than the
+running application. Equal or older versions are not offered, preventing an
+accidental downgrade from a stale manifest. `install` performs the same check
+and, when newer, calls the ESP-IDF HTTPS OTA path from one worker task before
+rebooting. Direct URL commands and automatic checks are not part of this stage.
+
+During the OTA worker operation, the Task Watchdog timeout is temporarily
+extended from the configured 5 seconds to 15 seconds for ESP32 TLS/ECDH work.
+The watchdog remains enabled and its normal timeout is restored when an OTA
+check or failed install finishes.
+TLS watchdog handling and stale-manifest downgrade blocking are verified on
+PCB v1.0 unit 02.
 
 OTA status is asynchronous because an accepted command only means that the
 worker started. OTA Service reports `checking`, `up_to_date`,
@@ -421,6 +440,10 @@ service-owned status callback. After every successful MQTT connection, OTA
 Service reports `ready` with the running application version. App Core passes
 that status to the registered MQTT service topic without moving OTA behavior
 into MQTT.
+
+Connection Config and Settings Store use NVS data separate from the OTA
+application slots, so a normal OTA install does not erase Wi-Fi/MQTT credentials
+or user runtime settings.
 
 ## Port Stop Conditions
 

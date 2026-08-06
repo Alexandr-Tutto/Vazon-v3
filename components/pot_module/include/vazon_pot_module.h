@@ -148,7 +148,8 @@ typedef struct {
 
 esp_err_t vazon_pot_module_init(vazon_pot_module_t *module,
                                 uint8_t pot_id,
-                                const vazon_pot_settings_t *settings);
+                                const vazon_pot_settings_t *settings,
+                                const vazon_pot_moisture_calibration_t *calibration);
 esp_err_t vazon_pot_module_record_moisture(vazon_pot_module_t *module,
                                            esp_err_t read_result,
                                            int raw_adc_value,

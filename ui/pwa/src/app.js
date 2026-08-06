@@ -1,5 +1,6 @@
 import { mqttConfig } from './mqtt-config.js';
 import { createMqttConnection } from './mqtt/mqtt-client.js';
+import { parseVazonTopic } from './mqtt/topic-registry.js';
 import { createDeviceStore } from './state/device-store.js';
 import { createUiState } from './ui-state.js';
 import { renderCards, renderMetricCard, renderTile } from './ui-components.js';
@@ -18,6 +19,7 @@ function currentUiState() {
 let uiState = currentUiState();
 let currentView = null;
 let settingsDraftDirty = false;
+let pendingSettingsTarget = null;
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
@@ -185,9 +187,10 @@ function refreshOpenView() {
 
   const entity = currentView.context?.entity;
   if (currentView.level === MENU_LEVELS.FUNCTION_STATUS && entity) {
+    if (settingsDraftDirty || hasFocusedPanelInput()) return;
     openFunctionStatus(entity);
   } else if (currentView.level === MENU_LEVELS.FUNCTION_SETTINGS && entity) {
-    if (settingsDraftDirty) {
+    if (settingsDraftDirty || hasFocusedPanelInput()) {
       refreshDirtySettingsControls(entity);
       return;
     }
@@ -200,6 +203,7 @@ function refreshOpenView() {
 function closePanel() {
   currentView = null;
   settingsDraftDirty = false;
+  pendingSettingsTarget = null;
   document.body.classList.remove('has-panel');
 }
 
@@ -218,6 +222,11 @@ function openParentView() {
 
 function isTextInput(element) {
   return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement;
+}
+
+function hasFocusedPanelInput() {
+  return isTextInput(document.activeElement) &&
+    elements.detailBody.contains(document.activeElement);
 }
 
 function rememberInputStartValue(event) {
@@ -259,10 +268,16 @@ function toggleMaintenanceMode(actionButton) {
 }
 
 function markSettingsDraftDirty(event) {
-  if (currentView?.level === MENU_LEVELS.FUNCTION_SETTINGS &&
-      isTextInput(event.target)) {
+  if (currentView && isTextInput(event.target)) {
     settingsDraftDirty = true;
   }
+}
+
+function actionReadsFieldArgs(actionButton) {
+  const target = actionButton.dataset.commandTarget;
+  const cmd = actionButton.dataset.commandName;
+  return cmd === 'set_settings' ||
+    (target === 'system' && cmd === 'set_day_window');
 }
 
 function readStaticCommandArgs(actionButton) {
@@ -341,7 +356,7 @@ function buildCommandPayload(actionButton) {
   const cmd = actionButton.dataset.commandName;
   let args = readStaticCommandArgs(actionButton);
 
-  if (cmd === 'set_settings') {
+  if (actionReadsFieldArgs(actionButton)) {
     args = {
       ...args,
       ...readFieldArgs(actionButton),
@@ -409,8 +424,9 @@ function handlePanelClick(event) {
   }
 
   const commandSent = emitCommand(actionButton);
-  if (commandSent && actionButton.dataset.commandName === 'set_settings') {
-    settingsDraftDirty = false;
+  if (commandSent && actionReadsFieldArgs(actionButton)) {
+    settingsDraftDirty = true;
+    pendingSettingsTarget = actionButton.dataset.commandTarget;
   }
 }
 
@@ -434,6 +450,13 @@ const mqttConnection = createMqttConnection(mqttConfig, {
   onStatus: (status) => setServerStatus(status),
   onMessage: ({ topic, payload }) => {
     if (!deviceStore.applyMessage(topic, payload)) return;
+    const parsed = parseVazonTopic(topic, mqttConfig.topicRoot);
+    if (settingsDraftDirty && pendingSettingsTarget &&
+        parsed?.topicClass === 'settings' &&
+        parsed.entity === pendingSettingsTarget) {
+      settingsDraftDirty = false;
+      pendingSettingsTarget = null;
+    }
     refreshFromDeviceStore();
     setServerStatus('connected');
   },

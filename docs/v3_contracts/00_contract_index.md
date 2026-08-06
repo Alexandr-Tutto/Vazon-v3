@@ -77,7 +77,7 @@ Runtime boundaries:
 One fact must have one owner file.
 Other files may reference that fact but must not restate or reinterpret it.
 Data model and MQTT registry are boundary documents, not module logic owners.
-Settings persistence implementation is postponed.
+Settings persistence survives reboot and OTA; verified on PCB v1.0 unit 02.
 Board support and sensor bring-up are confirmed.
 Runtime Core implementation is active.
 System Status aggregation is active.

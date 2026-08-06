@@ -7,16 +7,25 @@
 #include "esp_https_ota.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_task_wdt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #define OTA_MANIFEST_SIZE 2048U
 #define OTA_URL_SIZE      384U
 #define OTA_VERSION_SIZE  32U
+#define OTA_TASK_WDT_TIMEOUT_MS 15000U
+
+typedef struct {
+    uint32_t major;
+    uint32_t minor;
+    uint32_t patch;
+} ota_version_t;
 
 typedef enum {
     OTA_REQUEST_CHECK = 0,
@@ -31,19 +40,66 @@ typedef struct {
 static const char *TAG = "ota_service";
 static TaskHandle_t ota_task_handle;
 
-static bool version_valid(const char *version)
+static bool parse_version(const char *text, ota_version_t *version)
 {
-    if (version == NULL || version[0] == '\0') return false;
-    for (const char *cursor = version; *cursor != '\0'; ++cursor) {
-        const char value = *cursor;
-        if (!((value >= 'a' && value <= 'z') ||
-              (value >= 'A' && value <= 'Z') ||
-              (value >= '0' && value <= '9') || value == '.' ||
-              value == '-' || value == '_' || value == '+')) {
+    if (text == NULL || version == NULL) return false;
+    uint32_t parts[3] = {0};
+    const char *cursor = text;
+    for (size_t part = 0; part < 3U; ++part) {
+        if (*cursor < '0' || *cursor > '9') return false;
+        do {
+            const uint32_t digit = (uint32_t)(*cursor - '0');
+            if (parts[part] > (UINT32_MAX - digit) / 10U) return false;
+            parts[part] = parts[part] * 10U + digit;
+            ++cursor;
+        } while (*cursor >= '0' && *cursor <= '9');
+
+        if (part < 2U) {
+            if (*cursor != '.') return false;
+            ++cursor;
+        } else if (*cursor != '\0') {
             return false;
         }
     }
+    version->major = parts[0];
+    version->minor = parts[1];
+    version->patch = parts[2];
     return true;
+}
+
+static int compare_versions(const ota_version_t *left,
+                            const ota_version_t *right)
+{
+    if (left->major != right->major) return left->major > right->major ? 1 : -1;
+    if (left->minor != right->minor) return left->minor > right->minor ? 1 : -1;
+    if (left->patch != right->patch) return left->patch > right->patch ? 1 : -1;
+    return 0;
+}
+
+static uint32_t task_wdt_idle_core_mask(void)
+{
+    uint32_t mask = 0U;
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0
+    mask |= 1U << 0;
+#endif
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1
+    mask |= 1U << 1;
+#endif
+    return mask;
+}
+
+static esp_err_t configure_task_wdt(uint32_t timeout_ms)
+{
+    const esp_task_wdt_config_t config = {
+        .timeout_ms = timeout_ms,
+        .idle_core_mask = task_wdt_idle_core_mask(),
+#if CONFIG_ESP_TASK_WDT_PANIC
+        .trigger_panic = true,
+#else
+        .trigger_panic = false,
+#endif
+    };
+    return esp_task_wdt_reconfigure(&config);
 }
 
 static void report_status(vazon_ota_service_t *service, const char *state,
@@ -134,7 +190,8 @@ static esp_err_t parse_manifest(const char *manifest,
 
     const size_t version_length = strlen(version_item->valuestring);
     const size_t url_length = strlen(url_item->valuestring);
-    if (!version_valid(version_item->valuestring) ||
+    ota_version_t parsed_version;
+    if (!parse_version(version_item->valuestring, &parsed_version) ||
         version_length >= version_size ||
         url_length >= url_size) {
         cJSON_Delete(root);
@@ -167,6 +224,12 @@ static void ota_task(void *context)
     char manifest[OTA_MANIFEST_SIZE];
     char version[OTA_VERSION_SIZE];
     char url[OTA_URL_SIZE];
+    const esp_err_t wdt_result = configure_task_wdt(OTA_TASK_WDT_TIMEOUT_MS);
+    const bool wdt_extended = wdt_result == ESP_OK;
+    if (!wdt_extended) {
+        ESP_LOGW(TAG, "OTA watchdog extension failed: %s",
+                 esp_err_to_name(wdt_result));
+    }
 
     report_status(service, "checking", NULL, ESP_OK);
     esp_err_t result = fetch_manifest(manifest, sizeof(manifest));
@@ -180,8 +243,22 @@ static void ota_task(void *context)
     }
 
     const esp_app_desc_t *current = esp_app_get_description();
-    if (current != NULL && strcmp(current->version, version) == 0) {
-        report_status(service, "up_to_date", version, ESP_OK);
+    ota_version_t current_version;
+    ota_version_t manifest_version;
+    if (current == NULL ||
+        !parse_version(current->version, &current_version) ||
+        !parse_version(version, &manifest_version)) {
+        report_status(service, "failed", version, ESP_ERR_INVALID_VERSION);
+        goto done;
+    }
+    const int version_order = compare_versions(&manifest_version,
+                                               &current_version);
+    if (version_order <= 0) {
+        if (version_order < 0) {
+            ESP_LOGW(TAG, "Older OTA version ignored current=%s manifest=%s",
+                     current->version, version);
+        }
+        report_status(service, "up_to_date", current->version, ESP_OK);
         goto done;
     }
 
@@ -200,6 +277,14 @@ static void ota_task(void *context)
     esp_restart();
 
 done:
+    if (wdt_extended) {
+        const esp_err_t restore_result = configure_task_wdt(
+            (uint32_t)CONFIG_ESP_TASK_WDT_TIMEOUT_S * 1000U);
+        if (restore_result != ESP_OK) {
+            ESP_LOGE(TAG, "Task watchdog restore failed: %s",
+                     esp_err_to_name(restore_result));
+        }
+    }
     free(request);
     ota_task_handle = NULL;
     vTaskDelete(NULL);
@@ -277,7 +362,8 @@ esp_err_t vazon_ota_service_report_ready(vazon_ota_service_t *service)
 {
     if (service == NULL || !service->initialized) return ESP_ERR_INVALID_ARG;
     const esp_app_desc_t *current = esp_app_get_description();
-    if (current == NULL || !version_valid(current->version)) {
+    ota_version_t parsed_version;
+    if (current == NULL || !parse_version(current->version, &parsed_version)) {
         return ESP_ERR_INVALID_VERSION;
     }
     report_status(service, "ready", current->version, ESP_OK);

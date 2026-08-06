@@ -37,7 +37,7 @@ Software architecture: active ownership/boundary reference
 Migration rules: active old-repo reference boundary
 Firmware implementation: board bring-up skeleton active
 Production module implementation: postponed
-Settings persistence implementation: postponed
+Settings persistence implementation: reboot and OTA verified
 Remaining hardware confirmations: none
 ```
 

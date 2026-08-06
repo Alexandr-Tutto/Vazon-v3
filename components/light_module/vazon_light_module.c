@@ -37,11 +37,13 @@ static vazon_light_output_t requested_output(const vazon_light_module_t *module,
 }
 
 esp_err_t vazon_light_module_init(vazon_light_module_t *module,
+                                  const vazon_light_settings_t *settings,
                                   const vazon_global_context_t *global_context,
                                   vazon_light_output_apply_fn output_apply,
                                   void *output_context)
 {
-    if (module == NULL || global_context == NULL || output_apply == NULL) {
+    if (module == NULL || settings == NULL || !mode_valid(settings->mode) ||
+        global_context == NULL || output_apply == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -55,8 +57,7 @@ esp_err_t vazon_light_module_init(vazon_light_module_t *module,
     module->snapshot.status_reason = VAZON_LIGHT_STATUS_REASON_NONE;
     module->snapshot.last_command_result = VAZON_COMMAND_RESULT_UNKNOWN;
     module->snapshot.last_output_confirmed = VAZON_TRISTATE_UNKNOWN;
-    module->snapshot.settings.mode = VAZON_LIGHT_MODE_AUTO;
-    module->snapshot.settings.manual_state = false;
+    module->snapshot.settings = *settings;
     module->initialized = true;
     return ESP_OK;
 }
