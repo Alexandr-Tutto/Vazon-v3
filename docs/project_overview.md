@@ -1,6 +1,6 @@
 # Vazon V3 Project Overview
 
-Document status: active draft
+Document status: active
 Code status: architecture reference
 Scope: clean Vazon V3 firmware/UI/new hardware workspace
 
@@ -28,17 +28,18 @@ components/board_config/include/vazon_board_config.h
 ```text
 Contracts: active source of truth
 Pinout: active V3 PCB reference
-Board config scaffold: active firmware-facing pinout seed
+Board config: active firmware-facing pinout and board identity
 UI architecture: active presentation boundary
-UI implementation: V3.0 starting UI design baseline
+UI implementation: deployed direct-MQTT field-trial PWA
 Data model: active minimal boundary
 MQTT topic registry: active minimal boundary
 Software architecture: active ownership/boundary reference
 Migration rules: active old-repo reference boundary
-Firmware implementation: board bring-up skeleton active
-Production module implementation: postponed
+Firmware implementation: integrated runtime active on PCB v1.0 unit 02
+Local module implementation: active
 Settings persistence implementation: reboot and OTA verified
-Remaining hardware confirmations: none
+Remaining hardware confirmations: main-fan tachometer feedback and optional humidifier output-presence feedback
+Soil-moisture field calibration: pending installation with substrate
 ```
 
 No firmware or UI implementation should copy old-repository code directly.

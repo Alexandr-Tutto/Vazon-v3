@@ -1,7 +1,7 @@
 # Humidifier Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active local module implementation; physical output confirmation unavailable
 Scope: Vazon V3 Humidifier Module
 
 ## 1. Purpose

@@ -1,6 +1,6 @@
 # Vazon V3 Software Architecture
 
-Document status: active draft
+Document status: active
 Code status: architecture reference
 Scope: Vazon V3 firmware/UI software boundaries
 
@@ -157,8 +157,8 @@ change GlobalContext directly
 bypass Command Router
 ```
 
-Full MQTT topic cleanup is intentionally postponed until active contracts are
-clean.
+The active MQTT namespace, retain policy, and command envelope are owned by
+`docs/mqtt_topic_registry.md` and are wired through Command Router.
 
 ## 8. Output Boundary
 
@@ -187,7 +187,29 @@ The board config scaffold is:
 components/board_config/include/vazon_board_config.h
 ```
 
-## 10. Migration Boundary
+## 10. Service Ownership
+
+Services without a separate functional contract are owned here:
+
+```text
+Settings Store
+    persists only owner-defined settings and pot calibration in a versioned,
+    CRC-validated NVS blob separate from connection configuration
+    does not persist transient state, active runs, or timers
+
+OTA Service
+    owns HTTPS manifest check/install execution and asynchronous OTA state
+    accepts check/install only through Command Router
+    accepts only a strictly newer numeric major.minor.patch version
+    preserves Connection Config and Settings Store NVS data across normal OTA
+    does not yet provide rollback or boot confirmation; tracked in open questions
+```
+
+MQTT topic names and OTA service-topic payloads remain owned by
+`docs/mqtt_topic_registry.md`. Owner-defined settings remain owned by their
+module or Global Core contracts.
+
+## 11. Migration Boundary
 
 Old-repository code is reference-only.
 

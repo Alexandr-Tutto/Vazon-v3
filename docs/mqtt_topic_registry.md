@@ -1,7 +1,7 @@
 # Vazon V3 MQTT Topic Registry
 
 Document status: active minimal
-Code status: secure transport, typed codec, and bounded command queue implemented; runtime wiring pending
+Code status: secure transport, typed codec, bounded command queue, and runtime wiring verified on unit 02
 Scope: MQTT namespace, topic classes, retain policy, and command envelope only
 
 ## 1. Purpose

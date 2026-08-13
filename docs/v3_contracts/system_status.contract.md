@@ -1,6 +1,6 @@
 # System Status Contract
 
-Document status: active draft
+Document status: active
 Code status: active aggregation implementation
 Scope: Vazon V3 System Status
 

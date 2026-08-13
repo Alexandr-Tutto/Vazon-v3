@@ -1,7 +1,7 @@
 # Output Confirmation Policy Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active command-result policy; physical feedback availability is module-specific
 Scope: Vazon V3 output confirmation policy
 
 ## 1. Purpose

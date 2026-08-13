@@ -1,7 +1,7 @@
 # Command Router Contract
 
-Document status: active draft
-Code status: runtime skeleton
+Document status: active
+Code status: implemented
 Scope: Vazon V3 normal-runtime command routing boundary
 
 ## 1. Purpose

@@ -1,7 +1,7 @@
 # Light Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active local module implementation
 Scope: Vazon V3 Light Module
 
 ## 1. Purpose

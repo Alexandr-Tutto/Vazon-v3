@@ -46,6 +46,7 @@ shared data-shape boundary rules -> docs/v3_data_model.md
 MQTT namespace / retain policy / command envelope -> docs/mqtt_topic_registry.md
 UI presentation text and screen behavior -> docs/ui_architecture.md
 software boundary rules -> docs/software_architecture.md
+settings persistence and OTA service behavior -> docs/software_architecture.md
 old-repository migration rules -> docs/migration_rules.md
 ```
 

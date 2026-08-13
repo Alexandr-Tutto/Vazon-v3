@@ -1,6 +1,6 @@
 # Pot Module Contract
 
-Document status: active draft
+Document status: active
 Code status: active local module implementation
 Scope: Vazon V3 Pot Module
 

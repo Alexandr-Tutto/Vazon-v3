@@ -1,7 +1,7 @@
 # Module / Sensor Presence Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active runtime policy
 Scope: Vazon V3 Module / Sensor Presence Policy
 
 ## 1. Purpose

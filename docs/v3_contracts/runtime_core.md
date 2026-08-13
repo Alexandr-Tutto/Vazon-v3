@@ -1,7 +1,7 @@
 # Vazon V3 Runtime Core
 
-Document status: active bring-up overview
-Code status: architecture overview
+Document status: active overview
+Code status: integrated runtime active
 Scope: Vazon V3 firmware runtime overview
 
 This document is an umbrella overview for normal runtime.

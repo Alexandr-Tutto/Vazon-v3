@@ -1,6 +1,6 @@
 # Provisioning Button and Service Contract
 
-Document status: active bring-up contract
+Document status: active
 Code status: boot selection and local AP/HTTP flow implemented
 Scope: Vazon V3 Provisioning Button and Provisioning Service
 

@@ -27,7 +27,7 @@ export const mockState = {
 
   climate: {
     sensor_0x44: {
-      temperature_c: 28.1,
+      temperature_c: 29.1,
       humidity_pct: 61,
       status: 'ok',
       status_reason: null,
@@ -39,9 +39,9 @@ export const mockState = {
       status_reason: null,
     },
     rh_delta_pct: 17,
-    temperature_delta_c: 4.7,
+    temperature_delta_c: 5.7,
     status: 'warning',
-    status_reason: 'rh_delta_high',
+    status_reason: 'temperature_delta_high',
     settings: {},
   },
 

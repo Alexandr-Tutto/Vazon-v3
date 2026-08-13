@@ -1,7 +1,7 @@
 # Vazon V3 PWA
 
-Document status: draft
-Code status: direct-MQTT prototype PWA UI
+Document status: active field-trial interface
+Code status: deployed direct-MQTT prototype PWA UI
 Scope: PWA UI layout, menu navigation, actions, MQTT state rendering, and commands
 
 ## Purpose
@@ -23,17 +23,17 @@ MQTT-backed V3 state store
 Secure MQTT WebSocket connection
 MQTT command publishing
 OTA check/install commands and controller status display
+Persistent controller-settings editing through MQTT commands
 UI action registry
 Menu rendering helpers
 PWA manifest
-Service worker stub
+Service worker offline cache
 ```
 
 ## Current Non-Scope
 
 ```text
 Authentication
-Persistent settings editing
 Production icon set
 Build system
 ```
@@ -95,7 +95,7 @@ src/ui-state.js
     UI-only mapping from device data to screen labels and cards
 
 src/ui-actions.js
-    UI action registry for currently mocked command buttons
+    UI action registry for command buttons
 
 src/ui-components.js
     shared DOM rendering helpers
@@ -127,6 +127,6 @@ credential is intentionally visible in browser assets under accepted Decision
 ## Next UI Step
 
 ```text
-Verify retained messages from physical controller 02 and compare every payload
-with the owning V3 contract before replacing the prototype credential model.
+Collect field-trial feedback from controller 02. Replace the prototype
+credential model before public or customer deployment.
 ```

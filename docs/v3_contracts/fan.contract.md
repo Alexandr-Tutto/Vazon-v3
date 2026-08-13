@@ -1,7 +1,7 @@
 # Fan Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active local module implementation; tachometer confirmation deferred
 Scope: Vazon V3 Main Fan Module
 
 ## 1. Purpose

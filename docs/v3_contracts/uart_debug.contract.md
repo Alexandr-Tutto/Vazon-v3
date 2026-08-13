@@ -1,7 +1,7 @@
 # UART Debug Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active runtime logging policy
 Scope: Vazon V3 UART0 serial debug output
 
 ## 1. Purpose

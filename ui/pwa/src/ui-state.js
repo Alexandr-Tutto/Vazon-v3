@@ -31,10 +31,10 @@ function makeDetail(title, status, summary, message, rows) {
 
 function statusSummaryText(entity) {
   const reasons = {
-    rh_delta_high: '- різниця вологості висока',
     temperature_delta_high: '- різниця температур висока',
     temperature_delta_critical: '- різниця температур критична',
-    sht31_missing: '- датчик клімату не відповідає',
+    sht31_0x44_missing: '- верхній датчик клімату не відповідає',
+    sht31_0x45_missing: '- нижній датчик клімату не відповідає',
     sht31_stale: '- дані клімату застаріли',
     invalid_value: '- некоректне значення датчика',
     confirmation_failed: '- обертання не підтверджено',

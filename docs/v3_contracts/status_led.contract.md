@@ -1,6 +1,6 @@
 # Status LED Contract
 
-Document status: active draft
+Document status: active
 Code status: implemented for normal runtime and provisioning
 Scope: Vazon V3 Status LED
 

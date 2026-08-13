@@ -1,8 +1,13 @@
 # Vazon V3 Firmware Skeleton
 
-Document status: active draft
-Code status: runtime core skeleton in progress
-Scope: current firmware directory layout, PCB v1.0 smoke-test result, and software port order
+Document status: deprecated historical
+Code status: superseded by the integrated runtime
+Scope: historical PCB v1.0 bring-up result and software port plan
+
+This file preserves the completed bring-up sequence. It is not a current
+implementation-status or module-logic owner. Current status is recorded in
+`README.md` and `docs/project_overview.md`; behavior remains owned by the active
+contracts and service boundaries in `docs/software_architecture.md`.
 
 ## Current Goal
 

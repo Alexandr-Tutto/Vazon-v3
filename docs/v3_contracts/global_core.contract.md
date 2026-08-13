@@ -1,6 +1,6 @@
 # Global Core Contract
 
-Document status: active bring-up contract
+Document status: active
 Code status: normal-runtime context, connection state, and boot provisioning implemented
 Scope: Vazon V3 Global Core
 

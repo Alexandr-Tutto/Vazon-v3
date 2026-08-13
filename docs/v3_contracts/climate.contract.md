@@ -1,6 +1,6 @@
 # Climate Module Contract
 
-Document status: active draft
+Document status: active
 Code status: active local module implementation
 Scope: Vazon V3 Climate Module
 
@@ -131,10 +131,6 @@ calculate:
     rh_delta_pct = abs(sensor_0x44_rh - sensor_0x45_rh)
     temperature_delta_c = abs(sensor_0x44_temp - sensor_0x45_temp)
 
-if RH delta too high:
-    climate.status = warning
-    status_reason = rh_delta_high
-
 if temperature_delta_c > temperature_delta_warn:
     climate.status = warning
     status_reason = temperature_delta_high
@@ -144,10 +140,10 @@ if temperature_delta_c > temperature_delta_error:
     status_reason = temperature_delta_critical
 ```
 
-No climate-level `rh_delta_high` threshold is currently defined. Firmware
-calculates `rh_delta_pct`, but does not raise that warning until a threshold is
-added to this contract. Fan Module applies its own delta hysteresis settings to
-the same value.
+No climate-level RH-delta threshold is currently defined. Firmware calculates
+`rh_delta_pct`, but does not raise a climate warning from that value until a
+threshold is added to this contract. Fan Module applies its own delta
+hysteresis settings to the same value.
 
 ## 11. Rules
 

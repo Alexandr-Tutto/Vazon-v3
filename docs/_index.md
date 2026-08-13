@@ -13,8 +13,8 @@ Agents must read it to understand which documents are active and how documentati
 ## Current Working Baseline
 
 ```text
-UI baseline: V3.0 starting UI design is fixed by the current main branch state.
-Firmware baseline: PCB v1.0 board bring-up skeleton is the active embedded focus.
+UI baseline: deployed V3 direct-MQTT PWA is the active field-trial interface.
+Firmware baseline: integrated runtime on PCB v1.0 unit 02 is the active field-trial baseline.
 Hardware baseline: docs/hardware/v3_board_pinout.md and board_config must match.
 Branch: main
 ```
@@ -41,7 +41,7 @@ docs/project_overview.md
     project purpose, current state, system parts, and active ownership overview
 
 docs/software_architecture.md
-    firmware/UI/MQTT/software boundary rules
+    firmware/UI/MQTT boundaries and service ownership rules
 
 docs/ui_architecture.md
     UI structure, screens, states, and user-visible behavior
@@ -78,9 +78,6 @@ docs/v3_data_model.md
 docs/mqtt_topic_registry.md
     minimal MQTT namespace, retain policy, and command envelope boundary
 
-docs/firmware_skeleton.md
-    current firmware skeleton layout, PCB smoke-test scope, and software port order
-
 docs/migration_rules.md
     old-repository reference boundary and migration rules
 ```
@@ -98,7 +95,8 @@ docs/open_questions.md
 ## Deprecated Documents
 
 ```text
-None declared yet.
+docs/firmware_skeleton.md
+    historical board bring-up and software port plan; not a current status or logic owner
 ```
 
 ## Authority Rule

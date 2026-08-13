@@ -1,7 +1,7 @@
 # Door Module Contract
 
-Document status: draft
-Code status: architecture contract
+Document status: active
+Code status: active local module implementation
 Scope: Vazon V3 Door Module
 
 ## 1. Purpose

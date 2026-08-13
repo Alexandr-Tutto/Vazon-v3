@@ -1,6 +1,6 @@
 # Vazon V3 Board Pinout
 
-Document status: active draft
+Document status: active
 Code status: hardware reference
 Scope: Vazon V3 new PCB pinout
 
