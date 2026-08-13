@@ -111,6 +111,7 @@ export const mockState = {
   fan: {
     output: 'off',
     applied_power_pct: 0,
+    rpm: 0,
     auto_state: 'blocked',
     status: 'warning',
     status_reason: 'door_open',

@@ -64,6 +64,8 @@ static const char *TAG = "app_core";
 #define PROVISIONING_HOLD_MS        5000U
 #define PROVISIONING_POLL_MS        50U
 #define PROVISIONING_LED_POLL_MS    50U
+#define FAN_TACH_SAMPLE_MS          1000U
+#define FAN_TACH_CONFIRM_TIMEOUT_MS 3000U
 
 static vazon_command_router_t command_router;
 static vazon_runtime_core_t runtime_core;
@@ -85,6 +87,11 @@ static SemaphoreHandle_t runtime_mutex;
 static uint64_t next_climate_read_ms;
 static bool sntp_started;
 static uint8_t humidifier_mist_applied_duty_pct;
+#if VAZON_MAIN_FAN_TACH_ENABLED
+static bool fan_tach_tracking;
+static uint64_t fan_tach_sample_started_ms;
+static uint64_t fan_tach_last_pulse_ms;
+#endif
 static char ota_status_topic[VAZON_MQTT_TOPIC_SIZE];
 static vazon_persisted_settings_t last_saved_settings;
 static bool last_saved_settings_valid;
@@ -720,6 +727,8 @@ static const char *fan_status_reason_text(vazon_fan_status_reason_t reason)
         return "day_window_unknown";
     case VAZON_FAN_STATUS_REASON_OUTPUT_FAILED:
         return "output_failed";
+    case VAZON_FAN_STATUS_REASON_CONFIRMATION_FAILED:
+        return "confirmation_failed";
     case VAZON_FAN_STATUS_REASON_NONE:
     default:
         return "none";
@@ -740,6 +749,80 @@ static const char *fan_status_text(vazon_fan_status_t status)
         return "unknown";
     }
 }
+
+#if VAZON_MAIN_FAN_TACH_ENABLED
+static void update_main_fan_tach(bool request_on, uint64_t now_ms)
+{
+    if (!request_on) {
+        if (fan_tach_tracking) {
+            uint32_t discarded_pulses = 0U;
+            ESP_ERROR_CHECK_WITHOUT_ABORT(
+                vazon_gpio_inputs_take_main_fan_tach_pulses(&discarded_pulses));
+            fan_tach_tracking = false;
+        }
+        ESP_ERROR_CHECK_WITHOUT_ABORT(vazon_fan_module_report_rotation(
+            &fan_module, 0, VAZON_TRISTATE_UNKNOWN));
+        return;
+    }
+
+    if (!fan_tach_tracking) {
+        uint32_t discarded_pulses = 0U;
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            vazon_gpio_inputs_take_main_fan_tach_pulses(&discarded_pulses));
+        fan_tach_tracking = true;
+        fan_tach_sample_started_ms = now_ms;
+        fan_tach_last_pulse_ms = now_ms;
+        ESP_ERROR_CHECK_WITHOUT_ABORT(vazon_fan_module_report_rotation(
+            &fan_module, VAZON_FAN_RPM_UNKNOWN, VAZON_TRISTATE_UNKNOWN));
+        return;
+    }
+
+    const uint64_t sample_ms = now_ms - fan_tach_sample_started_ms;
+    if (sample_ms < FAN_TACH_SAMPLE_MS) {
+        return;
+    }
+
+    uint32_t pulse_count = 0U;
+    const esp_err_t read_result =
+        vazon_gpio_inputs_take_main_fan_tach_pulses(&pulse_count);
+    if (read_result != ESP_OK) {
+        ESP_LOGE(TAG, "Main fan tach read failed: %s",
+                 esp_err_to_name(read_result));
+        return;
+    }
+
+    int32_t rpm = 0;
+    vazon_tristate_t confirmed = VAZON_TRISTATE_UNKNOWN;
+    if (pulse_count > 0U) {
+        const uint64_t calculated_rpm =
+            ((uint64_t)pulse_count * 60000ULL) /
+            (sample_ms * VAZON_MAIN_FAN_TACH_PULSES_PER_REVOLUTION);
+        rpm = calculated_rpm > INT32_MAX ? INT32_MAX : (int32_t)calculated_rpm;
+        confirmed = VAZON_TRISTATE_TRUE;
+        fan_tach_last_pulse_ms = now_ms;
+    } else if (now_ms - fan_tach_last_pulse_ms >=
+               FAN_TACH_CONFIRM_TIMEOUT_MS) {
+        confirmed = VAZON_TRISTATE_FALSE;
+    } else {
+        rpm = VAZON_FAN_RPM_UNKNOWN;
+    }
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT(
+        vazon_fan_module_report_rotation(&fan_module, rpm, confirmed));
+    ESP_LOGI(TAG,
+             "SENSOR_%s fan.tach GPIO%d pulses=%lu rpm=%s confirmation=%s",
+             confirmed == VAZON_TRISTATE_FALSE ? "FAIL" : "OK",
+             VAZON_GPIO_MAIN_FAN_TACH, (unsigned long)pulse_count,
+             rpm == VAZON_FAN_RPM_UNKNOWN ? "unknown" : "available",
+             confirmed == VAZON_TRISTATE_TRUE
+                 ? "confirmed"
+                 : (confirmed == VAZON_TRISTATE_FALSE ? "failed" : "pending"));
+    if (rpm >= 0) {
+        ESP_LOGI(TAG, "Main fan tach rpm=%ld", (long)rpm);
+    }
+    fan_tach_sample_started_ms = now_ms;
+}
+#endif
 
 static void evaluate_fan_binary_and_log(vazon_door_state_t door_state,
                                         uint64_t now_ms)
@@ -766,16 +849,37 @@ static void evaluate_fan_binary_and_log(vazon_door_state_t door_state,
     const bool output_matches =
         (request_on && current->output == VAZON_FAN_OUTPUT_ON) ||
         (!request_on && current->output == VAZON_FAN_OUTPUT_OFF);
-    if (!output_matches) {
+    const bool power_matches =
+        !request_on || current->applied_power_pct == current->requested_power_pct;
+    if (!output_matches || !power_matches) {
+        const uint8_t requested_power_pct =
+            request_on ? (uint8_t)current->requested_power_pct : 0U;
         const esp_err_t driver_result =
-            vazon_gpio_outputs_set(VAZON_GPIO_OUTPUT_MAIN_FAN, request_on);
+            vazon_gpio_outputs_set_main_fan(request_on, requested_power_pct);
         const esp_err_t report_result = vazon_fan_module_report_output_result(
-            &fan_module, request_on ? 100U : 0U, driver_result);
+            &fan_module, requested_power_pct, driver_result);
         if (report_result != ESP_OK) {
             ESP_LOGE(TAG, "Fan binary output failed: %s", esp_err_to_name(report_result));
+        } else if (request_on && (requested_power_pct == 100U ||
+                                  requested_power_pct ==
+                                      current->settings.power_level_pct)) {
+            ESP_LOGI(TAG,
+                     "Main fan PWM GPIO%d frequency=%uHz fan_duty=%u%% gpio_duty=%u%%",
+                     VAZON_GPIO_MAIN_FAN_PWM,
+                     VAZON_MAIN_FAN_PWM_FREQUENCY_HZ,
+                     requested_power_pct, 100U - requested_power_pct);
         }
         current = vazon_fan_module_get_snapshot(&fan_module);
     }
+
+#if VAZON_MAIN_FAN_TACH_ENABLED
+    update_main_fan_tach(request_on && current->output == VAZON_FAN_OUTPUT_ON,
+                         now_ms);
+#else
+    ESP_ERROR_CHECK_WITHOUT_ABORT(vazon_fan_module_report_rotation(
+        &fan_module, VAZON_FAN_RPM_UNKNOWN, VAZON_TRISTATE_UNKNOWN));
+#endif
+    current = vazon_fan_module_get_snapshot(&fan_module);
 
     if (current->output != previous.output || current->auto_state != previous.auto_state ||
         current->status != previous.status ||
@@ -1427,6 +1531,7 @@ static void provisioning_led_task(void *context)
 void vazon_app_core_init(void)
 {
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_safe_off());
+    ESP_ERROR_CHECK(vazon_gpio_outputs_init_main_fan_pwm());
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_humidifier_mist_pwm());
     ESP_ERROR_CHECK(vazon_gpio_outputs_init_status_led_off());
     ESP_ERROR_CHECK(vazon_i2c_service_scan_climate_bus());

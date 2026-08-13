@@ -187,6 +187,12 @@ Maintenance-представлення має рівень warning, але не 
 | `mqtt_offline` | Немає зв'язку із сервісом. | Перевірте інтернет/живлення пристрою. |
 | `device_offline` | Пристрій не відповідає. | Перевірте живлення пристрою. |
 
+Retained `availability = offline` overrides retained controller state in UI.
+While device availability is offline, the main status says that the device does
+not respond, subsystem tiles mark their retained data as not current, live
+metrics are hidden, and commands are not sent. Browser-to-broker connectivity
+must not be presented as controller availability.
+
 Невідомий `status_reason` показується як:
 
 ```text
@@ -340,6 +346,7 @@ UI code:
 | `manual_duration_sec` | Ручний запуск |
 | `power_level_pct` | Інтенсивність |
 | `applied_power_pct` | Поточна потужність |
+| `rpm` | Оберти |
 | `last_command_result` | Остання команда |
 | `last_output_confirmed` | Вихід підтверджено |
 
@@ -372,7 +379,8 @@ Wi-Fi / зв'язок
 Приклади:
 
 ```text
-fan.output = on                  -> вентилятор обертається
+fan.output = on                  -> контролер подав живлення і PWM-команду
+fan.last_output_confirmed = true -> тахометр підтвердив обертання
 humidifier.mist_output = on       -> пар анімується
 light.output = on                 -> світло/сонце активовано
 light.output = off у штатному auto -> місяць або спокійна off-іконка
@@ -653,6 +661,8 @@ UI не описує MQTT namespace для світла.
 fan.status
 fan.status_reason
 fan.output
+fan.rpm
+fan.last_output_confirmed
 fan.settings.mode
 ```
 

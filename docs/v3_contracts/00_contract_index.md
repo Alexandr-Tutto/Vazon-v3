@@ -83,8 +83,10 @@ Runtime Core implementation is active.
 System Status aggregation is active.
 V3.0 starting UI design baseline is active.
 Door, Climate, Pot, Light, Fan, and Humidifier Modules are active local module
-implementations. Fan uses a temporary 0/100% GPIO fallback; its future
-four-wire PWM control GPIO and output driver remain deferred. Humidifier
+implementations. Fan uses GPIO13 switched +12 V master power, GPIO25 25 kHz
+PWM control, and GPIO34 tachometer feedback; master power and PWM are verified,
+while tachometer commissioning remains deferred.
+Humidifier
 uses a binary local-fan output and an 800 Hz mist PWM output; low, medium, and
 high mist intensity apply 50%, 60%, and 70% duty.
 ```

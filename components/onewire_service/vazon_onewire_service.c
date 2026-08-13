@@ -104,6 +104,15 @@ esp_err_t vazon_onewire_service_read_pot_temperatures(
     for (size_t index = 0; index < pot_temperature_sensor_count; ++index) {
         read_results[index] = ds18b20_get_temperature(
             pot_temperature_sensors[index], &temperatures_c[index]);
+        if (read_results[index] == ESP_ERR_INVALID_CRC) {
+            read_results[index] = ds18b20_get_temperature(
+                pot_temperature_sensors[index], &temperatures_c[index]);
+            if (read_results[index] == ESP_OK) {
+                ESP_LOGW(TAG,
+                         "DS18B20 scratchpad CRC retry recovered pot[%u]",
+                         (unsigned int)index);
+            }
+        }
     }
     return ESP_OK;
 }

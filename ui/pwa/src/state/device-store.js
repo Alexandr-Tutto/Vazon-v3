@@ -65,6 +65,7 @@ function createEmptyState() {
     fan: {
       ...unknownOutputState(),
       applied_power_pct: null,
+      rpm: null,
       auto_state: 'unknown',
     },
     humidifier: {
@@ -98,6 +99,7 @@ export function createDeviceStore({ topicRoot, serialNumber }) {
   const state = createEmptyState();
   let deviceId = null;
   let lastCommandResult = null;
+  let retainedAvailability = null;
 
   function acceptDevice(candidate) {
     if (!deviceMatchesSerial(candidate, serialNumber)) return false;
@@ -110,8 +112,9 @@ export function createDeviceStore({ topicRoot, serialNumber }) {
     if (!parsed || !acceptDevice(parsed.deviceId)) return false;
 
     if (parsed.topicClass === 'availability') {
+      retainedAvailability = payload === 'online';
       state.system.global_context.connection.mqtt_state =
-        payload === 'online' ? 'connected' : 'disconnected';
+        retainedAvailability ? 'connected' : 'disconnected';
       return true;
     }
 
@@ -137,6 +140,10 @@ export function createDeviceStore({ topicRoot, serialNumber }) {
     if (entity === 'system') {
       if (topicClass === 'state' && payload && typeof payload === 'object') {
         Object.assign(state.system.global_context, payload);
+        if (retainedAvailability !== null) {
+          state.system.global_context.connection.mqtt_state =
+            retainedAvailability ? 'connected' : 'disconnected';
+        }
         return true;
       }
       if (topicClass === 'status') return mergeEntity(state.system, payload);

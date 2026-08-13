@@ -35,8 +35,14 @@
 /* Actuators */
 #define VAZON_GPIO_LIGHT              GPIO_NUM_4
 #define VAZON_GPIO_MAIN_FAN           GPIO_NUM_13
+#define VAZON_GPIO_MAIN_FAN_PWM       GPIO_NUM_25
 #define VAZON_GPIO_HUMIDIFIER_FAN     GPIO_NUM_19
 #define VAZON_GPIO_HUMIDIFIER_MIST    GPIO_NUM_26
+
+#define VAZON_MAIN_FAN_PWM_FREQUENCY_HZ 25000U
+#define VAZON_MAIN_FAN_TACH_PULSES_PER_REVOLUTION 2U
+/* Temporary: suspected damaged tachometer output is disconnected. */
+#define VAZON_MAIN_FAN_TACH_ENABLED 0
 
 /* Humidifier mist PWM produced for the external RC differentiator. */
 #define VAZON_HUMIDIFIER_MIST_PWM_FREQUENCY_HZ 800U
@@ -47,6 +53,7 @@
 /* Sensors */
 #define VAZON_GPIO_DOOR_REED          GPIO_NUM_33
 #define VAZON_GPIO_HUMIDIFIER_WATER   GPIO_NUM_35
+#define VAZON_GPIO_MAIN_FAN_TACH      GPIO_NUM_34
 #define VAZON_GPIO_POT_TEMP_ONEWIRE   GPIO_NUM_32
 #define VAZON_GPIO_POT0_SOIL_MOISTURE GPIO_NUM_36
 #define VAZON_GPIO_POT1_SOIL_MOISTURE GPIO_NUM_39

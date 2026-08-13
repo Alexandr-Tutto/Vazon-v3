@@ -51,6 +51,7 @@ esp_err_t vazon_fan_module_init(vazon_fan_module_t *module,
     module->snapshot.output_request = VAZON_FAN_OUTPUT_OFF;
     module->snapshot.requested_power_pct = 0;
     module->snapshot.applied_power_pct = VAZON_FAN_POWER_UNKNOWN;
+    module->snapshot.rpm = VAZON_FAN_RPM_UNKNOWN;
     module->snapshot.auto_state = VAZON_FAN_AUTO_STATE_UNKNOWN;
     module->snapshot.status = VAZON_FAN_STATUS_UNKNOWN;
     module->snapshot.status_reason = VAZON_FAN_STATUS_REASON_NONE;
@@ -259,6 +260,10 @@ esp_err_t vazon_fan_module_evaluate(vazon_fan_module_t *module,
     if (module->output_failed) {
         module->snapshot.status = VAZON_FAN_STATUS_ERROR;
         module->snapshot.status_reason = VAZON_FAN_STATUS_REASON_OUTPUT_FAILED;
+    } else if (module->rotation_failed) {
+        module->snapshot.status = VAZON_FAN_STATUS_ERROR;
+        module->snapshot.status_reason =
+            VAZON_FAN_STATUS_REASON_CONFIRMATION_FAILED;
     }
     return ESP_OK;
 }
@@ -351,6 +356,26 @@ esp_err_t vazon_fan_module_report_output_result(vazon_fan_module_t *module,
                                                       : VAZON_FAN_OUTPUT_ON;
     module->snapshot.last_command_result = VAZON_COMMAND_RESULT_ACCEPTED;
     module->snapshot.last_output_confirmed = VAZON_TRISTATE_UNKNOWN;
+    return ESP_OK;
+}
+
+esp_err_t vazon_fan_module_report_rotation(vazon_fan_module_t *module,
+                                           int32_t rpm,
+                                           vazon_tristate_t confirmed)
+{
+    if (module == NULL || !module->initialized || rpm < VAZON_FAN_RPM_UNKNOWN ||
+        (confirmed != VAZON_TRISTATE_UNKNOWN &&
+         confirmed != VAZON_TRISTATE_FALSE &&
+         confirmed != VAZON_TRISTATE_TRUE)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (confirmed == VAZON_TRISTATE_TRUE && rpm <= 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    module->snapshot.rpm = rpm;
+    module->snapshot.last_output_confirmed = confirmed;
+    module->rotation_failed = confirmed == VAZON_TRISTATE_FALSE;
     return ESP_OK;
 }
 

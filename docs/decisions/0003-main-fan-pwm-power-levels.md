@@ -5,7 +5,7 @@ Date: 2026-07-17
 
 ## Decision
 
-The future main cabinet fan uses a four-wire 12 V interface with these
+The main cabinet fan uses a four-wire 12 V interface with these
 user-selectable PWM control levels:
 
 ```text
@@ -62,10 +62,15 @@ OFF immediately.
 Fan Module owns the selected power level and the start/ramp sequence. Output
 Driver applies the requested PWM duty and does not calculate Fan Module logic.
 
-The fan connector has four positions: GND, +12 V, tachometer, and PWM control.
-The tachometer is not used. The dedicated PWM GPIO and final electrical driver
-are deferred until the fan hardware is installed; they must not be inferred
-from the current GPIO13 switched-power output.
+The fan connector has four positions: GND, switched +12 V, tachometer, and PWM
+control. GPIO13 controls the switched +12 V master power output. GPIO25 drives
+the 25 kHz PWM control through an external inverting open-collector stage.
+GPIO34 reads the externally conditioned tachometer signal; the current fan
+interface uses two tachometer pulses per revolution.
 
-UI only selects and displays power levels. UI does not implement PWM timing or
-the start/ramp sequence.
+Master power is OFF whenever Fan Module requests OFF. For ON, Output Driver
+first presets the PWM request and then enables the switched +12 V output.
+Tachometer confirmation and RPM calculation belong to the controller, not UI.
+
+UI only selects and displays power levels, RPM, and confirmation state. UI does
+not implement PWM timing, tachometer evaluation, or the start/ramp sequence.

@@ -83,6 +83,7 @@ UI status panel may provide quick commands for `mode`, `runtime`, and
 ```text
 fan.output = on / off / unknown
 fan.applied_power_pct = 0..100 / unknown
+fan.rpm = non-negative integer / unknown
 fan.auto_state = off / running / pause / blocked / alert / unknown
 fan.status = ok / warning / error / unknown
 fan.status_reason
@@ -239,7 +240,9 @@ if power_level_pct changes while fan is already on:
 
 if fan.stop or a safety rule requests off:
     interrupt boost or ramp immediately
-    apply 0% PWM
+    switch GPIO13 master +12 V power off immediately
+    release the GPIO25 open-collector PWM output
+    report applied_power_pct = 0
     fan.output = off
 ```
 
@@ -287,10 +290,16 @@ confirmation_failed
 confirmation_unavailable
 ```
 
-The current PCB has no physical fan-output feedback. A PWM duty accepted by the
-future output driver may keep `fan.status = ok` while
-`last_output_confirmed = unknown`. Confirmation unavailability alone is not a
-warning or proof that the fan physically rotates.
+While fan output is ON, GPIO34 tachometer pulses provide rotation confirmation
+and RPM. The current interface uses two pulses per revolution. Absence of a
+tachometer pulse for one one-second sample does not raise an error. Three
+consecutive seconds without pulses after master power ON produce
+`last_output_confirmed = false`, `fan.status = error`, and
+`fan.status_reason = confirmation_failed`. A valid pulse sample clears that
+failure and sets `last_output_confirmed = true`.
+
+Tachometer confirmation cannot distinguish a missing fan, a stalled fan, a
+broken tachometer wire, or a failed tachometer output.
 
 `fan.output = off` does not mean that Fan Module is inactive. Normal user
 control keeps the module active so it continues to report status and accept
@@ -331,6 +340,10 @@ Fan Module follows Output Confirmation Policy.
 Module-specific retry parameters:
 retry_count = 3
 retry_delay_sec = 1
+
+tachometer_gpio = GPIO34
+tachometer_pulses_per_revolution = 2
+tachometer_sample_sec = 1
 ```
 
 ## 14. Forbidden
@@ -351,14 +364,23 @@ Fan Module does not define MQTT topic strings.
 Fan Module calculates output_request and requested_power_pct, including boost
 and ramp timing.
 
-Until the dedicated four-wire PWM control GPIO and output driver are assigned:
-    output_request = off -> current GPIO13 switched-power output LOW, applied_power_pct = 0
-    output_request = on  -> current GPIO13 switched-power output HIGH, applied_power_pct = 100
-    requested_power_pct continues to expose the calculated boost/ramp request
+GPIO13 applies switched +12 V master power.
+GPIO25 applies the requested 25 kHz PWM through an external inverting
+open-collector stage. Output Driver converts logical fan duty to the inverted
+GPIO duty; Fan Module remains unaware of electrical inversion.
+GPIO34 captures externally conditioned tachometer pulses.
 
-The module must not represent the binary GPIO HIGH fallback as an applied
-20..100% PWM level other than 100%.
+Current tachometer commissioning exception:
+    GPIO34 tachometer capture is disabled
+    RPM and physical rotation confirmation remain unknown
+    this exception is removed when a working tachometer source is available
 
-Command routing, final output retry handling, and physical application remain
-part of the later four-wire driver-integration step.
+output_request = off:
+    GPIO13 LOW before PWM changes
+    GPIO25 open-collector stage released
+    applied_power_pct = 0
+
+output_request = on:
+    requested PWM preset before GPIO13 HIGH
+    applied_power_pct follows requested_power_pct
 ```

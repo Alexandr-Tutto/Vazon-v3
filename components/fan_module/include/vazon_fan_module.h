@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #define VAZON_FAN_POWER_UNKNOWN (-1)
+#define VAZON_FAN_RPM_UNKNOWN (-1)
 #define VAZON_COMMAND_TARGET_FAN "fan"
 #define VAZON_COMMAND_FAN_SET_MODE "set_mode"
 #define VAZON_COMMAND_FAN_SET_RUNTIME "set_runtime"
@@ -66,6 +67,7 @@ typedef enum {
     VAZON_FAN_STATUS_REASON_CLIMATE_INVALID,
     VAZON_FAN_STATUS_REASON_DAY_WINDOW_UNKNOWN,
     VAZON_FAN_STATUS_REASON_OUTPUT_FAILED,
+    VAZON_FAN_STATUS_REASON_CONFIRMATION_FAILED,
 } vazon_fan_status_reason_t;
 
 typedef struct {
@@ -131,6 +133,7 @@ typedef struct {
     vazon_fan_output_t output_request;
     int16_t requested_power_pct;
     int16_t applied_power_pct;
+    int32_t rpm;
     vazon_fan_auto_state_t auto_state;
     vazon_fan_status_t status;
     vazon_fan_status_reason_t status_reason;
@@ -160,6 +163,7 @@ typedef struct {
     uint64_t timer_cycle_started_ms;
     bool requested_on;
     bool output_failed;
+    bool rotation_failed;
     vazon_fan_pwm_phase_t pwm_phase;
     uint64_t pwm_phase_started_ms;
     uint8_t pwm_ramp_start_pct;
@@ -178,6 +182,9 @@ esp_err_t vazon_fan_module_evaluate(vazon_fan_module_t *module,
 esp_err_t vazon_fan_module_report_output_result(vazon_fan_module_t *module,
                                                 uint8_t applied_power_pct,
                                                 esp_err_t driver_result);
+esp_err_t vazon_fan_module_report_rotation(vazon_fan_module_t *module,
+                                           int32_t rpm,
+                                           vazon_tristate_t confirmed);
 esp_err_t vazon_fan_module_register_command_target(
     vazon_fan_module_t *module, vazon_command_router_t *router);
 const vazon_fan_snapshot_t *vazon_fan_module_get_snapshot(

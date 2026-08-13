@@ -14,8 +14,14 @@ static const char *TAG = "gpio_outputs";
 #define HUMIDIFIER_MIST_PWM_CHANNEL    LEDC_CHANNEL_0
 #define HUMIDIFIER_MIST_PWM_RESOLUTION LEDC_TIMER_10_BIT
 #define HUMIDIFIER_MIST_PWM_MAX_DUTY   ((1U << 10U) - 1U)
+#define MAIN_FAN_PWM_MODE               LEDC_LOW_SPEED_MODE
+#define MAIN_FAN_PWM_TIMER              LEDC_TIMER_1
+#define MAIN_FAN_PWM_CHANNEL            LEDC_CHANNEL_1
+#define MAIN_FAN_PWM_RESOLUTION         LEDC_TIMER_10_BIT
+#define MAIN_FAN_PWM_MAX_DUTY           ((1U << 10U) - 1U)
 
 static bool humidifier_mist_pwm_initialized;
+static bool main_fan_pwm_initialized;
 static const gpio_num_t ACTUATOR_GPIOS[VAZON_GPIO_OUTPUT_COUNT] = {
     [VAZON_GPIO_OUTPUT_LIGHT] = VAZON_GPIO_LIGHT,
     [VAZON_GPIO_OUTPUT_MAIN_FAN] = VAZON_GPIO_MAIN_FAN,
@@ -34,6 +40,10 @@ esp_err_t vazon_gpio_outputs_init_safe_off(void)
             "Failed to preset GPIO%d to OFF",
             ACTUATOR_GPIOS[i]);
     }
+    actuator_pin_mask |= (1ULL << VAZON_GPIO_MAIN_FAN_PWM);
+    ESP_RETURN_ON_ERROR(gpio_set_level(VAZON_GPIO_MAIN_FAN_PWM,
+                                       VAZON_GPIO_LEVEL_LOW),
+                        TAG, "Failed to preset main fan PWM released");
 
     const gpio_config_t config = {
         .pin_bit_mask = actuator_pin_mask,
@@ -117,6 +127,76 @@ esp_err_t vazon_gpio_outputs_init_status_led_off(void)
     return ESP_OK;
 }
 
+esp_err_t vazon_gpio_outputs_init_main_fan_pwm(void)
+{
+    const ledc_timer_config_t timer = {
+        .speed_mode = MAIN_FAN_PWM_MODE,
+        .duty_resolution = MAIN_FAN_PWM_RESOLUTION,
+        .timer_num = MAIN_FAN_PWM_TIMER,
+        .freq_hz = VAZON_MAIN_FAN_PWM_FREQUENCY_HZ,
+        .clk_cfg = LEDC_AUTO_CLK,
+    };
+    ESP_RETURN_ON_ERROR(ledc_timer_config(&timer), TAG,
+                        "Failed to configure main fan PWM timer");
+
+    const ledc_channel_config_t channel = {
+        .gpio_num = VAZON_GPIO_MAIN_FAN_PWM,
+        .speed_mode = MAIN_FAN_PWM_MODE,
+        .channel = MAIN_FAN_PWM_CHANNEL,
+        .intr_type = LEDC_INTR_DISABLE,
+        .timer_sel = MAIN_FAN_PWM_TIMER,
+        .duty = 0,
+        .hpoint = 0,
+    };
+    ESP_RETURN_ON_ERROR(ledc_channel_config(&channel), TAG,
+                        "Failed to configure main fan PWM channel");
+    main_fan_pwm_initialized = true;
+    ESP_LOGI(TAG, "Main fan PWM initialized GPIO%d frequency=%uHz request=100%%",
+             VAZON_GPIO_MAIN_FAN_PWM, VAZON_MAIN_FAN_PWM_FREQUENCY_HZ);
+    ESP_LOGI(TAG, "Main fan master power enabled GPIO%d active=HIGH",
+             VAZON_GPIO_MAIN_FAN);
+    return ESP_OK;
+}
+
+static esp_err_t set_main_fan_pwm_duty(uint8_t requested_duty_pct)
+{
+    if (requested_duty_pct > 100U) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!main_fan_pwm_initialized) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    /* GPIO HIGH turns the external NPN on and pulls the fan PWM input LOW. */
+    const uint32_t transistor_duty_pct = 100U - requested_duty_pct;
+    const uint32_t duty =
+        (MAIN_FAN_PWM_MAX_DUTY * transistor_duty_pct + 50U) / 100U;
+    ESP_RETURN_ON_ERROR(
+        ledc_set_duty(MAIN_FAN_PWM_MODE, MAIN_FAN_PWM_CHANNEL, duty),
+        TAG, "Failed to set main fan PWM duty");
+    return ledc_update_duty(MAIN_FAN_PWM_MODE, MAIN_FAN_PWM_CHANNEL);
+}
+
+esp_err_t vazon_gpio_outputs_set_main_fan(bool power_on, uint8_t duty_pct)
+{
+    if (duty_pct > 100U || (power_on && duty_pct == 0U)) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    if (!power_on) {
+        ESP_RETURN_ON_ERROR(
+            gpio_set_level(VAZON_GPIO_MAIN_FAN,
+                           VAZON_OUTPUT_ACTIVE_HIGH_OFF_LEVEL),
+            TAG, "Failed to switch main fan power OFF");
+        return set_main_fan_pwm_duty(100U);
+    }
+
+    ESP_RETURN_ON_ERROR(set_main_fan_pwm_duty(duty_pct), TAG,
+                        "Failed to preset main fan PWM duty");
+    return gpio_set_level(VAZON_GPIO_MAIN_FAN,
+                          VAZON_OUTPUT_ACTIVE_HIGH_ON_LEVEL);
+}
+
 esp_err_t vazon_gpio_outputs_run_status_led_test(void)
 {
     ESP_RETURN_ON_ERROR(vazon_gpio_outputs_init_status_led_off(), TAG,
@@ -162,6 +242,9 @@ esp_err_t vazon_gpio_outputs_set(vazon_gpio_output_t output, bool on)
     if (output == VAZON_GPIO_OUTPUT_HUMIDIFIER_MIST &&
         humidifier_mist_pwm_initialized) {
         return vazon_gpio_outputs_set_humidifier_mist_duty(on ? 100U : 0U);
+    }
+    if (output == VAZON_GPIO_OUTPUT_MAIN_FAN && main_fan_pwm_initialized) {
+        return vazon_gpio_outputs_set_main_fan(on, on ? 100U : 0U);
     }
 
     return gpio_set_level(ACTUATOR_GPIOS[output],

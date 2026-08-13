@@ -37,6 +37,7 @@ function statusSummaryText(entity) {
     sht31_missing: '- датчик клімату не відповідає',
     sht31_stale: '- дані клімату застаріли',
     invalid_value: '- некоректне значення датчика',
+    confirmation_failed: '- обертання не підтверджено',
   };
   const statuses = {
     ok: '- норма',
@@ -120,6 +121,12 @@ function soilClassText(value) {
   };
 
   return labels[value] || value || 'невідомо';
+}
+
+function fanConfirmationText(value) {
+  if (value === 'true') return 'Підтверджено';
+  if (value === 'false') return 'Не підтверджено';
+  return '—';
 }
 
 function aggregatePotStatus(pots) {
@@ -224,6 +231,8 @@ function humidifierSummary(humidifier) {
 }
 
 export function createUiState(raw) {
+  const deviceOffline =
+    raw.system.global_context.connection.mqtt_state !== 'connected';
   const maintenance = raw.system.global_context.maintenance || {};
   const maintenanceActive = maintenance.active === true;
   const humidifierFanActive = raw.humidifier.fan_output === 'on'
@@ -233,19 +242,25 @@ export function createUiState(raw) {
     && raw.fan.settings.mode === 'manual'
     && raw.fan.auto_state === 'running'
     && raw.fan.output === 'on';
-  const system = {
+  const system = deviceOffline ? {
+    ...raw.system,
+    status: 'warning',
+    status_reason: 'device_offline',
+    affected_system: 'connection',
+    affected_system_label: getAffectedLabel('connection'),
+  } : {
     ...raw.system,
     affected_system_label: getAffectedLabel(raw.system.affected_system),
   };
 
   const climate = {
     top: {
-      temperature_c: valueOrUnknown(raw.climate.sensor_0x44.temperature_c, '°'),
-      humidity_pct: valueOrUnknown(raw.climate.sensor_0x44.humidity_pct, '%'),
+      temperature_c: deviceOffline ? '—' : valueOrUnknown(raw.climate.sensor_0x44.temperature_c, '°'),
+      humidity_pct: deviceOffline ? '—' : valueOrUnknown(raw.climate.sensor_0x44.humidity_pct, '%'),
     },
     bottom: {
-      temperature_c: valueOrUnknown(raw.climate.sensor_0x45.temperature_c, '°'),
-      humidity_pct: valueOrUnknown(raw.climate.sensor_0x45.humidity_pct, '%'),
+      temperature_c: deviceOffline ? '—' : valueOrUnknown(raw.climate.sensor_0x45.temperature_c, '°'),
+      humidity_pct: deviceOffline ? '—' : valueOrUnknown(raw.climate.sensor_0x45.humidity_pct, '%'),
     },
   };
 
@@ -282,7 +297,7 @@ export function createUiState(raw) {
       ? 'Увага'
       : (raw.fan.output === 'on' ? 'Працює' : 'Вимкнено'));
 
-  const tiles = [
+  const liveTiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.summary),
     tile('humidifier', 'Зволоження', humidifierStatus, humidifierTileSummary, !maintenanceActive && (raw.humidifier.mist_output === 'on' || humidifierFanActive)),
@@ -290,6 +305,11 @@ export function createUiState(raw) {
     tile('fan', 'Вентиляція', fanStatus, fanTileSummary, raw.fan.output === 'on'),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
+  const tiles = deviceOffline
+    ? liveTiles.map((item) => item.entity === 'connection'
+      ? tile('connection', 'Wi-Fi / звʼязок', 'warning', 'Пристрій недоступний')
+      : tile(item.entity, item.title, 'unknown', 'Дані неактуальні', false))
+    : liveTiles;
 
   const details = {
     climate: makeDetail('Клімат', raw.climate.status, statusSummaryText(raw.climate), 'Показано дві зони без усереднення.', [
@@ -328,6 +348,8 @@ export function createUiState(raw) {
       { label: 'Стратегія', value: strategyText(raw.fan.settings.auto_strategy) },
       { label: 'Інтенсивність', value: valueOrUnknown(raw.fan.settings.power_level_pct, '%') },
       { label: 'Поточна потужність', value: valueOrUnknown(raw.fan.applied_power_pct, '%') },
+      { label: 'Оберти', value: valueOrUnknown(raw.fan.rpm, ' об/хв') },
+      { label: 'Обертання', value: fanConfirmationText(raw.fan.last_output_confirmed) },
     ]),
 
     connection: makeDetail('Wi-Fi / звʼязок', raw.system.status, serverStateText(raw.system.global_context.connection.mqtt_state), '', [
@@ -340,6 +362,7 @@ export function createUiState(raw) {
     raw,
     system,
     climate,
+    deviceOffline,
     tiles,
     details,
     connectionLabel: `${wifiStateText(raw.system.global_context.connection.wifi_state)} / ${serverStateText(raw.system.global_context.connection.mqtt_state)}`,

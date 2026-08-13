@@ -148,6 +148,11 @@ if soil temperature is enabled and DS18B20 read valid:
     update soil_temperature.temperature_c
     update last_valid_temperature_read_time
 
+if a DS18B20 scratchpad read returns ESP_ERR_INVALID_CRC:
+    OneWire Service retries that sensor once without starting a new conversion
+    successful retry is treated as the current valid reading
+    failed retry is reported to Pot Module as the temporary read failure
+
 pot.status is derived from enabled child sensor statuses:
     any enabled child sensor error -> pot.status = error
     any enabled child sensor warning -> pot.status = warning

@@ -40,6 +40,7 @@ function setServerStatus(status) {
       ? `Сервер: підключено, контролер №${mqttConfig.serialNumber}`
       : `Сервер: підключено, контролер №${mqttConfig.serialNumber} не знайдено`,
     reconnecting: 'Сервер: відновлення звʼязку…',
+    'device-offline': `Сервер: підключено, контролер №${mqttConfig.serialNumber} недоступний`,
     offline: 'Сервер: немає звʼязку',
     error: 'Сервер: помилка підключення',
   };
@@ -49,6 +50,11 @@ function setServerStatus(status) {
 }
 
 function renderMainStatus(state) {
+  if (state.deviceOffline) {
+    elements.mainStatus.textContent = 'Пристрій не відповідає';
+    return;
+  }
+
   const maintenance = state.raw.system.global_context.maintenance;
 
   if (maintenance?.active === true) {
@@ -458,12 +464,21 @@ const mqttConnection = createMqttConnection(mqttConfig, {
       pendingSettingsTarget = null;
     }
     refreshFromDeviceStore();
-    setServerStatus('connected');
+    setServerStatus(
+      deviceStore.getState().system.global_context.connection.mqtt_state === 'connected'
+        ? 'connected'
+        : 'device-offline',
+    );
   },
 });
 
 function sendMqttCommand(event) {
   const deviceId = deviceStore.getDeviceId();
+  if (deviceStore.getState().system.global_context.connection.mqtt_state !==
+      'connected') {
+    setServerStatus('device-offline');
+    return;
+  }
   if (!deviceId) {
     setServerStatus('connected');
     return;

@@ -19,11 +19,13 @@ typedef enum {
 } vazon_gpio_output_t;
 
 esp_err_t vazon_gpio_outputs_init_safe_off(void);
+esp_err_t vazon_gpio_outputs_init_main_fan_pwm(void);
 esp_err_t vazon_gpio_outputs_init_humidifier_mist_pwm(void);
 esp_err_t vazon_gpio_outputs_init_status_led_off(void);
 esp_err_t vazon_gpio_outputs_run_status_led_test(void);
 esp_err_t vazon_gpio_outputs_set_status_led(bool green_on, bool red_on);
 esp_err_t vazon_gpio_outputs_set(vazon_gpio_output_t output, bool on);
+esp_err_t vazon_gpio_outputs_set_main_fan(bool power_on, uint8_t duty_pct);
 esp_err_t vazon_gpio_outputs_set_humidifier_mist_duty(uint8_t duty_pct);
 bool vazon_gpio_outputs_is_actuator_gpio(int gpio);
 esp_err_t vazon_gpio_outputs_set_raw(gpio_num_t gpio, int level);

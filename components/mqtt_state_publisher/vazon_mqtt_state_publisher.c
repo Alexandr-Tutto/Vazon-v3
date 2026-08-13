@@ -307,6 +307,7 @@ static const char *fan_reason_text(vazon_fan_status_reason_t value)
     case VAZON_FAN_STATUS_REASON_CLIMATE_INVALID: return "climate_invalid";
     case VAZON_FAN_STATUS_REASON_DAY_WINDOW_UNKNOWN: return "day_window_unknown";
     case VAZON_FAN_STATUS_REASON_OUTPUT_FAILED: return "output_failed";
+    case VAZON_FAN_STATUS_REASON_CONFIRMATION_FAILED: return "confirmation_failed";
     case VAZON_FAN_STATUS_REASON_NONE:
     default: return NULL;
     }
@@ -692,12 +693,18 @@ static esp_err_t publish_fan(vazon_mqtt_state_publisher_t *publisher,
         (void)snprintf(applied_power, sizeof(applied_power), "%d",
                        snapshot->applied_power_pct);
     }
+    char rpm[16];
+    if (snapshot->rpm == VAZON_FAN_RPM_UNKNOWN) {
+        (void)snprintf(rpm, sizeof(rpm), "null");
+    } else {
+        (void)snprintf(rpm, sizeof(rpm), "%ld", (long)snapshot->rpm);
+    }
 
     char payload[MQTT_STATE_PAYLOAD_SIZE];
     int written = snprintf(
         payload, sizeof(payload),
-        "{\"output\":\"%s\",\"applied_power_pct\":%s,\"auto_state\":\"%s\",\"last_command_result\":\"%s\",\"last_output_confirmed\":\"%s\"}",
-        fan_output_text(snapshot->output), applied_power,
+        "{\"output\":\"%s\",\"applied_power_pct\":%s,\"rpm\":%s,\"auto_state\":\"%s\",\"last_command_result\":\"%s\",\"last_output_confirmed\":\"%s\"}",
+        fan_output_text(snapshot->output), applied_power, rpm,
         fan_auto_state_text(snapshot->auto_state),
         command_result_text(snapshot->last_command_result),
         output_confirmation_text(snapshot->last_output_confirmed));
