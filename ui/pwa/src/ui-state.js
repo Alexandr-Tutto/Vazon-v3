@@ -235,13 +235,15 @@ export function createUiState(raw) {
     raw.system.global_context.connection.mqtt_state !== 'connected';
   const maintenance = raw.system.global_context.maintenance || {};
   const maintenanceActive = maintenance.active === true;
+  const fanActive = raw.fan.output === 'on'
+    || Number(raw.fan.applied_power_pct) > 0;
   const humidifierFanActive = raw.humidifier.fan_output === 'on'
     || raw.humidifier.fan_output === 'post_run';
   const fanDoorServiceRun = maintenanceActive
     && raw.door.state === 'open'
     && raw.fan.settings.mode === 'manual'
     && raw.fan.auto_state === 'running'
-    && raw.fan.output === 'on';
+    && fanActive;
   const system = deviceOffline ? {
     ...raw.system,
     status: 'warning',
@@ -295,14 +297,14 @@ export function createUiState(raw) {
     ? (fanDoorServiceRun ? 'Працює вручну' : 'Заблоковано')
     : (raw.fan.status_reason
       ? 'Увага'
-      : (raw.fan.output === 'on' ? 'Працює' : 'Вимкнено'));
+      : (fanActive ? 'Працює' : 'Вимкнено'));
 
   const liveTiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
     tile('pot', 'Ґрунт', potAggregate.status, potAggregate.summary),
     tile('humidifier', 'Зволоження', humidifierStatus, humidifierTileSummary, !maintenanceActive && (raw.humidifier.mist_output === 'on' || humidifierFanActive)),
     tile('light', 'Світло', lightStatus, lightTileSummary, raw.light.output === 'on'),
-    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, raw.fan.output === 'on'),
+    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, fanActive),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
   const tiles = deviceOffline

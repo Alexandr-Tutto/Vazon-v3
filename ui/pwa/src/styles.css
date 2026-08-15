@@ -171,7 +171,9 @@ button {
 }
 
 .status-tile.is-running .fan-blades {
-  transform-origin: 32px 32px;
+  transform-box: view-box;
+  transform-origin: center;
+  will-change: transform;
   animation: fanSpin 0.9s linear infinite;
 }
 
@@ -185,6 +187,7 @@ button {
 }
 
 @keyframes fanSpin {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
@@ -554,11 +557,7 @@ input[name="time_off"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  html {
     scroll-behavior: auto !important;
   }
 }
