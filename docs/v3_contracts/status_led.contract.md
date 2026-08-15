@@ -103,6 +103,11 @@ short blink, long pause       - 200 ms ON, 1800 ms OFF
 red/green alternate blink     - 500 ms green, 500 ms red
 ```
 
+Normal-runtime LED timing runs from a dedicated periodic task using monotonic
+time. Sensor reads, transport work, logging, and the main runtime mutex must not
+gate blink-edge evaluation. This keeps the physical health indication cadence
+stable even while other runtime work is delayed.
+
 When `system.status` is still `unknown` and neither offline state is known,
 both LED channels stay OFF. This avoids displaying a false normal state during
 startup.

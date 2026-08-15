@@ -79,6 +79,9 @@ sht31_stale_timeout_sec = 300
 
 temperature_delta_warn = 5
 temperature_delta_error = 10
+
+rh_offset_0x44_pct = -20..20; field-trial default = +5
+rh_offset_0x45_pct = -20..20; field-trial default = +5
 ```
 
 ## 8. State
@@ -128,6 +131,8 @@ if humidity out of warning range:
     climate.status = warning
 
 calculate:
+    sensor_0x44_rh = clamp(raw_sensor_0x44_rh + rh_offset_0x44_pct, 0, 100)
+    sensor_0x45_rh = clamp(raw_sensor_0x45_rh + rh_offset_0x45_pct, 0, 100)
     rh_delta_pct = abs(sensor_0x44_rh - sensor_0x45_rh)
     temperature_delta_c = abs(sensor_0x44_temp - sensor_0x45_temp)
 
@@ -151,6 +156,8 @@ hysteresis settings to the same value.
 The two SHT31 sensors are independent sensors.
 In this project they are logically used as two air zones.
 Physical placement labels are installation/UI metadata, not a climate logic rule.
+Relative-humidity calibration is an additive percentage-point offset owned by
+Climate Module. The I2C service retains the uncalibrated factory conversion.
 
 Main UI must show both sensors/zones.
 Do not collapse sensors into one averaged value.

@@ -50,6 +50,8 @@ typedef struct {
     uint32_t sht31_stale_timeout_sec;
     float temperature_delta_warn;
     float temperature_delta_error;
+    float rh_offset_0x44_pct;
+    float rh_offset_0x45_pct;
 } vazon_climate_settings_t;
 
 typedef struct {
@@ -67,6 +69,10 @@ typedef struct {
     float temperature_delta_warn;
     bool has_temperature_delta_error;
     float temperature_delta_error;
+    bool has_rh_offset_0x44_pct;
+    float rh_offset_0x44_pct;
+    bool has_rh_offset_0x45_pct;
+    float rh_offset_0x45_pct;
 } vazon_climate_settings_patch_t;
 
 typedef struct {

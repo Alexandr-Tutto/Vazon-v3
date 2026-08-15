@@ -42,7 +42,17 @@ export const mockState = {
     temperature_delta_c: 5.7,
     status: 'warning',
     status_reason: 'temperature_delta_high',
-    settings: {},
+    settings: {
+      temperature_low_warn: 18,
+      temperature_high_warn: 35,
+      humidity_low_warn: 20,
+      humidity_high_warn: 95,
+      sht31_stale_timeout_sec: 300,
+      temperature_delta_warn: 5,
+      temperature_delta_error: 10,
+      rh_offset_0x44_pct: 5,
+      rh_offset_0x45_pct: 5,
+    },
   },
 
   pot: [

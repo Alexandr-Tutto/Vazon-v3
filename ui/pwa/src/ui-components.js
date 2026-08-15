@@ -374,6 +374,9 @@ export function renderCard(card) {
 
   if (card.sections) {
     card.sections.forEach((section) => article.append(renderSection(section)));
+    if (card.controls) {
+      article.append(renderControlRow(card.controls, card.controlClass));
+    }
   } else if (card.fields) {
     const fieldWrap = document.createElement('div');
     fieldWrap.className = 'value-pair';

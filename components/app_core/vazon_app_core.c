@@ -59,6 +59,8 @@ static const char *TAG = "app_core";
 #define DAY_WINDOW_POLL_MS         1000U
 #define SETTINGS_TASK_STACK        3072U
 #define SETTINGS_POLL_MS           1000U
+#define STATUS_LED_TASK_STACK      2048U
+#define STATUS_LED_POLL_MS         20U
 #define CLOCK_VALID_YEAR           2020
 #define PROVISIONING_CHECK_MS       5000U
 #define PROVISIONING_HOLD_MS        5000U
@@ -84,9 +86,21 @@ static vazon_mqtt_command_queue_t mqtt_command_queue;
 static vazon_mqtt_state_publisher_t mqtt_state_publisher;
 static vazon_ota_service_t ota_service;
 static SemaphoreHandle_t runtime_mutex;
+static SemaphoreHandle_t status_led_inputs_mutex;
 static uint64_t next_climate_read_ms;
 static bool sntp_started;
 static uint8_t humidifier_mist_applied_duty_pct;
+
+typedef struct {
+    bool valid;
+    bool maintenance_door_active;
+    vazon_system_status_snapshot_t system_status;
+    vazon_connection_state_t wifi_state;
+    vazon_connection_state_t mqtt_state;
+} status_led_runtime_inputs_t;
+
+/* Keeps the LED cadence independent from runtime I/O under runtime_mutex. */
+static status_led_runtime_inputs_t status_led_runtime_inputs;
 #if VAZON_MAIN_FAN_TACH_ENABLED
 static bool fan_tach_tracking;
 static uint64_t fan_tach_sample_started_ms;
@@ -1279,6 +1293,65 @@ static const char *status_led_pattern_text(vazon_status_led_pattern_t pattern)
     }
 }
 
+static void update_status_led_runtime_inputs(
+    const vazon_system_status_snapshot_t *system_snapshot,
+    const vazon_global_context_t *global_context)
+{
+    xSemaphoreTake(status_led_inputs_mutex, portMAX_DELAY);
+    status_led_runtime_inputs.system_status = *system_snapshot;
+    status_led_runtime_inputs.maintenance_door_active =
+        global_context->maintenance.door_active;
+    status_led_runtime_inputs.wifi_state =
+        global_context->connection.wifi_state;
+    status_led_runtime_inputs.mqtt_state =
+        global_context->connection.mqtt_state;
+    status_led_runtime_inputs.valid = true;
+    xSemaphoreGive(status_led_inputs_mutex);
+}
+
+static void status_led_runtime_task(void *context)
+{
+    (void)context;
+    TickType_t last_wake_time = xTaskGetTickCount();
+
+    while (true) {
+        status_led_runtime_inputs_t current = {0};
+        xSemaphoreTake(status_led_inputs_mutex, portMAX_DELAY);
+        current = status_led_runtime_inputs;
+        xSemaphoreGive(status_led_inputs_mutex);
+
+        if (current.valid) {
+            const vazon_status_led_inputs_t inputs = {
+                .provisioning_active = false,
+                .maintenance_door_active = current.maintenance_door_active,
+                .system_status = &current.system_status,
+                .wifi_state = current.wifi_state,
+                .mqtt_state = current.mqtt_state,
+            };
+            const vazon_status_led_pattern_t previous_pattern =
+                vazon_status_led_get_snapshot(&status_led)->pattern;
+            const uint64_t now_ms =
+                (uint64_t)(esp_timer_get_time() / 1000);
+            const esp_err_t result =
+                vazon_status_led_evaluate(&status_led, &inputs, now_ms);
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Status LED update failed: %s",
+                         esp_err_to_name(result));
+            } else {
+                const vazon_status_led_pattern_t current_pattern =
+                    vazon_status_led_get_snapshot(&status_led)->pattern;
+                if (current_pattern != previous_pattern) {
+                    ESP_LOGI(TAG, "Status LED pattern=%s",
+                             status_led_pattern_text(current_pattern));
+                }
+            }
+        }
+
+        vTaskDelayUntil(&last_wake_time,
+                        pdMS_TO_TICKS(STATUS_LED_POLL_MS));
+    }
+}
+
 static void update_system_status_and_log(vazon_door_state_t door_state,
                                          bool door_fault,
                                          uint64_t now_ms)
@@ -1346,28 +1419,7 @@ static void update_system_status_and_log(vazon_door_state_t door_state,
 
     const vazon_global_context_t *global_context =
         vazon_runtime_core_get_context(&runtime_core);
-    const vazon_status_led_inputs_t led_inputs = {
-        .provisioning_active = false,
-        .maintenance_door_active = global_context->maintenance.door_active,
-        .system_status = &current,
-        .wifi_state = global_context->connection.wifi_state,
-        .mqtt_state = global_context->connection.mqtt_state,
-    };
-    const vazon_status_led_pattern_t previous_led_pattern =
-        vazon_status_led_get_snapshot(&status_led)->pattern;
-    const esp_err_t led_result =
-        vazon_status_led_evaluate(&status_led, &led_inputs, now_ms);
-    if (led_result != ESP_OK) {
-        ESP_LOGE(TAG, "Status LED update failed: %s",
-                 esp_err_to_name(led_result));
-    } else {
-        const vazon_status_led_pattern_t current_led_pattern =
-            vazon_status_led_get_snapshot(&status_led)->pattern;
-        if (current_led_pattern != previous_led_pattern) {
-            ESP_LOGI(TAG, "Status LED pattern=%s",
-                     status_led_pattern_text(current_led_pattern));
-        }
-    }
+    update_status_led_runtime_inputs(&current, global_context);
 
     if (current.status != previous.status ||
         current.status_reason != previous.status_reason ||
@@ -1585,6 +1637,8 @@ void vazon_app_core_init(void)
 
     runtime_mutex = xSemaphoreCreateMutex();
     ESP_ERROR_CHECK(runtime_mutex != NULL ? ESP_OK : ESP_ERR_NO_MEM);
+    status_led_inputs_mutex = xSemaphoreCreateMutex();
+    ESP_ERROR_CHECK(status_led_inputs_mutex != NULL ? ESP_OK : ESP_ERR_NO_MEM);
 
     vazon_persisted_settings_t stored_settings;
     const esp_err_t settings_load_result =
@@ -1635,6 +1689,8 @@ void vazon_app_core_init(void)
         .sht31_stale_timeout_sec = 300U,
         .temperature_delta_warn = 5.0f,
         .temperature_delta_error = 10.0f,
+        .rh_offset_0x44_pct = 5.0f,
+        .rh_offset_0x45_pct = 5.0f,
     };
     esp_err_t module_init_result = vazon_climate_module_init(
         &climate_module,
@@ -1835,6 +1891,12 @@ void vazon_app_core_init(void)
         .unstable_timeout_ms = DOOR_UNSTABLE_TIMEOUT_MS,
     };
     ESP_ERROR_CHECK(vazon_door_module_init(&door_module, &door_config));
+    ESP_ERROR_CHECK(xTaskCreate(status_led_runtime_task,
+                                "status_led",
+                                STATUS_LED_TASK_STACK,
+                                NULL, 5, NULL) == pdPASS
+                        ? ESP_OK
+                        : ESP_ERR_NO_MEM);
     ESP_ERROR_CHECK(xTaskCreate(door_runtime_task, "door_runtime", 4096, &door_module, 5,
                                 NULL) == pdPASS
                         ? ESP_OK

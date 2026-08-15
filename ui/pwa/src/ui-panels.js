@@ -529,10 +529,17 @@ function getFunctionSettingsCards(entity, uiState) {
               { label: 'Критичне попередження', name: 'temperature_delta_error', value: raw.climate.settings.temperature_delta_error, unit: '°C', step: 1 },
             ],
           },
+          {
+            label: 'Калібрування вологості',
+            fields: [
+              { label: 'Поправка верхнього датчика', name: 'rh_offset_0x44_pct', value: raw.climate.settings.rh_offset_0x44_pct, unit: '%', min: -20, max: 20, step: 0.5 },
+              { label: 'Поправка нижнього датчика', name: 'rh_offset_0x45_pct', value: raw.climate.settings.rh_offset_0x45_pct, unit: '%', min: -20, max: 20, step: 0.5 },
+            ],
+          },
         ],
+        controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')],
         wide: true,
       },
-      { bare: true, controls: [getUiAction('climate.thresholds.edit'), getUiAction('navigation.close')] },
     ];
   }
 

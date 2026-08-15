@@ -17,7 +17,13 @@ static bool settings_valid(const vazon_climate_settings_t *settings)
            isfinite(settings->temperature_delta_warn) &&
            isfinite(settings->temperature_delta_error) &&
            settings->temperature_delta_warn >= 0.0f &&
-           settings->temperature_delta_warn < settings->temperature_delta_error;
+           settings->temperature_delta_warn < settings->temperature_delta_error &&
+           isfinite(settings->rh_offset_0x44_pct) &&
+           settings->rh_offset_0x44_pct >= -20.0f &&
+           settings->rh_offset_0x44_pct <= 20.0f &&
+           isfinite(settings->rh_offset_0x45_pct) &&
+           settings->rh_offset_0x45_pct >= -20.0f &&
+           settings->rh_offset_0x45_pct <= 20.0f;
 }
 
 static int sensor_index(uint8_t address)
@@ -80,7 +86,10 @@ esp_err_t vazon_climate_module_record_sensor(vazon_climate_module_t *module,
 
     runtime->invalid_value = false;
     sensor->temperature_c = temperature_c;
-    sensor->humidity_pct = humidity_pct;
+    const float offset = index == 0
+                             ? module->snapshot.settings.rh_offset_0x44_pct
+                             : module->snapshot.settings.rh_offset_0x45_pct;
+    sensor->humidity_pct = fminf(100.0f, fmaxf(0.0f, humidity_pct + offset));
     sensor->has_valid_sample = true;
     sensor->last_valid_sample_ms = now_ms;
     return ESP_OK;
@@ -234,6 +243,12 @@ esp_err_t vazon_climate_module_set_settings(
     }
     if (patch->has_temperature_delta_error) {
         candidate.temperature_delta_error = patch->temperature_delta_error;
+    }
+    if (patch->has_rh_offset_0x44_pct) {
+        candidate.rh_offset_0x44_pct = patch->rh_offset_0x44_pct;
+    }
+    if (patch->has_rh_offset_0x45_pct) {
+        candidate.rh_offset_0x45_pct = patch->rh_offset_0x45_pct;
     }
     if (!settings_valid(&candidate)) return ESP_ERR_INVALID_ARG;
     module->snapshot.settings = candidate;

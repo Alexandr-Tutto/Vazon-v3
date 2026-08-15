@@ -259,6 +259,9 @@ UI code:
 | `temperature_delta_warn` | Жовте попередження |
 | `temperature_delta_error` | Критичне попередження |
 | `temperature_delta settings group` | Аномальна різниця температур |
+| `rh_offset_0x44_pct` | Поправка верхнього датчика |
+| `rh_offset_0x45_pct` | Поправка нижнього датчика |
+| `RH offset settings group` | Калібрування вологості |
 
 ### Pot / soil labels
 

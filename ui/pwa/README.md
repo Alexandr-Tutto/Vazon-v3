@@ -24,6 +24,7 @@ Secure MQTT WebSocket connection
 MQTT command publishing
 OTA check/install commands and controller status display
 Persistent controller-settings editing through MQTT commands
+Independent SHT31 relative-humidity calibration-offset editing
 UI action registry
 Menu rendering helpers
 PWA manifest

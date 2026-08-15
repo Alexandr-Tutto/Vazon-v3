@@ -545,14 +545,16 @@ static esp_err_t publish_climate(vazon_mqtt_state_publisher_t *publisher,
     const vazon_climate_settings_t *settings = &snapshot->settings;
     written = snprintf(
         payload, sizeof(payload),
-        "{\"temperature_low_warn\":%.2f,\"temperature_high_warn\":%.2f,\"humidity_low_warn\":%.2f,\"humidity_high_warn\":%.2f,\"sht31_stale_timeout_sec\":%lu,\"temperature_delta_warn\":%.2f,\"temperature_delta_error\":%.2f}",
+        "{\"temperature_low_warn\":%.2f,\"temperature_high_warn\":%.2f,\"humidity_low_warn\":%.2f,\"humidity_high_warn\":%.2f,\"sht31_stale_timeout_sec\":%lu,\"temperature_delta_warn\":%.2f,\"temperature_delta_error\":%.2f,\"rh_offset_0x44_pct\":%.2f,\"rh_offset_0x45_pct\":%.2f}",
         (double)settings->temperature_low_warn,
         (double)settings->temperature_high_warn,
         (double)settings->humidity_low_warn,
         (double)settings->humidity_high_warn,
         (unsigned long)settings->sht31_stale_timeout_sec,
         (double)settings->temperature_delta_warn,
-        (double)settings->temperature_delta_error);
+        (double)settings->temperature_delta_error,
+        (double)settings->rh_offset_0x44_pct,
+        (double)settings->rh_offset_0x45_pct);
     if (written < 0 || (size_t)written >= sizeof(payload)) return ESP_ERR_INVALID_SIZE;
     return publish_payload(publisher, TOPIC_CLIMATE_SETTINGS,
                            "settings", "climate", payload, force);

@@ -415,7 +415,9 @@ static esp_err_t decode_climate(const char *cmd, const cJSON *args,
         !optional_float(args, "humidity_high_warn", &p->has_humidity_high_warn, &p->humidity_high_warn, &count) ||
         !optional_u32(args, "sht31_stale_timeout_sec", &p->has_sht31_stale_timeout_sec, &p->sht31_stale_timeout_sec, &count) ||
         !optional_float(args, "temperature_delta_warn", &p->has_temperature_delta_warn, &p->temperature_delta_warn, &count) ||
-        !optional_float(args, "temperature_delta_error", &p->has_temperature_delta_error, &p->temperature_delta_error, &count)) return ESP_ERR_INVALID_ARG;
+        !optional_float(args, "temperature_delta_error", &p->has_temperature_delta_error, &p->temperature_delta_error, &count) ||
+        !optional_float(args, "rh_offset_0x44_pct", &p->has_rh_offset_0x44_pct, &p->rh_offset_0x44_pct, &count) ||
+        !optional_float(args, "rh_offset_0x45_pct", &p->has_rh_offset_0x45_pct, &p->rh_offset_0x45_pct, &count)) return ESP_ERR_INVALID_ARG;
     if (count == 0 || count != cJSON_GetArraySize(args)) return ESP_ERR_INVALID_ARG;
     *decoded = p;
     return ESP_OK;

@@ -36,8 +36,11 @@ MQTT topic registry: active minimal boundary
 Software architecture: active ownership/boundary reference
 Migration rules: active old-repo reference boundary
 Firmware implementation: integrated runtime active on PCB v1.0 unit 02
+Deployed field-trial firmware: 0.1.10
 Local module implementation: active
-Settings persistence implementation: reboot and OTA verified
+Settings persistence implementation: schema v2; schema-v1 migration, reboot, and OTA verified
+SHT31 field calibration: independent additive RH offsets active; device 02 initial value +5 %RH for both sensors
+Status LED timing: independent periodic runtime task active
 Remaining hardware confirmations: main-fan tachometer feedback and optional humidifier output-presence feedback
 Soil-moisture field calibration: pending installation with substrate
 ```

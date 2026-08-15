@@ -357,6 +357,28 @@ function normalizeHumidifierSettingsArgs(args) {
   return normalized;
 }
 
+function normalizeClimateSettingsArgs(args) {
+  const normalized = { ...args };
+
+  [
+    'temperature_low_warn',
+    'temperature_high_warn',
+    'humidity_low_warn',
+    'humidity_high_warn',
+    'temperature_delta_warn',
+    'temperature_delta_error',
+    'rh_offset_0x44_pct',
+    'rh_offset_0x45_pct',
+  ].forEach((field) => {
+    if (!(field in normalized)) return;
+
+    const value = Number(String(normalized[field]).replace(',', '.'));
+    if (Number.isFinite(value)) normalized[field] = value;
+  });
+
+  return normalized;
+}
+
 function buildCommandPayload(actionButton) {
   const target = actionButton.dataset.commandTarget;
   const cmd = actionButton.dataset.commandName;
@@ -371,6 +393,9 @@ function buildCommandPayload(actionButton) {
 
   if (target === 'fan' && cmd === 'set_settings') {
     args = normalizeFanSettingsArgs(args);
+  }
+  if (target === 'climate' && cmd === 'set_settings') {
+    args = normalizeClimateSettingsArgs(args);
   }
   if (target === 'humidifier' && cmd === 'set_settings') {
     args = normalizeHumidifierSettingsArgs(args);

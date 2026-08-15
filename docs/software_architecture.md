@@ -195,6 +195,8 @@ Services without a separate functional contract are owned here:
 Settings Store
     persists only owner-defined settings and pot calibration in a versioned,
     CRC-validated NVS blob separate from connection configuration
+    current schema version 2 migrates valid schema-version-1 settings without
+    losing existing module, schedule, or calibration values
     does not persist transient state, active runs, or timers
 
 OTA Service
