@@ -129,12 +129,24 @@ button {
 .status-tile.is-warn { border-color: var(--warn); }
 .status-tile.is-error { border-color: var(--err); }
 .status-tile.is-unknown { border-color: var(--unknown); }
-.status-tile.is-inactive { border-color: var(--unknown); }
+.status-tile.is-inactive {
+  border-color: #c3cbc7;
+  background: #eef1ef;
+  box-shadow: none;
+  color: #8e9893;
+  filter: grayscale(1) saturate(0.15);
+  opacity: 0.58;
+}
 
-.status-tile.is-unknown .status-icon,
-.status-tile.is-unknown .wifi-bars,
+.status-tile.is-inactive .tile-title,
+.status-tile.is-inactive .tile-state,
 .status-tile.is-inactive .status-icon,
 .status-tile.is-inactive .wifi-bars {
+  color: #7f8984;
+}
+
+.status-tile.is-unknown .status-icon,
+.status-tile.is-unknown .wifi-bars {
   color: var(--unknown);
 }
 

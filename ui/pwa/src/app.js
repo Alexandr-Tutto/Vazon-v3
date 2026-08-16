@@ -19,7 +19,7 @@ function currentUiState() {
 let uiState = currentUiState();
 let currentView = null;
 let settingsDraftDirty = false;
-let pendingSettingsTarget = null;
+let pendingSettingsRequest = null;
 
 const elements = {
   mainStatus: document.getElementById('mainStatus'),
@@ -209,7 +209,7 @@ function refreshOpenView() {
 function closePanel() {
   currentView = null;
   settingsDraftDirty = false;
-  pendingSettingsTarget = null;
+  pendingSettingsRequest = null;
   document.body.classList.remove('has-panel');
 }
 
@@ -275,6 +275,8 @@ function toggleMaintenanceMode(actionButton) {
 
 function markSettingsDraftDirty(event) {
   if (currentView && isTextInput(event.target)) {
+    event.target.setCustomValidity('');
+    normalizeDayWindowInput(event.target);
     settingsDraftDirty = true;
   }
 }
@@ -357,6 +359,49 @@ function normalizeHumidifierSettingsArgs(args) {
   return normalized;
 }
 
+function normalizeTimeText(value) {
+  const match = /^(\d{2})\D(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  if (Number(match[1]) > 23 || Number(match[2]) > 59) return null;
+  return `${match[1]}:${match[2]}`;
+}
+
+function normalizeDayWindowInput(input) {
+  if (!['time_on', 'time_off'].includes(input.name)) return;
+
+  const normalized = normalizeTimeText(input.value);
+  if (normalized !== null) input.value = normalized;
+}
+
+function validateActionFields(actionButton) {
+  const scope = actionButton.closest('.card-section') || actionButton.closest('.panel-card');
+  if (!scope) return true;
+
+  const target = actionButton.dataset.commandTarget;
+  const cmd = actionButton.dataset.commandName;
+  const inputs = Array.from(scope.querySelectorAll('input[name]'));
+
+  for (const input of inputs) {
+    input.setCustomValidity('');
+    if (target === 'system' && cmd === 'set_day_window' &&
+        ['time_on', 'time_off'].includes(input.name)) {
+      const normalized = normalizeTimeText(input.value);
+      if (normalized === null) {
+        input.setCustomValidity('Вкажіть коректний час у форматі ГГ:ХХ; розділювач може бути будь-яким');
+      } else {
+        input.value = normalized;
+      }
+    }
+    if (!input.checkValidity()) {
+      input.reportValidity();
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function normalizeClimateSettingsArgs(args) {
   const normalized = { ...args };
 
@@ -408,11 +453,32 @@ function buildCommandPayload(actionButton) {
   };
 }
 
+function isUnchangedDayWindowCommand(payload) {
+  if (payload.target !== 'system' || payload.cmd !== 'set_day_window') {
+    return false;
+  }
+
+  const confirmed = deviceStore.getState().system.global_context.day_window;
+  return Object.entries(payload.args)
+    .every(([key, value]) => key in confirmed && String(confirmed[key]) === String(value));
+}
+
 function emitCommand(actionButton) {
+  if (!validateActionFields(actionButton)) {
+    return null;
+  }
+
   const payload = buildCommandPayload(actionButton);
 
   if (!payload.target || !payload.cmd) {
-    return false;
+    return null;
+  }
+
+  if (isUnchangedDayWindowCommand(payload)) {
+    settingsDraftDirty = false;
+    pendingSettingsRequest = null;
+    refreshFromDeviceStore();
+    return null;
   }
 
   elements.detailBody.dispatchEvent(new CustomEvent('vazon-command', {
@@ -420,7 +486,7 @@ function emitCommand(actionButton) {
     detail: payload,
   }));
 
-  return true;
+  return payload;
 }
 
 function handlePanelClick(event) {
@@ -454,11 +520,24 @@ function handlePanelClick(event) {
     return;
   }
 
-  const commandSent = emitCommand(actionButton);
-  if (commandSent && actionReadsFieldArgs(actionButton)) {
+  const commandPayload = emitCommand(actionButton);
+  if (commandPayload && actionReadsFieldArgs(actionButton)) {
     settingsDraftDirty = true;
-    pendingSettingsTarget = actionButton.dataset.commandTarget;
+    pendingSettingsRequest = {
+      target: commandPayload.target,
+      cmd: commandPayload.cmd,
+      expectedArgs: commandPayload.args,
+    };
   }
+}
+
+function settingsPayloadMatchesPending(payload) {
+  if (!pendingSettingsRequest || !payload || typeof payload !== 'object') {
+    return false;
+  }
+
+  return Object.entries(pendingSettingsRequest.expectedArgs)
+    .every(([key, value]) => key in payload && String(payload[key]) === String(value));
 }
 
 function registerServiceWorker() {
@@ -482,11 +561,18 @@ const mqttConnection = createMqttConnection(mqttConfig, {
   onMessage: ({ topic, payload }) => {
     if (!deviceStore.applyMessage(topic, payload)) return;
     const parsed = parseVazonTopic(topic, mqttConfig.topicRoot);
-    if (settingsDraftDirty && pendingSettingsTarget &&
+    if (settingsDraftDirty && pendingSettingsRequest &&
         parsed?.topicClass === 'settings' &&
-        parsed.entity === pendingSettingsTarget) {
+        parsed.entity === pendingSettingsRequest.target &&
+        settingsPayloadMatchesPending(payload)) {
       settingsDraftDirty = false;
-      pendingSettingsTarget = null;
+      pendingSettingsRequest = null;
+    } else if (settingsDraftDirty && pendingSettingsRequest &&
+               ['reject', 'fail'].includes(parsed?.topicClass) &&
+               payload?.target === pendingSettingsRequest.target &&
+               payload?.cmd === pendingSettingsRequest.cmd) {
+      settingsDraftDirty = false;
+      pendingSettingsRequest = null;
     }
     refreshFromDeviceStore();
     setServerStatus(

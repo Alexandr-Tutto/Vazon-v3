@@ -256,7 +256,7 @@ const actionRegistry = {
     command: { target: 'light', cmd: 'set_manual_state', args: { manual_state: 'off' } },
   },
   'system.day_window.edit': {
-    label: 'Змінити',
+    label: 'Зберегти графік',
     command: { target: 'system', cmd: 'set_day_window', args: {} },
   },
 

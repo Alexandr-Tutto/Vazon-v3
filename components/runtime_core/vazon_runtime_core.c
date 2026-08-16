@@ -135,11 +135,12 @@ esp_err_t vazon_runtime_core_set_day_window(vazon_runtime_core_t *core,
         memcpy(candidate.time_off, patch->time_off, VAZON_RUNTIME_TIME_TEXT_SIZE);
     }
 
+    /* Keep the last evaluated state until the runtime clock task evaluates the
+     * accepted schedule. Resetting it to unknown creates a short, observable
+     * OFF request in every day-window consumer, even for an idempotent patch. */
     core->context.day_window = candidate;
     if (!candidate.schedule_enabled) {
         core->context.day_window.active = VAZON_TRISTATE_TRUE;
-    } else {
-        core->context.day_window.active = VAZON_TRISTATE_UNKNOWN;
     }
     return ESP_OK;
 }

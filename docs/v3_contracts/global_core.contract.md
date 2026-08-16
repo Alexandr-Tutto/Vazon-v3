@@ -116,6 +116,12 @@ day_window:
 day_window is part of GlobalContext.
 ```
 
+`HH:MM` is the canonical stored and MQTT representation. A user-facing UI may
+accept exactly two hour digits and two minute digits with any single non-digit
+separator, for example `07.00`, `07-00`, `07/00`, or `07 00`. Before sending
+`system.set_day_window`, the UI must validate the `00..23` / `00..59` ranges,
+normalize the value to `HH:MM`, and display it with `:`.
+
 Startup defaults before persisted settings are loaded:
 
 ```text
@@ -172,6 +178,11 @@ Wi-Fi provisioning is not normal runtime command flow.
 ```
 
 `system.set_day_window` updates provided `day_window` fields.
+
+An accepted update preserves the last evaluated `day_window.active` value
+until the clock task evaluates the updated schedule. Reapplying the current
+schedule must not create an intermediate `unknown` state or a transient output
+change in day-window consumers.
 
 Command Router representation:
 

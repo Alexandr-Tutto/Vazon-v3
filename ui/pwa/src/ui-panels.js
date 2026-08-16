@@ -315,8 +315,8 @@ function timeField(label, name, value) {
     name,
     value,
     type: 'text',
-    inputMode: 'numeric',
-    pattern: '[0-9]{2}:[0-9]{2}',
+    inputMode: 'decimal',
+    pattern: '[0-9]{2}[^0-9][0-9]{2}',
     maxLength: 5,
     size: 5,
     width: '7ch',
@@ -456,7 +456,14 @@ function getFunctionStatusCards(entity, uiState) {
       {
         label: 'Режим роботи',
         sections: [
-          { controls: [getUiAction('light.mode.manual'), getUiAction('light.mode.auto'), getUiAction('light.manual.on'), getUiAction('light.manual.off')] },
+          {
+            controls: [
+              activeAction('light.mode.manual', raw.light.settings.mode === 'manual'),
+              activeAction('light.mode.auto', raw.light.settings.mode === 'auto'),
+              activeAction('light.manual.on', raw.light.settings.manual_state === 'on'),
+              activeAction('light.manual.off', raw.light.settings.manual_state === 'off'),
+            ],
+          },
           {
             label: 'Графік',
             fields: [

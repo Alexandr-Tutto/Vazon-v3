@@ -132,15 +132,17 @@ function fanConfirmationText(value) {
 function aggregatePotStatus(pots) {
   const priority = {
     ok: 0,
-    inactive: 1,
-    unknown: 2,
-    warning: 3,
-    error: 4,
+    unknown: 1,
+    warning: 2,
+    error: 3,
   };
 
   if (pots.length === 0) return 'unknown';
+  if (pots.every((pot) => pot.status === 'inactive')) return 'inactive';
 
-  return pots.reduce((worst, pot) => {
+  const activePots = pots.filter((pot) => pot.status !== 'inactive');
+
+  return activePots.reduce((worst, pot) => {
     const status = pot.status in priority ? pot.status : 'unknown';
     return priority[status] > priority[worst] ? status : worst;
   }, 'ok');
@@ -155,7 +157,7 @@ function potSummary(pots, status) {
     ok: 'Норма',
     warning: 'Потрібна увага',
     error: 'Потрібна дія',
-    inactive: 'Вимкнено',
+    inactive: 'Не активовано',
     unknown: 'Немає даних',
   };
 
@@ -301,10 +303,10 @@ export function createUiState(raw) {
 
   const liveTiles = [
     tile('climate', 'Клімат', raw.climate.status, raw.climate.status_reason ? 'Увага' : 'Норма'),
-    tile('pot', 'Ґрунт', potAggregate.status, potAggregate.summary),
+    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, fanActive),
     tile('humidifier', 'Зволоження', humidifierStatus, humidifierTileSummary, !maintenanceActive && (raw.humidifier.mist_output === 'on' || humidifierFanActive)),
     tile('light', 'Світло', lightStatus, lightTileSummary, raw.light.output === 'on'),
-    tile('fan', 'Вентиляція', fanStatus, fanTileSummary, fanActive),
+    tile('pot', 'Ґрунт', potAggregate.status, potAggregate.summary),
     tile('connection', 'Wi-Fi / звʼязок', raw.system.global_context.connection.mqtt_state === 'connected' ? 'ok' : 'warning', wifiStateText(raw.system.global_context.connection.wifi_state)),
   ];
   const tiles = deviceOffline
