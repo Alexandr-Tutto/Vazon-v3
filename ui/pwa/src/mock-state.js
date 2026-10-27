@@ -50,8 +50,8 @@ export const mockState = {
       sht31_stale_timeout_sec: 300,
       temperature_delta_warn: 5,
       temperature_delta_error: 10,
-      rh_offset_0x44_pct: 5,
-      rh_offset_0x45_pct: 5,
+      rh_offset_0x44_pct: 12,
+      rh_offset_0x45_pct: 12,
     },
   },
 
@@ -75,6 +75,14 @@ export const mockState = {
       settings: {
         soil_moisture_enabled: true,
         soil_temperature_enabled: true,
+        calibration: {
+          dry_valid: true,
+          normal_valid: true,
+          wet_valid: true,
+          dry_calibration_mv: 2100,
+          normal_calibration_mv: 1600,
+          wet_calibration_mv: 1100,
+        },
       },
     },
     {
@@ -96,6 +104,14 @@ export const mockState = {
       settings: {
         soil_moisture_enabled: true,
         soil_temperature_enabled: true,
+        calibration: {
+          dry_valid: false,
+          normal_valid: false,
+          wet_valid: false,
+          dry_calibration_mv: 0,
+          normal_calibration_mv: 0,
+          wet_calibration_mv: 0,
+        },
       },
     },
   ],

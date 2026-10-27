@@ -82,7 +82,7 @@ MQTT offline has its own LED pattern because the LED is a local physical indicat
 ## 8. LED States
 
 ```text
-green short blink, long pause - normal ok
+green steady                  - normal ok
 
 green 50/50 blink             - provisioning button check window or provisioning AP active
 
@@ -92,12 +92,15 @@ red 50/50 blink               - mqtt offline
 
 red steady                    - system error not caused only by MQTT offline
 
-red/green alternate blink     - door-origin maintenance or local warning / attention
+green 50/50 blink             - local warning / attention
+
+red/green alternate blink     - door-origin maintenance
 ```
 
 Exact runtime timing:
 
 ```text
+green steady                  - continuously ON
 short blink, long pause       - 200 ms ON, 1800 ms OFF
 50/50 blink                   - 500 ms ON, 500 ms OFF
 red/green alternate blink     - 500 ms green, 500 ms red

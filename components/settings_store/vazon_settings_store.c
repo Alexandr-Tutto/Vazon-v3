@@ -8,8 +8,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#define SETTINGS_SCHEMA_VERSION 2U
+#define SETTINGS_SCHEMA_VERSION 3U
+#define SETTINGS_SCHEMA_VERSION_V2 2U
 #define SETTINGS_SCHEMA_VERSION_V1 1U
+#define FIELD_TRIAL_RH_OFFSET_PCT 12.0f
 
 typedef struct {
     float temperature_low_warn;
@@ -83,8 +85,8 @@ static void migrate_v1_settings(
         source->climate.temperature_delta_warn;
     target->climate.temperature_delta_error =
         source->climate.temperature_delta_error;
-    target->climate.rh_offset_0x44_pct = 5.0f;
-    target->climate.rh_offset_0x45_pct = 5.0f;
+    target->climate.rh_offset_0x44_pct = FIELD_TRIAL_RH_OFFSET_PCT;
+    target->climate.rh_offset_0x45_pct = FIELD_TRIAL_RH_OFFSET_PCT;
     target->light = source->light;
     target->fan = source->fan;
     target->humidifier = source->humidifier;
@@ -114,12 +116,26 @@ esp_err_t vazon_settings_store_load(vazon_persisted_settings_t *settings)
         result = nvs_get_blob(handle, SETTINGS_KEY, &blob, &size);
         nvs_close(handle);
         if (result != ESP_OK) return result;
-        if (blob.schema_version != SETTINGS_SCHEMA_VERSION ||
-            blob.payload_size != (uint16_t)sizeof(blob.payload)) {
+        if (blob.payload_size != (uint16_t)sizeof(blob.payload)) {
             return ESP_ERR_INVALID_VERSION;
         }
         if (blob.crc32 != blob_crc(&blob)) return ESP_ERR_INVALID_CRC;
+        if (blob.schema_version != SETTINGS_SCHEMA_VERSION &&
+            blob.schema_version != SETTINGS_SCHEMA_VERSION_V2) {
+            return ESP_ERR_INVALID_VERSION;
+        }
         *settings = blob.payload;
+        if (blob.schema_version == SETTINGS_SCHEMA_VERSION_V2) {
+            settings->climate.rh_offset_0x44_pct = FIELD_TRIAL_RH_OFFSET_PCT;
+            settings->climate.rh_offset_0x45_pct = FIELD_TRIAL_RH_OFFSET_PCT;
+            ESP_LOGI(TAG, "Runtime settings migrated schema=2->3");
+            const esp_err_t save_result = vazon_settings_store_save(settings);
+            if (save_result != ESP_OK) {
+                ESP_LOGW(TAG, "Migrated runtime settings save failed: %s",
+                         esp_err_to_name(save_result));
+            }
+            return ESP_OK;
+        }
         ESP_LOGI(TAG, "Runtime settings loaded schema=%u",
                  (unsigned int)blob.schema_version);
         return ESP_OK;
@@ -136,7 +152,7 @@ esp_err_t vazon_settings_store_load(vazon_persisted_settings_t *settings)
         }
         if (blob.crc32 != blob_v1_crc(&blob)) return ESP_ERR_INVALID_CRC;
         migrate_v1_settings(&blob.payload, settings);
-        ESP_LOGI(TAG, "Runtime settings migrated schema=1->2");
+        ESP_LOGI(TAG, "Runtime settings migrated schema=1->3");
         const esp_err_t save_result = vazon_settings_store_save(settings);
         if (save_result != ESP_OK) {
             ESP_LOGW(TAG, "Migrated runtime settings save failed: %s",

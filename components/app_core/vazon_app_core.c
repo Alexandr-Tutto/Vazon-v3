@@ -50,7 +50,9 @@ static const char *TAG = "app_core";
 #define DOOR_DEBOUNCE_MS           100U
 #define DOOR_UNSTABLE_TIMEOUT_MS   1000U
 #define CLIMATE_READ_INTERVAL_MS   5000U
-#define POT_READ_INTERVAL_MS       10000U
+#define POT_CALIBRATION_READ_INTERVAL_MS 2000U
+#define POT_NORMAL_READ_INTERVAL_MS      30000U
+#define POT_CADENCE_CHECK_INTERVAL_MS    2000U
 #define MQTT_COMMAND_QUEUE_DEPTH   8U
 #define MQTT_COMMAND_TASK_STACK    6144U
 #define MQTT_STATE_TASK_STACK      8192U
@@ -500,6 +502,8 @@ static const char *pot_reason_text(vazon_pot_status_reason_t reason)
     switch (reason) {
     case VAZON_POT_REASON_CALIBRATION_INVALID:
         return "calibration_invalid";
+    case VAZON_POT_REASON_SOIL_OVERWET:
+        return "soil_overwet";
     case VAZON_POT_REASON_MOISTURE_READ_FAILED:
         return "moisture_read_failed";
     case VAZON_POT_REASON_MOISTURE_STALE:
@@ -541,6 +545,7 @@ static void pot_runtime_task(void *context)
 {
     (void)context;
     while (true) {
+        bool calibration_in_progress = false;
         float temperatures_c[2] = {0.0f, 0.0f};
         esp_err_t temperature_results[2] = {ESP_ERR_NOT_FOUND,
                                             ESP_ERR_NOT_FOUND};
@@ -580,6 +585,13 @@ static void pot_runtime_task(void *context)
 
             const vazon_pot_snapshot_t *snapshot =
                 vazon_pot_module_get_snapshot(&pot_modules[pot_id]);
+            const vazon_pot_moisture_calibration_t *calibration =
+                &snapshot->calibration;
+            if (snapshot->settings.soil_moisture_enabled &&
+                !(calibration->dry_valid && calibration->normal_valid &&
+                  calibration->wet_valid)) {
+                calibration_in_progress = true;
+            }
             const bool sensor_missing =
                 snapshot->status_reason == VAZON_POT_REASON_MOISTURE_READ_FAILED ||
                 snapshot->status_reason == VAZON_POT_REASON_MOISTURE_STALE ||
@@ -614,7 +626,10 @@ static void pot_runtime_task(void *context)
                          snapshot->soil_moisture.raw_mv,
                          snapshot->soil_moisture.value_pct,
                          pot_sensor_status_text(snapshot->soil_moisture.status),
-                         "none");
+                         snapshot->soil_moisture.moisture_class ==
+                                 VAZON_POT_MOISTURE_CLASS_OVERWET
+                             ? "soil_overwet"
+                             : "none");
             } else {
                 ESP_LOGW(TAG,
                          "SENSOR_FAIL pot[%u].soil_moisture GPIO%d raw=%d mv=unavailable status=%s reason=%s result=%s",
@@ -645,7 +660,36 @@ static void pot_runtime_task(void *context)
             }
             unlock_runtime(runtime_mutex);
         }
-        vTaskDelay(pdMS_TO_TICKS(POT_READ_INTERVAL_MS));
+
+        uint32_t wait_ms = calibration_in_progress
+                               ? POT_CALIBRATION_READ_INTERVAL_MS
+                               : POT_NORMAL_READ_INTERVAL_MS;
+        while (wait_ms > 0U) {
+            const uint32_t slice_ms =
+                wait_ms < POT_CADENCE_CHECK_INTERVAL_MS
+                    ? wait_ms
+                    : POT_CADENCE_CHECK_INTERVAL_MS;
+            vTaskDelay(pdMS_TO_TICKS(slice_ms));
+            wait_ms -= slice_ms;
+            if (calibration_in_progress || wait_ms == 0U) continue;
+
+            bool calibration_started = false;
+            ESP_ERROR_CHECK(lock_runtime(runtime_mutex));
+            for (uint8_t pot_id = 0; pot_id < 2U; ++pot_id) {
+                const vazon_pot_snapshot_t *snapshot =
+                    vazon_pot_module_get_snapshot(&pot_modules[pot_id]);
+                const vazon_pot_moisture_calibration_t *calibration =
+                    &snapshot->calibration;
+                if (snapshot->settings.soil_moisture_enabled &&
+                    !(calibration->dry_valid && calibration->normal_valid &&
+                      calibration->wet_valid)) {
+                    calibration_started = true;
+                    break;
+                }
+            }
+            unlock_runtime(runtime_mutex);
+            if (calibration_started) break;
+        }
     }
 }
 
@@ -1281,6 +1325,8 @@ static const char *status_led_pattern_text(vazon_status_led_pattern_t pattern)
         return "provisioning";
     case VAZON_STATUS_LED_PATTERN_SYSTEM_ERROR:
         return "system_error";
+    case VAZON_STATUS_LED_PATTERN_DOOR_MAINTENANCE:
+        return "door_maintenance";
     case VAZON_STATUS_LED_PATTERN_LOCAL_WARNING:
         return "local_warning";
     case VAZON_STATUS_LED_PATTERN_MQTT_OFFLINE:
@@ -1689,8 +1735,8 @@ void vazon_app_core_init(void)
         .sht31_stale_timeout_sec = 300U,
         .temperature_delta_warn = 5.0f,
         .temperature_delta_error = 10.0f,
-        .rh_offset_0x44_pct = 5.0f,
-        .rh_offset_0x45_pct = 5.0f,
+        .rh_offset_0x44_pct = 12.0f,
+        .rh_offset_0x45_pct = 12.0f,
     };
     esp_err_t module_init_result = vazon_climate_module_init(
         &climate_module,

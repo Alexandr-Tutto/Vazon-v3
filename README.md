@@ -26,4 +26,4 @@ Old Vazon repository is a reference source only. Do not copy old implementation 
 - Verified on hardware: SNTP time synchronization and Global Core `day_window` evaluation using the proven Ukraine timezone settings.
 - Verified on hardware: the main four-wire fan uses GPIO13 switched +12 V master power and GPIO25 25 kHz PWM; GPIO34 tachometer feedback is temporarily disabled. The humidifier local fan is a separate binary output; its mist output uses 800 Hz PWM at 50/60/70% duty.
 - Verified end to end on device #2: provisioning, HiveMQ Cloud transport, retained V3 MQTT state and commands, PWA control, and OTA update through the deployed Worker. Device #2 is ready for field trials in the live cabinet.
-- Deployed field-trial release: `0.1.11`; fixes light schedule updates without transient relay shutdown, improves light-mode feedback and schedule input in the PWA, and distinguishes non-activated subsystems visually.
+- Deployed field-trial release: `0.1.13`; adds a soil-overwet warning and confirmed, persistent soil-moisture calibration progress to the PWA.

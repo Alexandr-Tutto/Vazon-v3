@@ -32,7 +32,7 @@ static vazon_status_led_pattern_t select_pattern(
         return VAZON_STATUS_LED_PATTERN_PROVISIONING;
     }
     if (inputs->maintenance_door_active) {
-        return VAZON_STATUS_LED_PATTERN_LOCAL_WARNING;
+        return VAZON_STATUS_LED_PATTERN_DOOR_MAINTENANCE;
     }
     if (status->status == VAZON_SYSTEM_STATUS_ERROR && !mqtt_only_error) {
         return VAZON_STATUS_LED_PATTERN_SYSTEM_ERROR;
@@ -63,7 +63,7 @@ static void pattern_outputs(vazon_status_led_pattern_t pattern,
 
     switch (pattern) {
     case VAZON_STATUS_LED_PATTERN_NORMAL:
-        *green_on = now_ms % STATUS_LED_SHORT_CYCLE_MS < STATUS_LED_SHORT_ON_MS;
+        *green_on = true;
         break;
     case VAZON_STATUS_LED_PATTERN_PROVISIONING:
         *green_on = now_ms % STATUS_LED_EVEN_CYCLE_MS < STATUS_LED_EVEN_ON_MS;
@@ -71,9 +71,12 @@ static void pattern_outputs(vazon_status_led_pattern_t pattern,
     case VAZON_STATUS_LED_PATTERN_SYSTEM_ERROR:
         *red_on = true;
         break;
-    case VAZON_STATUS_LED_PATTERN_LOCAL_WARNING:
+    case VAZON_STATUS_LED_PATTERN_DOOR_MAINTENANCE:
         *green_on = now_ms % STATUS_LED_EVEN_CYCLE_MS < STATUS_LED_EVEN_ON_MS;
         *red_on = !*green_on;
+        break;
+    case VAZON_STATUS_LED_PATTERN_LOCAL_WARNING:
+        *green_on = now_ms % STATUS_LED_EVEN_CYCLE_MS < STATUS_LED_EVEN_ON_MS;
         break;
     case VAZON_STATUS_LED_PATTERN_MQTT_OFFLINE:
         *red_on = now_ms % STATUS_LED_EVEN_CYCLE_MS < STATUS_LED_EVEN_ON_MS;

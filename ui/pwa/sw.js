@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vazon-v3-pwa-mqtt-prototype-v11';
+const CACHE_NAME = 'vazon-v3-pwa-mqtt-prototype-v15';
 
 const APP_ASSETS = [
   './index.html',

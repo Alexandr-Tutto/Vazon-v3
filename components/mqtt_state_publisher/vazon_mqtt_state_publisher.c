@@ -202,6 +202,7 @@ static const char *pot_reason_text(vazon_pot_status_reason_t value)
 {
     switch (value) {
     case VAZON_POT_REASON_CALIBRATION_INVALID: return "calibration_invalid";
+    case VAZON_POT_REASON_SOIL_OVERWET: return "soil_overwet";
     case VAZON_POT_REASON_MOISTURE_READ_FAILED: return "moisture_read_failed";
     case VAZON_POT_REASON_MOISTURE_STALE: return "moisture_stale";
     case VAZON_POT_REASON_TEMPERATURE_MISSING: return "temperature_missing";
@@ -638,15 +639,23 @@ static esp_err_t publish_pot(vazon_mqtt_state_publisher_t *publisher,
     if (result != ESP_OK) return result;
 
     const vazon_pot_settings_t *settings = &snapshot->settings;
+    const vazon_pot_moisture_calibration_t *calibration =
+        &snapshot->calibration;
     written = snprintf(
         payload, sizeof(payload),
-        "{\"soil_moisture_enabled\":%s,\"soil_temperature_enabled\":%s,\"moisture_stale_timeout_sec\":%lu,\"temperature_stale_timeout_sec\":%lu,\"temperature_low_warn_c\":%.2f,\"temperature_high_warn_c\":%.2f}",
+        "{\"soil_moisture_enabled\":%s,\"soil_temperature_enabled\":%s,\"moisture_stale_timeout_sec\":%lu,\"temperature_stale_timeout_sec\":%lu,\"temperature_low_warn_c\":%.2f,\"temperature_high_warn_c\":%.2f,\"calibration\":{\"dry_valid\":%s,\"normal_valid\":%s,\"wet_valid\":%s,\"dry_calibration_mv\":%d,\"normal_calibration_mv\":%d,\"wet_calibration_mv\":%d}}",
         bool_text(settings->soil_moisture_enabled),
         bool_text(settings->soil_temperature_enabled),
         (unsigned long)settings->moisture_stale_timeout_sec,
         (unsigned long)settings->temperature_stale_timeout_sec,
         (double)settings->temperature_low_warn_c,
-        (double)settings->temperature_high_warn_c);
+        (double)settings->temperature_high_warn_c,
+        bool_text(calibration->dry_valid),
+        bool_text(calibration->normal_valid),
+        bool_text(calibration->wet_valid),
+        calibration->dry_calibration_mv,
+        calibration->normal_calibration_mv,
+        calibration->wet_calibration_mv);
     if (written < 0 || (size_t)written >= sizeof(payload)) return ESP_ERR_INVALID_SIZE;
     return publish_payload(publisher, settings_slot, "settings", entity,
                            payload, force);

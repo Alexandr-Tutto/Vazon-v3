@@ -96,7 +96,9 @@ zone humidity values plus `rh_delta_pct` to Humidifier and Fan Modules. Its
 settings command is registered under the `climate` Command Router target.
 
 Two Pot Module instances read averaged ADC moisture values and DS18B20
-temperatures every 10 seconds. The OneWire conversion runs in its own task and
+temperatures every 2 seconds while an enabled moisture calibration is incomplete
+and every 30 seconds in normal runtime. During the normal wait they detect a
+newly started calibration within 2 seconds. The OneWire conversion runs in its own task and
 does not block Door Module polling. Moisture stays explicitly uncalibrated
 until the dry/normal/wet sequence is captured. Both instances register
 `pot/0` and `pot/1` Command Router targets for sensor enable settings,

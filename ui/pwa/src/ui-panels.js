@@ -183,6 +183,9 @@ function potIssueText(pot) {
   if (pot.status_reason === 'calibration_invalid') {
     return 'Калібрування некоректне. Повторіть калібрування.';
   }
+  if (pot.status_reason === 'soil_overwet') {
+    return 'Ґрунт перезволожений. Припиніть полив і дайте ґрунту просохнути.';
+  }
   if (pot.status === 'error') return 'Потрібна перевірка: ґрунт.';
   if (pot.status === 'warning') return 'Потрібна увага: ґрунт.';
   if (pot.status === 'unknown') return 'Немає актуальних даних.';
@@ -305,8 +308,30 @@ function sensorSwitch(label, name, enabled, enableActionId, disableActionId, pas
   };
 }
 
-function potCalibrationAction(index, point) {
-  return getUiAction(`pot[${index}].calibrate_soil_moisture.${point}`);
+function potCalibrationAction(index, point, calibration = {}) {
+  const validityField = {
+    dry: 'dry_valid',
+    normal: 'normal_valid',
+    wet: 'wet_valid',
+  }[point];
+  const actionId = `pot[${index}].calibrate_soil_moisture.${point}`;
+
+  return validityField
+    ? activeAction(actionId, calibration[validityField] === true)
+    : getUiAction(actionId);
+}
+
+function potCalibrationPoint(label, valid, value) {
+  return valid === true && Number.isFinite(Number(value))
+    ? `${label}-${Number(value)}`
+    : `${label}-----`;
+}
+
+function potCalibrationLabel(calibration = {}) {
+  const dry = potCalibrationPoint('С', calibration.dry_valid, calibration.dry_calibration_mv);
+  const normal = potCalibrationPoint('Н', calibration.normal_valid, calibration.normal_calibration_mv);
+  const wet = potCalibrationPoint('М', calibration.wet_valid, calibration.wet_calibration_mv);
+  return `Калібрування вологості — ${dry}, ${normal}, ${wet} мВ`;
 }
 
 function timeField(label, name, value) {
@@ -383,6 +408,8 @@ function fanPowerCard(fan) {
 }
 
 function potSettingsCard(index, label, pot) {
+  const calibration = pot.settings.calibration || {};
+
   return {
     label,
     sections: [
@@ -395,13 +422,13 @@ function potSettingsCard(index, label, pot) {
         ],
       },
       {
-        label: 'Калібрування вологості',
+        label: potCalibrationLabel(calibration),
         instructions: [
-          ['Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'dry') }, '.'],
-          ['Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'normal') }, '.'],
-          ['Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'wet') }, '.'],
+          ['Встановіть датчик у ємність із таким самим сухим грунтом. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'dry', calibration) }, '.'],
+          ['Долийте води до бажаного оптимального стану. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'normal', calibration) }, '.'],
+          ['Перелийте води, зробіть грунт вологішим, ніж потрібно. Зачекайте 1 хвилину, натисніть ', { action: potCalibrationAction(index, 'wet', calibration) }, '.'],
         ],
-        note: ['Калібрування закінчено. Переставте датчик у бажаний вазон обережно, не пошкоджуючи коріння. Якщо на якомусь етапі помилились, натисніть ', { action: potCalibrationAction(index, 'reset') }, ' і повторіть процедуру із сухого грунту.'],
+        note: ['Кнопка зеленіє лише після запису відповідної точки контролером. Калібрування закінчено, коли зелені всі три кнопки. Переставте датчик у бажаний вазон обережно, не пошкоджуючи коріння. Якщо на якомусь етапі помилились, натисніть ', { action: potCalibrationAction(index, 'reset', calibration) }, ' і повторіть процедуру із сухого грунту.'],
       },
       {
         label: 'Пороги та таймаути',

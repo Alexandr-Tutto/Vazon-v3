@@ -101,6 +101,9 @@ pot[pot_id].soil_temperature_enabled = true / false; default = true
 dry_calibration_mv
 normal_calibration_mv
 wet_calibration_mv
+dry_valid
+normal_valid
+wet_valid
 
 moisture_stale_timeout_sec = 300
 temperature_stale_timeout_sec = 300
@@ -148,6 +151,15 @@ if soil temperature is enabled and DS18B20 read valid:
     update soil_temperature.temperature_c
     update last_valid_temperature_read_time
 
+if any enabled soil moisture calibration sequence is incomplete:
+    acquire pot sensor readings every 2 seconds
+else:
+    acquire pot sensor readings every 30 seconds
+
+during a normal-cadence wait:
+    detect a newly incomplete calibration sequence within 2 seconds
+    advance the next acquisition instead of waiting the full 30 seconds
+
 if a DS18B20 scratchpad read returns ESP_ERR_INVALID_CRC:
     OneWire Service retries that sensor once without starting a new conversion
     successful retry is treated as the current valid reading
@@ -182,6 +194,19 @@ class thresholds:
 90 <= value <= 100 % = overwet
 ```
 
+A fresh, valid `overwet` reading is a condition warning:
+
+```text
+soil_moisture.status = warning
+pot.status = warning
+pot.status_reason = soil_overwet
+```
+
+It is not a sensor failure and does not control an actuator. Sensor errors,
+stale data, and invalid calibration retain higher error priority. A temporary
+current read failure retains `moisture_read_failed` instead of asserting an
+unconfirmed `soil_overwet` condition from the previous value.
+
 ## 12. Soil Moisture Calibration Command
 
 ```text
@@ -210,6 +235,12 @@ point = reset:
     user must repeat calibration from dry point
 ```
 
+The retained `settings/pot/{pot_id}` payload includes the three calibration
+values and their `dry_valid`, `normal_valid`, and `wet_valid` flags. A flag
+becomes `true` only after the owning module accepts and records that point.
+Reset clears all three flags. UI calibration progress must be derived from
+these confirmed flags, not optimistically from a button press or MQTT publish.
+
 The UI text and step-by-step user procedure are owned by `docs/ui_architecture.md`.
 
 ## 13. Stale Rule
@@ -234,6 +265,9 @@ error    - enabled sensor missing, stale, invalid reading, or invalid calibratio
 inactive - both pot sensors are disabled
 unknown  - no valid state after startup
 ```
+
+`soil_overwet` is the warning reason for a fresh valid moisture value in the
+`overwet` class.
 
 ## 15. MQTT Surface
 

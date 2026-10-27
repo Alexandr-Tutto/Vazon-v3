@@ -80,8 +80,8 @@ sht31_stale_timeout_sec = 300
 temperature_delta_warn = 5
 temperature_delta_error = 10
 
-rh_offset_0x44_pct = -20..20; field-trial default = +5
-rh_offset_0x45_pct = -20..20; field-trial default = +5
+rh_offset_0x44_pct = -20..20; field-trial default = +12
+rh_offset_0x45_pct = -20..20; field-trial default = +12
 ```
 
 ## 8. State

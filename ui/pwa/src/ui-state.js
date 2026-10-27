@@ -37,6 +37,7 @@ function statusSummaryText(entity) {
     sht31_0x45_missing: '- нижній датчик клімату не відповідає',
     sht31_stale: '- дані клімату застаріли',
     invalid_value: '- некоректне значення датчика',
+    soil_overwet: '- ґрунт перезволожений',
     confirmation_failed: '- обертання не підтверджено',
   };
   const statuses = {
@@ -151,6 +152,10 @@ function aggregatePotStatus(pots) {
 function potSummary(pots, status) {
   if (pots.some((pot) => pot.status_reason === 'calibration_invalid')) {
     return 'Потрібне калібрування';
+  }
+  if (status === 'warning' &&
+      pots.some((pot) => pot.status_reason === 'soil_overwet')) {
+    return 'Перезволожено';
   }
 
   const labels = {

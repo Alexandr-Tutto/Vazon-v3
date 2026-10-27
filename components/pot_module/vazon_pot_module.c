@@ -203,11 +203,15 @@ esp_err_t vazon_pot_module_evaluate(vazon_pot_module_t *module,
             &module->snapshot.calibration, module->snapshot.soil_moisture.raw_mv);
         module->snapshot.soil_moisture.moisture_class = moisture_class(
             module->snapshot.soil_moisture.value_pct);
-        module->snapshot.soil_moisture.status =
-            module->moisture_last_read_failed ? VAZON_POT_SENSOR_WARNING
-                                              : VAZON_POT_SENSOR_OK;
         if (module->moisture_last_read_failed) {
+            module->snapshot.soil_moisture.status = VAZON_POT_SENSOR_WARNING;
             moisture_reason = VAZON_POT_REASON_MOISTURE_READ_FAILED;
+        } else if (module->snapshot.soil_moisture.moisture_class ==
+                   VAZON_POT_MOISTURE_CLASS_OVERWET) {
+            module->snapshot.soil_moisture.status = VAZON_POT_SENSOR_WARNING;
+            moisture_reason = VAZON_POT_REASON_SOIL_OVERWET;
+        } else {
+            module->snapshot.soil_moisture.status = VAZON_POT_SENSOR_OK;
         }
     }
 
